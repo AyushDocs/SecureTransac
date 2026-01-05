@@ -1,0 +1,61 @@
+{
+  "users": {
+    "0x1111111111111111111111111111111111111111": {
+      "transactions": [
+        {
+          "type": "OUT",
+          "to": "0x2222222222222222222222222222222222222222",
+          "amount": 50,
+          "timestamp": 1767618073272
+        }
+      ],
+      "complaints": [],
+      "trustScore": 0.52
+    },
+    "0x2222222222222222222222222222222222222222": {
+      "transactions": [
+        {
+          "type": "IN",
+          "from": "0x1111111111111111111111111111111111111111",
+          "amount": 50,
+          "timestamp": 1767618073272
+        },
+        {
+          "type": "OUT",
+          "to": "0xBAD6666666666666666666666666666666666666",
+          "amount": 10,
+          "timestamp": 1767618073331
+        }
+      ],
+      "complaints": [],
+      "trustScore": 0.46
+    },
+    "0xbad6666666666666666666666666666666666666": {
+      "transactions": [
+        {
+          "type": "IN",
+          "from": "0x2222222222222222222222222222222222222222",
+          "amount": 10,
+          "timestamp": 1767618073331
+        }
+      ],
+      "complaints": [
+        {
+          "reporter": "0x1111111111111111111111111111111111111111",
+          "text": "This is a total SCAM fraud theft!",
+          "timestamp": 1767618073313,
+          "severity": 3
+        }
+      ],
+      "trustScore": 0.06999999999999998
+    }
+  },
+  "analytics": {
+    "totalEvaluations": 5,
+    "riskDistribution": {
+      "high": 2,
+      "medium": 3,
+      "low": 0
+    }
+  }
+}
