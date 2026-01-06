@@ -22,6 +22,7 @@ class AIScoreService {
         // Logic: Interacting with low-trust users reduces your score
         if (receiver.trustScore < 0.4) {
             sender.trustScore -= 0.1;
+            persistence.incrementBlockedTransactions(); // Track as "blocked" (or flagged)
             console.log(`[AI] Penalty: ${from} interacted with suspicious receiver ${to}`);
         }
 
@@ -78,8 +79,29 @@ class AIScoreService {
         } catch (e) {
             console.error("Web3 Sync Failed:", e.message);
         }
-
         return { address, score, status: category };
+    }
+
+    async manualOverride(address, action, reason) {
+        console.log(`[AI] Manual Override: ${action} for ${address}. Reason: ${reason}`);
+        
+        let newScore = 0.5;
+        if (action === 'whitelist') newScore = 0.95;
+        else if (action === 'blacklist') newScore = 0.05;
+        else if (action === 'reset') newScore = 0.5;
+
+        const user = persistence.getUser(address);
+        user.trustScore = newScore;
+        // Record the override as a complaint with ADMIN reporter
+        user.complaints.push({ 
+            reporter: 'ADMIN', 
+            text: `Manual ${action}: ${reason}`, 
+            timestamp: Date.now(), 
+            severity: action === 'blacklist' ? 5 : 0 
+        });
+        
+        persistence.updateUser(address, user);
+        return await this.processEvaluation(address);
     }
 }
 

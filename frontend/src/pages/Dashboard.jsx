@@ -1,15 +1,36 @@
-import PageWrapper from "../layout/PageWrapper";
+import { useEffect, useState } from "react";
+import { fetchDashboardMetrics } from "../api/client";
 import MetricCard from "../dashboard/MetricCard";
+import RiskHeatmap from "../dashboard/RiskHeatmap";
 import TrustDonut from "../dashboard/TrustDonut";
 import VelocityChart from "../dashboard/VelocityChart";
-import RiskHeatmap from "../dashboard/RiskHeatmap";
+import PageWrapper from "../layout/PageWrapper";
+import { logger } from "../utils/logger";
 
 // Main dashboard page with overview metrics
 function Dashboard() {
+  const [metricsData, setMetricsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadMetrics() {
+      try {
+        logger.info("Dashboard: Loading metrics...");
+        const data = await fetchDashboardMetrics();
+        setMetricsData(data);
+      } catch (error) {
+        logger.error("Dashboard: Failed to load metrics", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMetrics();
+  }, []);
+
   const metrics = [
     {
       title: "Blocked Transactions",
-      value: 1247,
+      value: metricsData?.blockedTransactions || 0,
       change: -12.5,
       variant: "destructive",
       icon: (
@@ -20,7 +41,7 @@ function Dashboard() {
     },
     {
       title: "Total Evaluations",
-      value: 89432,
+      value: metricsData?.totalEvaluations || 0,
       change: 24.3,
       variant: "success",
       icon: (
@@ -31,7 +52,7 @@ function Dashboard() {
     },
     {
       title: "Active Wallets",
-      value: 12847,
+      value: metricsData?.activeWallets || 0,
       change: 8.1,
       variant: "default",
       icon: (
@@ -42,7 +63,7 @@ function Dashboard() {
     },
     {
       title: "Flagged Addresses",
-      value: 342,
+      value: metricsData?.flaggedAddresses || 0,
       change: 3.2,
       variant: "warning",
       icon: (
@@ -54,24 +75,34 @@ function Dashboard() {
   ];
 
   const trustData = [
-    { label: "Low Risk", value: 7234, color: "hsl(142, 76%, 36%)" },
-    { label: "Medium Risk", value: 3891, color: "hsl(45, 93%, 47%)" },
-    { label: "High Risk", value: 1722, color: "hsl(0, 72%, 51%)" },
+    { label: "Low Risk", value: metricsData?.riskDistribution?.low || 0, color: "hsl(142, 76%, 36%)" },
+    { label: "Medium Risk", value: metricsData?.riskDistribution?.medium || 0, color: "hsl(45, 93%, 47%)" },
+    { label: "High Risk", value: metricsData?.riskDistribution?.high || 0, color: "hsl(0, 72%, 51%)" },
   ];
 
-  const velocityData = [
-    { label: "Mon", value: 12400 },
-    { label: "Tue", value: 14200 },
-    { label: "Wed", value: 11800 },
-    { label: "Thu", value: 15600 },
-    { label: "Fri", value: 13900 },
-    { label: "Sat", value: 10200 },
-    { label: "Sun", value: 11400 },
+  const velocityData = metricsData?.evaluationVelocity || [
+    { label: "Mon", value: 0 },
+    { label: "Tue", value: 0 },
+    { label: "Wed", value: 0 },
+    { label: "Thu", value: 0 },
+    { label: "Fri", value: 0 },
+    { label: "Sat", value: 0 },
+    { label: "Sun", value: 0 },
   ];
 
-  const heatmapData = Array.from({ length: 4 }, () =>
-    Array.from({ length: 7 }, () => Math.random())
+  const heatmapData = metricsData?.riskHeatmap || Array.from({ length: 4 }, () =>
+    Array.from({ length: 7 }, () => 0)
   );
+
+  if (loading) {
+    return (
+      <PageWrapper title="Dashboard">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-400">Loading metrics...</div>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper title="Dashboard">

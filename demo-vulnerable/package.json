@@ -1,0 +1,9 @@
+{
+    "name": "demo-vulnerable",
+    "version": "1.0.0",
+    "description": "Demo vulnerable and secure contracts",
+    "dependencies": {
+        "truffle": "^5.11.5",
+        "@openzeppelin/contracts": "^5.0.0"
+    }
+}

@@ -58,7 +58,26 @@ function AuditTimeline({ events }) {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground">{event.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                  {event.type === "transaction" && event.data ? (
+                    <div className="mt-2 p-3 bg-secondary/50 rounded-lg border border-border space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Type:</span>
+                        <span className="text-foreground font-medium">{event.data.type}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="text-foreground font-medium">{event.data.amount} ETH</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{event.data.to ? "To:" : "From:"}</span>
+                        <span className="text-foreground font-mono truncate ml-4">
+                          {event.data.to || event.data.from}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                  )}
                 </div>
                 <Badge variant={getVariant(event.severity)}>{event.severity}</Badge>
               </div>

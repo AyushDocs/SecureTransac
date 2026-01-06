@@ -13,6 +13,10 @@ SecureTransac is a sophisticated security infrastructure layer for blockchain ap
 
 ## 📂 Project Structure
 
+For a detailed breakdown of where each facility is located, see the **[Project Map](file:///j:/Users/ayush/Desktop/code/Pecathon/PROJECT_MAP.md)**.
+
+AI context and coding standards can be found in **[.github/copilot-instructions.md](file:///j:/Users/ayush/Desktop/code/Pecathon/.github/copilot-instructions.md)**.
+
 ```text
 /onchain           - Core Smart Contracts (Truffle)
   /contracts       - TrustRegistry, IdentityVault, Guardian logic
@@ -81,6 +85,13 @@ truffle test
 - [ ] Cross-chain registry synchronization (CCIP).
 - [ ] DAO-based governance for blacklist appeals.
 - [ ] Automated threat simulation for developers.
+
+## 🤝 Community & Security
+
+- **[License](file:///j:/Users/ayush/Desktop/code/Pecathon/LICENSE)**: This project is licensed under the MIT License.
+- **[Code of Conduct](file:///j:/Users/ayush/Desktop/code/Pecathon/CODE_OF_CONDUCT.md)**: We are committed to fostering a welcoming environment.
+- **[Contributing](file:///j:/Users/ayush/Desktop/code/Pecathon/CONTRIBUTING.md)**: Please read our contribution guidelines before submitting PRs.
+- **[Security Policy](file:///j:/Users/ayush/Desktop/code/Pecathon/SECURITY.md)**: Report any vulnerabilities to security@securetransac.io.
 
 ---
 Built for the Pecathon hackathon. Secure your code, secure the future.

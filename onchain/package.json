@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ganache:persistent": "ganache -p 8545 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\""
   },
   "keywords": [],
   "author": "",

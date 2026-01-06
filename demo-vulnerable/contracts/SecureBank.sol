@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../onchain/contracts/Guardian.sol";
+import "./Guardian.sol";
 
 /**
  * @title SecureBank

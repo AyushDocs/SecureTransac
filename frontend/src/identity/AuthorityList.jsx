@@ -6,7 +6,7 @@ function AuthorityList({ authorities, onRevoke }) {
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Authorized Entities</h3>
+        <h3 className="text-lg font-semibold text-foreground">Authorized Authorities</h3>
         <Button variant="outline" size="sm">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

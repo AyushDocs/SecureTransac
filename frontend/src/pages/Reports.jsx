@@ -1,68 +1,39 @@
-import { useState } from "react";
-import PageWrapper from "../layout/PageWrapper";
-import Button from "../components/common/Button";
+import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../api/config";
 import Badge from "../components/common/Badge";
+import Button from "../components/common/Button";
+import PageWrapper from "../layout/PageWrapper";
+import { logger } from "../utils/logger";
 
 // Reports page with export and audit logs
 function Reports() {
   const [exportLoading, setExportLoading] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        logger.info("Reports: Fetching audit logs...");
+        const response = await fetch(`${API_BASE_URL}/audit-logs`);
+        if (!response.ok) throw new Error("Failed to fetch logs");
+        const data = await response.json();
+        setAuditLogs(data);
+        logger.info("Reports: Audit logs loaded", data);
+      } catch (error) {
+        logger.error("Reports: Error loading audit logs", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLogs();
+  }, []);
 
   const exportTypes = [
     { id: "transactions", label: "Transaction Report", format: "CSV" },
     { id: "scores", label: "Trust Score Summary", format: "PDF" },
     { id: "acl", label: "ACL Export", format: "JSON" },
     { id: "audit", label: "Full Audit Trail", format: "PDF" },
-  ];
-
-  const auditLogs = [
-    {
-      id: "1",
-      action: "Address Whitelisted",
-      user: "admin@securetransac.io",
-      target: "0x742d...e322",
-      timestamp: "2024-01-15 14:32:00",
-      type: "access_control",
-    },
-    {
-      id: "2",
-      action: "Threshold Updated",
-      user: "security@securetransac.io",
-      target: "Global threshold: 0.65",
-      timestamp: "2024-01-15 12:15:00",
-      type: "configuration",
-    },
-    {
-      id: "3",
-      action: "Decryption Approved",
-      user: "admin@securetransac.io",
-      target: "Request #1234",
-      timestamp: "2024-01-14 09:45:00",
-      type: "identity",
-    },
-    {
-      id: "4",
-      action: "Manual Override",
-      user: "compliance@securetransac.io",
-      target: "0x8Ba1...BA72",
-      timestamp: "2024-01-13 16:20:00",
-      type: "access_control",
-    },
-    {
-      id: "5",
-      action: "Authority Added",
-      user: "admin@securetransac.io",
-      target: "mike@securetransac.io",
-      timestamp: "2024-01-12 11:00:00",
-      type: "identity",
-    },
-    {
-      id: "6",
-      action: "Report Exported",
-      user: "analyst@securetransac.io",
-      target: "Transaction Report (CSV)",
-      timestamp: "2024-01-11 08:30:00",
-      type: "export",
-    },
   ];
 
   const handleExport = (type) => {

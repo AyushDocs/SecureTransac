@@ -7,10 +7,22 @@
           "to": "0x2222222222222222222222222222222222222222",
           "amount": 50,
           "timestamp": 1767618073272
+        },
+        {
+          "type": "OUT",
+          "to": "0x2222222222222222222222222222222222222222",
+          "amount": 50,
+          "timestamp": 1767695646742
+        },
+        {
+          "type": "OUT",
+          "to": "0x2222222222222222222222222222222222222222",
+          "amount": 50,
+          "timestamp": 1767695693622
         }
       ],
       "complaints": [],
-      "trustScore": 0.52
+      "trustScore": 0.6200000000000001
     },
     "0x2222222222222222222222222222222222222222": {
       "transactions": [
@@ -25,10 +37,34 @@
           "to": "0xBAD6666666666666666666666666666666666666",
           "amount": 10,
           "timestamp": 1767618073331
+        },
+        {
+          "type": "IN",
+          "from": "0x1111111111111111111111111111111111111111",
+          "amount": 50,
+          "timestamp": 1767695646742
+        },
+        {
+          "type": "OUT",
+          "to": "0xBAD6666666666666666666666666666666666666",
+          "amount": 10,
+          "timestamp": 1767695646798
+        },
+        {
+          "type": "IN",
+          "from": "0x1111111111111111111111111111111111111111",
+          "amount": 50,
+          "timestamp": 1767695693622
+        },
+        {
+          "type": "OUT",
+          "to": "0xBAD6666666666666666666666666666666666666",
+          "amount": 10,
+          "timestamp": 1767695693697
         }
       ],
       "complaints": [],
-      "trustScore": 0.46
+      "trustScore": 0.62
     },
     "0xbad6666666666666666666666666666666666666": {
       "transactions": [
@@ -37,6 +73,18 @@
           "from": "0x2222222222222222222222222222222222222222",
           "amount": 10,
           "timestamp": 1767618073331
+        },
+        {
+          "type": "IN",
+          "from": "0x2222222222222222222222222222222222222222",
+          "amount": 10,
+          "timestamp": 1767695646798
+        },
+        {
+          "type": "IN",
+          "from": "0x2222222222222222222222222222222222222222",
+          "amount": 10,
+          "timestamp": 1767695693697
         }
       ],
       "complaints": [
@@ -45,17 +93,1017 @@
           "text": "This is a total SCAM fraud theft!",
           "timestamp": 1767618073313,
           "severity": 3
+        },
+        {
+          "reporter": "0x1111111111111111111111111111111111111111",
+          "text": "This is a total SCAM fraud theft!",
+          "timestamp": 1767695646783,
+          "severity": 3
+        },
+        {
+          "reporter": "0x1111111111111111111111111111111111111111",
+          "text": "This is a total SCAM fraud theft!",
+          "timestamp": 1767695693674,
+          "severity": 3
         }
       ],
-      "trustScore": 0.06999999999999998
+      "trustScore": 0.11000000000000004
+    },
+    "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
+      "transactions": [
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 10,
+          "timestamp": 1767697533691
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 11,
+          "timestamp": 1767697534354
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 10,
+          "timestamp": 1767697577881
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 11,
+          "timestamp": 1767697580128
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 12,
+          "timestamp": 1767697582354
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 5,
+          "timestamp": 1767699874677
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767699875330
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 9,
+          "timestamp": 1767699877490
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767699879265
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767699881283
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 5,
+          "timestamp": 1767700589717
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767700590336
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 9,
+          "timestamp": 1767700592241
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767700593936
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767700595887
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 5,
+          "timestamp": 1767702983146
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767702983834
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 9,
+          "timestamp": 1767702985772
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767702987502
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767702989368
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 5,
+          "timestamp": 1767703185217
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767703185802
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 9,
+          "timestamp": 1767703187575
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703189202
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703190941
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 5,
+          "timestamp": 1767703993509
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767703994196
+        },
+        {
+          "type": "IN",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 9,
+          "timestamp": 1767703996215
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703997918
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703999973
+        }
+      ],
+      "complaints": [
+        {
+          "reporter": "ADMIN",
+          "text": "Manual whitelist: very good guy",
+          "timestamp": 1767699321165,
+          "severity": 0
+        },
+        {
+          "reporter": "ADMIN",
+          "text": "Manual blacklist: not that good guy",
+          "timestamp": 1767699633121,
+          "severity": 5
+        },
+        {
+          "reporter": "ADMIN",
+          "text": "Manual whitelist: ok ok guy please get him to 0.6 atleast\n",
+          "timestamp": 1767699676609,
+          "severity": 0
+        }
+      ],
+      "trustScore": 1
+    },
+    "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
+      "transactions": [
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 10,
+          "timestamp": 1767697533691
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 5,
+          "timestamp": 1767697534197
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 11,
+          "timestamp": 1767697534354
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 10,
+          "timestamp": 1767697577881
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 5,
+          "timestamp": 1767697579038
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 11,
+          "timestamp": 1767697580128
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 6,
+          "timestamp": 1767697581255
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 12,
+          "timestamp": 1767697582354
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767697583456
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 3,
+          "timestamp": 1767699873269
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 6,
+          "timestamp": 1767699875330
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767699876047
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767699879936
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767699881932
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 3,
+          "timestamp": 1767700588360
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 6,
+          "timestamp": 1767700590336
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767700590968
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767700594629
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767700596503
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 3,
+          "timestamp": 1767702981698
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 6,
+          "timestamp": 1767702983834
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767702984487
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767702988131
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767702989972
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 3,
+          "timestamp": 1767703183991
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 6,
+          "timestamp": 1767703185802
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767703186394
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703189773
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703191503
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 3,
+          "timestamp": 1767703991846
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 6,
+          "timestamp": 1767703994196
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 7,
+          "timestamp": 1767703994883
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703998577
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767704000612
+        }
+      ],
+      "complaints": [],
+      "trustScore": 1
+    },
+    "0x90f79bf6eb2c4f870365e785982e1f101e93b906": {
+      "transactions": [
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 5,
+          "timestamp": 1767697534197
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 5,
+          "timestamp": 1767697579038
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 6,
+          "timestamp": 1767697581255
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767697583456
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 1,
+          "timestamp": 1767697585690
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 3,
+          "timestamp": 1767699873269
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 4,
+          "timestamp": 1767699874050
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767699876047
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 8,
+          "timestamp": 1767699876683
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767699880624
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 3,
+          "timestamp": 1767700588360
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 4,
+          "timestamp": 1767700589067
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767700590968
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 8,
+          "timestamp": 1767700591613
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767700595260
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 3,
+          "timestamp": 1767702981698
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 4,
+          "timestamp": 1767702982495
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767702984487
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 8,
+          "timestamp": 1767702985133
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767702988749
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 3,
+          "timestamp": 1767703183991
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 4,
+          "timestamp": 1767703184634
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767703186394
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 8,
+          "timestamp": 1767703186975
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703190355
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 3,
+          "timestamp": 1767703991846
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 4,
+          "timestamp": 1767703992806
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 7,
+          "timestamp": 1767703994883
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 8,
+          "timestamp": 1767703995575
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.1,
+          "timestamp": 1767703999345
+        }
+      ],
+      "complaints": [],
+      "trustScore": 1
+    },
+    "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65": {
+      "transactions": [
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 1,
+          "timestamp": 1767697585690
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 4,
+          "timestamp": 1767699874050
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 5,
+          "timestamp": 1767699874677
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 8,
+          "timestamp": 1767699876683
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 9,
+          "timestamp": 1767699877490
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767699879265
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767699879936
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 0.1,
+          "timestamp": 1767699880624
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767699881283
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767699881932
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 4,
+          "timestamp": 1767700589067
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 5,
+          "timestamp": 1767700589717
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 8,
+          "timestamp": 1767700591613
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 9,
+          "timestamp": 1767700592241
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767700593936
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767700594629
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 0.1,
+          "timestamp": 1767700595260
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767700595887
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767700596503
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 4,
+          "timestamp": 1767702982495
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 5,
+          "timestamp": 1767702983146
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 8,
+          "timestamp": 1767702985133
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 9,
+          "timestamp": 1767702985772
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767702987502
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767702988131
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 0.1,
+          "timestamp": 1767702988749
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767702989368
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767702989972
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 4,
+          "timestamp": 1767703184634
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 5,
+          "timestamp": 1767703185217
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 8,
+          "timestamp": 1767703186975
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 9,
+          "timestamp": 1767703187575
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767703189202
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767703189773
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 0.1,
+          "timestamp": 1767703190355
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767703190941
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767703191503
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 4,
+          "timestamp": 1767703992806
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 5,
+          "timestamp": 1767703993509
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 8,
+          "timestamp": 1767703995575
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 9,
+          "timestamp": 1767703996215
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767703997918
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767703998577
+        },
+        {
+          "type": "IN",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 0.1,
+          "timestamp": 1767703999345
+        },
+        {
+          "type": "IN",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 0.1,
+          "timestamp": 1767703999973
+        },
+        {
+          "type": "IN",
+          "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 0.1,
+          "timestamp": 1767704000612
+        }
+      ],
+      "complaints": [
+        {
+          "reporter": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "text": "Suspected scammer and fraudulent withdrawals!",
+          "timestamp": 1767697584613,
+          "severity": 2
+        }
+      ],
+      "trustScore": 1
+    },
+    "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
+      "transactions": [],
+      "complaints": [],
+      "trustScore": 0.5
+    },
+    "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f": {
+      "transactions": [],
+      "complaints": [],
+      "trustScore": 0.5
+    },
+    "0xa0ee7a142d267c1f36714e4a8f75612f20a79720": {
+      "transactions": [],
+      "complaints": [],
+      "trustScore": 0.5
+    },
+    "0xbcd4042de499d14e55001ccbb24a551f3b9493a7": {
+      "transactions": [],
+      "complaints": [],
+      "trustScore": 0.5
     }
   },
   "analytics": {
-    "totalEvaluations": 5,
+    "totalEvaluations": 199,
     "riskDistribution": {
-      "high": 2,
-      "medium": 3,
-      "low": 0
+      "high": 19,
+      "medium": 75,
+      "low": 105
+    },
+    "blockedTransactions": 14,
+    "riskHeatmap": [
+      [
+        0.1,
+        0.2,
+        0.15,
+        0.4,
+        0.2,
+        0.1,
+        0.05
+      ],
+      [
+        0.2,
+        0.5,
+        0.3,
+        0.1,
+        0.4,
+        0.8,
+        0.2
+      ],
+      [
+        0.1,
+        0.1,
+        0.2,
+        0.1,
+        0.05,
+        0.1,
+        0.1
+      ],
+      [
+        0.3,
+        0.4,
+        0.6,
+        0.3,
+        0.2,
+        0.1,
+        0.1
+      ]
+    ],
+    "evaluationVelocity": [
+      {
+        "label": "Mon",
+        "value": 12400
+      },
+      {
+        "label": "Tue",
+        "value": 14200
+      },
+      {
+        "label": "Wed",
+        "value": 11800
+      },
+      {
+        "label": "Thu",
+        "value": 15600
+      },
+      {
+        "label": "Fri",
+        "value": 13900
+      },
+      {
+        "label": "Sat",
+        "value": 10200
+      },
+      {
+        "label": "Sun",
+        "value": 11400
+      }
+    ]
+  },
+  "authorities": {
+    "0x2222222222222222222222222222222222222222": {
+      "id": "0x2222222222222222222222222222222222222222",
+      "name": "Gamy",
+      "email": "gamy@info.com",
+      "level": "security",
+      "timestamp": 1767702805702
     }
   }
 }
