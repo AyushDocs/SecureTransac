@@ -60,7 +60,7 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.8.21+commit.d9974bed\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"AddressBlacklisted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"score\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"required\",\"type\":\"uint256\"}],\"name\":\"InsufficientTrustScore\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"minRequiredScore\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contract TrustRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Base contract to provide trust-score based access control.\",\"kind\":\"dev\",\"methods\":{},\"title\":\"Guardian\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Guardian.sol\":\"Guardian\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"keccak256\":\"0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6\",\"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a\"]},\"@openzeppelin/contracts/utils/Context.sol\":{\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12\",\"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF\"]},\"project:/contracts/Guardian.sol\":{\"keccak256\":\"0xfbfb9774cc30e7d94e752e82b09b92ed58c1c133d86ef663203f8d3086324d12\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3d515e880ce0b622b5d2fd87b86a75cf0ab15d6fe116068ecae39d767d683df8\",\"dweb:/ipfs/Qmdj8N7r3aiBbYmypw99jtZXBheN8BT68grMRC8hrmCrPN\"]},\"project:/contracts/TrustRegistry.sol\":{\"keccak256\":\"0xd932282bcf3ec443e784ef87d8b5b848bbfb2a2b45979ae2a31644a0122dd6c0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://fb506a269d41816711efef9fd9b35bacc908f6ca2b7528bfb32afbc5be64fc58\",\"dweb:/ipfs/QmRzhNi57Cywqt9W8KMn52Fx1paGFc4JKBXNqctErG9NHQ\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.21+commit.d9974bed\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"AddressBlacklisted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"score\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"required\",\"type\":\"uint256\"}],\"name\":\"InsufficientTrustScore\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"minRequiredScore\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contract TrustRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Base contract to provide trust-score based access control.\",\"kind\":\"dev\",\"methods\":{},\"title\":\"Guardian\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Guardian.sol\":\"Guardian\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"keccak256\":\"0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6\",\"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a\"]},\"@openzeppelin/contracts/utils/Context.sol\":{\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12\",\"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF\"]},\"project:/contracts/Guardian.sol\":{\"keccak256\":\"0xfbfb9774cc30e7d94e752e82b09b92ed58c1c133d86ef663203f8d3086324d12\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3d515e880ce0b622b5d2fd87b86a75cf0ab15d6fe116068ecae39d767d683df8\",\"dweb:/ipfs/Qmdj8N7r3aiBbYmypw99jtZXBheN8BT68grMRC8hrmCrPN\"]},\"project:/contracts/TrustRegistry.sol\":{\"keccak256\":\"0x9bba5f0135f45f463ce91de29a45a20030b5f7844a1265b7d54c80e96f744c39\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6dce5b15979e1e14be91f78f7a43669bf75594f8303550e468345770456bfc89\",\"dweb:/ipfs/QmZgB9SYkdkvkqVj3CfNFnMzF8PENze76Vr1yu9pusyzGH\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "immutableReferences": {},
@@ -83,7 +83,7 @@
         147
       ],
       "TrustRegistry": [
-        694
+        751
       ]
     },
     "id": 257,
@@ -108,7 +108,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 257,
-        "sourceUnit": 695,
+        "sourceUnit": 752,
         "src": "60:29:2",
         "symbolAliases": [],
         "unitAlias": ""
@@ -147,7 +147,7 @@
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_TrustRegistry_$694",
+              "typeIdentifier": "t_contract$_TrustRegistry_$751",
               "typeString": "contract TrustRegistry"
             },
             "typeName": {
@@ -160,13 +160,13 @@
                   "225:13:2"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 694,
+                "referencedDeclaration": 751,
                 "src": "225:13:2"
               },
-              "referencedDeclaration": 694,
+              "referencedDeclaration": 751,
               "src": "225:13:2",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                "typeIdentifier": "t_contract$_TrustRegistry_$751",
                 "typeString": "contract TrustRegistry"
               }
             },
@@ -361,7 +361,7 @@
                       "referencedDeclaration": 184,
                       "src": "501:8:2",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                        "typeIdentifier": "t_contract$_TrustRegistry_$751",
                         "typeString": "contract TrustRegistry"
                       }
                     },
@@ -393,10 +393,10 @@
                         "name": "TrustRegistry",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 694,
+                        "referencedDeclaration": 751,
                         "src": "512:13:2",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_TrustRegistry_$694_$",
+                          "typeIdentifier": "t_type$_t_contract$_TrustRegistry_$751_$",
                           "typeString": "type(contract TrustRegistry)"
                         }
                       },
@@ -412,13 +412,13 @@
                       "src": "512:24:2",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                        "typeIdentifier": "t_contract$_TrustRegistry_$751",
                         "typeString": "contract TrustRegistry"
                       }
                     },
                     "src": "501:35:2",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                      "typeIdentifier": "t_contract$_TrustRegistry_$751",
                       "typeString": "contract TrustRegistry"
                     }
                   },
@@ -637,7 +637,7 @@
                         "referencedDeclaration": 184,
                         "src": "645:8:2",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                          "typeIdentifier": "t_contract$_TrustRegistry_$751",
                           "typeString": "contract TrustRegistry"
                         }
                       },
@@ -649,7 +649,7 @@
                       "memberLocation": "654:8:2",
                       "memberName": "getScore",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 643,
+                      "referencedDeclaration": 700,
                       "src": "645:17:2",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_uint256_$",
@@ -733,7 +733,7 @@
                               "referencedDeclaration": 184,
                               "src": "704:8:2",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_contract$_TrustRegistry_$694",
+                                "typeIdentifier": "t_contract$_TrustRegistry_$751",
                                 "typeString": "contract TrustRegistry"
                               }
                             },
@@ -745,7 +745,7 @@
                             "memberLocation": "713:13:2",
                             "memberName": "isBlacklisted",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 693,
+                            "referencedDeclaration": 750,
                             "src": "704:22:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_bool_$",
@@ -1085,7 +1085,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-06T12:48:26.115Z",
+  "updatedAt": "2026-01-23T20:32:04.810Z",
   "devdoc": {
     "details": "Base contract to provide trust-score based access control.",
     "kind": "dev",

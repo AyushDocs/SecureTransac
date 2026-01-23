@@ -32,10 +32,18 @@ app.use((err, req, res, next) => {
     });
 });
 
+const http = require('http');
+const socketService = require('./src/services/socketService');
+const web3Service = require('./src/services/web3Service');
+
+const server = http.createServer(app);
+socketService.init(server);
+web3Service.startEventListeners();
+
 if (require.main === module) {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`\x1b[32m[SecureTransac]\x1b[0m Server running on port ${PORT}`);
     });
 }
 
-module.exports = app;
+module.exports = { app, server };

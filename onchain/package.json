@@ -1,14 +1,21 @@
 {
-  "name": "onchain",
+  "name": "secure-transac-contracts",
   "version": "1.0.0",
-  "description": "",
+  "description": "Secure Transaction Contracts",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "ganache:persistent": "ganache -p 8545 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\""
+    "test": "truffle test",
+    "dev:ganache": "ganache -p 8545 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\"",
+    "dev:reset": "rm -Recurse -Force ./ganache_db ; truffle migrate --reset --network development",
+    "dev:deploy": "truffle migrate --network development"
+
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "secure",
+    "transaction",
+    "contracts" 
+  ],
+  "author": "AyushDocs",
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0"

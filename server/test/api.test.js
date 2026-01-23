@@ -1,8 +1,11 @@
 const request = require('supertest');
 const { expect } = require('chai');
-const app = require('../index');
+const { app, server } = require('../index');
 
-describe('SecureTransac API', () => {
+describe('SecureTransac API', () => { 
+    after(() => {
+        server.close();
+    });
     const userA = '0x1111111111111111111111111111111111111111';
     const userB = '0x2222222222222222222222222222222222222222';
     const attacker = '0xBAD6666666666666666666666666666666666666';

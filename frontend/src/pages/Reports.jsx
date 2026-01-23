@@ -55,7 +55,7 @@ function Reports() {
   };
 
   return (
-    <PageWrapper title="Reports & Audit Logs">
+    <PageWrapper title="SecureTransac: Reports & Audit Logs">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Export Reports</h3>

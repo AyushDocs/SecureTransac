@@ -37,6 +37,16 @@ export const TRUST_REGISTRY_ABI = [
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "reporter", "type": "address" },
+      { "internalType": "bool", "name": "status", "type": "bool" }
+    ],
+    "name": "setReporterStatus",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ];
 
@@ -58,6 +68,26 @@ export const IDENTITY_VAULT_ABI = [
     "name": "isAuthorizedAuthority",
     "outputs": [
       { "internalType": "bool", "name": "", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_ipfsHash", "type": "string" }
+    ],
+    "name": "storeData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_user", "type": "address" }
+    ],
+    "name": "requestData",
+    "outputs": [
+      { "internalType": "string", "name": "", "type": "string" }
     ],
     "stateMutability": "view",
     "type": "function"

@@ -19,10 +19,24 @@
           "to": "0x2222222222222222222222222222222222222222",
           "amount": 50,
           "timestamp": 1767695693622
+        },
+        {
+          "type": "OUT",
+          "to": "0x2222222222222222222222222222222222222222",
+          "amount": 50,
+          "timestamp": 1769198429135,
+          "id": "tx_1769198429135_u29zbfslf"
         }
       ],
-      "complaints": [],
-      "trustScore": 0.6200000000000001
+      "complaints": [
+        {
+          "reporter": "ADMIN",
+          "text": "Manual whitelist: he has a good transaction history\n",
+          "timestamp": 1768235708947,
+          "severity": 0
+        }
+      ],
+      "trustScore": 0.79
     },
     "0x2222222222222222222222222222222222222222": {
       "transactions": [
@@ -61,10 +75,25 @@
           "to": "0xBAD6666666666666666666666666666666666666",
           "amount": 10,
           "timestamp": 1767695693697
+        },
+        {
+          "type": "IN",
+          "to": "0x2222222222222222222222222222222222222222",
+          "amount": 50,
+          "timestamp": 1769198429135,
+          "id": "tx_1769198429135_u29zbfslf",
+          "from": "0x1111111111111111111111111111111111111111"
+        },
+        {
+          "type": "OUT",
+          "to": "0xBAD6666666666666666666666666666666666666",
+          "amount": 10,
+          "timestamp": 1769198429191,
+          "id": "tx_1769198429191_44xyykoal"
         }
       ],
       "complaints": [],
-      "trustScore": 0.62
+      "trustScore": 0.8200000000000001
     },
     "0xbad6666666666666666666666666666666666666": {
       "transactions": [
@@ -85,6 +114,14 @@
           "from": "0x2222222222222222222222222222222222222222",
           "amount": 10,
           "timestamp": 1767695693697
+        },
+        {
+          "type": "IN",
+          "to": "0xBAD6666666666666666666666666666666666666",
+          "amount": 10,
+          "timestamp": 1769198429191,
+          "id": "tx_1769198429191_44xyykoal",
+          "from": "0x2222222222222222222222222222222222222222"
         }
       ],
       "complaints": [
@@ -107,7 +144,7 @@
           "severity": 3
         }
       ],
-      "trustScore": 0.11000000000000004
+      "trustScore": 0
     },
     "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
       "transactions": [
@@ -290,6 +327,21 @@
           "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
           "amount": 0.1,
           "timestamp": 1767703999973
+        },
+        {
+          "type": "OUT",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 50,
+          "timestamp": 1769194485802,
+          "id": "tx_1769194485802_5s5ffckei"
+        },
+        {
+          "type": "IN",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 500,
+          "timestamp": 1769194486426,
+          "id": "tx_1769194486426_o7bxl3prp",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
         }
       ],
       "complaints": [
@@ -309,6 +361,12 @@
           "reporter": "ADMIN",
           "text": "Manual whitelist: ok ok guy please get him to 0.6 atleast\n",
           "timestamp": 1767699676609,
+          "severity": 0
+        },
+        {
+          "reporter": "ADMIN",
+          "text": "Manual whitelist: Long term verified participant",
+          "timestamp": 1769194486992,
           "severity": 0
         }
       ],
@@ -519,9 +577,26 @@
           "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
           "amount": 0.1,
           "timestamp": 1767704000612
+        },
+        {
+          "type": "IN",
+          "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "amount": 50,
+          "timestamp": 1769194485802,
+          "id": "tx_1769194485802_5s5ffckei",
+          "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
         }
       ],
-      "complaints": [],
+      "complaints": [
+        {
+          "reporter": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "text": "Very professional and fast transaction!",
+          "timestamp": 1769194486383,
+          "type": "COMMENT",
+          "txId": "tx_1769194485802_5s5ffckei",
+          "rating": 5
+        }
+      ],
       "trustScore": 1
     },
     "0x90f79bf6eb2c4f870365e785982e1f101e93b906": {
@@ -705,10 +780,50 @@
           "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
           "amount": 0.1,
           "timestamp": 1767703999345
+        },
+        {
+          "type": "OUT",
+          "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "amount": 500,
+          "timestamp": 1769194486426,
+          "id": "tx_1769194486426_o7bxl3prp"
+        },
+        {
+          "type": "OUT",
+          "to": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "amount": 10,
+          "timestamp": 1769199034676,
+          "id": "tx_1769199034676_pw5n818j2"
+        },
+        {
+          "type": "IN",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 5,
+          "timestamp": 1769199034759,
+          "id": "tx_1769199034759_gc4sbx5dn",
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
         }
       ],
-      "complaints": [],
-      "trustScore": 1
+      "complaints": [
+        {
+          "reporter": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "text": "Be careful! This user asked for private keys during the chat.",
+          "timestamp": 1769194486968,
+          "type": "COMMENT",
+          "txId": "tx_1769194486426_o7bxl3prp",
+          "rating": 1
+        },
+        {
+          "reporter": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "text": "Confirmed fraudulent medical record submission.",
+          "timestamp": 1769194487017,
+          "severity": 1
+        }
+      ],
+      "trustScore": 1,
+      "name": "Alice (Trusted)",
+      "role": "user",
+      "registrationDate": "2026-01-23T20:24:06.026Z"
     },
     "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65": {
       "transactions": [
@@ -987,6 +1102,21 @@
           "from": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
           "amount": 0.1,
           "timestamp": 1767704000612
+        },
+        {
+          "type": "OUT",
+          "to": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+          "amount": 0.1,
+          "timestamp": 1769199034834,
+          "id": "tx_1769199034834_ksry6knuy"
+        },
+        {
+          "type": "IN",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.05,
+          "timestamp": 1769199034905,
+          "id": "tx_1769199034905_h5imrlhzv",
+          "from": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f"
         }
       ],
       "complaints": [
@@ -997,17 +1127,58 @@
           "severity": 2
         }
       ],
-      "trustScore": 1
+      "trustScore": 1,
+      "name": "Bob (Suspicious)",
+      "role": "user",
+      "registrationDate": "2026-01-23T20:24:06.028Z"
     },
     "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
-      "transactions": [],
+      "transactions": [
+        {
+          "type": "IN",
+          "to": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "amount": 10,
+          "timestamp": 1769199034676,
+          "id": "tx_1769199034676_pw5n818j2",
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+        },
+        {
+          "type": "OUT",
+          "to": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "amount": 5,
+          "timestamp": 1769199034759,
+          "id": "tx_1769199034759_gc4sbx5dn"
+        }
+      ],
       "complaints": [],
-      "trustScore": 0.5
+      "trustScore": 0.56,
+      "name": "System Deployer",
+      "role": "deployer",
+      "registrationDate": "2026-01-23T20:24:06.022Z"
     },
     "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f": {
-      "transactions": [],
+      "transactions": [
+        {
+          "type": "IN",
+          "to": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+          "amount": 0.1,
+          "timestamp": 1769199034834,
+          "id": "tx_1769199034834_ksry6knuy",
+          "from": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+        },
+        {
+          "type": "OUT",
+          "to": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+          "amount": 0.05,
+          "timestamp": 1769199034905,
+          "id": "tx_1769199034905_h5imrlhzv"
+        }
+      ],
       "complaints": [],
-      "trustScore": 0.5
+      "trustScore": 0.56,
+      "name": "Eve (Malicious)",
+      "role": "user",
+      "registrationDate": "2026-01-23T20:24:06.030Z"
     },
     "0xa0ee7a142d267c1f36714e4a8f75612f20a79720": {
       "transactions": [],
@@ -1018,16 +1189,27 @@
       "transactions": [],
       "complaints": [],
       "trustScore": 0.5
+    },
+    "0xffcf8fdee72ac11b5c542428b35eef5769c409f0": {
+      "transactions": [],
+      "complaints": [],
+      "trustScore": 0.5,
+      "role": "company",
+      "name": "gffgf",
+      "email": "serer@ewe.ij",
+      "companyName": "5dtydt",
+      "description": "",
+      "registrationDate": "2026-01-23T19:46:51.695Z"
     }
   },
   "analytics": {
-    "totalEvaluations": 199,
+    "totalEvaluations": 220,
     "riskDistribution": {
-      "high": 19,
-      "medium": 75,
-      "low": 105
+      "high": 20,
+      "medium": 81,
+      "low": 119
     },
-    "blockedTransactions": 14,
+    "blockedTransactions": 15,
     "riskHeatmap": [
       [
         0.1,
@@ -1104,6 +1286,38 @@
       "email": "gamy@info.com",
       "level": "security",
       "timestamp": 1767702805702
+    },
+    "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65": {
+      "id": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+      "name": "HealthTrust Inc.",
+      "email": "verify@healthtrust.io",
+      "level": "verified_reporter",
+      "timestamp": 1769194485755
+    },
+    "0x123": {
+      "id": "0x123",
+      "name": "Test Auth",
+      "timestamp": 1769198550597
+    },
+    "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
+      "id": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "name": "ChainSafe Audit",
+      "email": "audit@chainsafe.io",
+      "totalReports": 0,
+      "rejectedReports": 0,
+      "status": "active",
+      "timestamp": 1769199846024
+    },
+    "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
+      "id": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+      "name": "OpenZeppelin Security",
+      "email": "security@openzeppelin.com",
+      "totalReports": 0,
+      "rejectedReports": 0,
+      "status": "active",
+      "timestamp": 1769199846025
     }
-  }
+  },
+  "verificationRequests": [],
+  "nonces": {}
 }

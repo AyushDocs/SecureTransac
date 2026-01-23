@@ -61,6 +61,17 @@ contract TrustRegistry is Ownable {
         emit ThresholdUpdated(_whitelistThreshold, _blacklistThreshold);
     }
 
+    event TransactionLogged(address indexed from, address indexed to, uint256 amount, uint256 timestamp);
+    event ReportSubmitted(address indexed reporter, address indexed target, string reason, uint256 timestamp);
+
+    function recordTransaction(address from, address to, uint256 amount) external onlyReporter {
+        emit TransactionLogged(from, to, amount, block.timestamp);
+    }
+
+    function submitReport(address target, string calldata reason) external {
+        emit ReportSubmitted(msg.sender, target, reason, block.timestamp);
+    }
+
     function updateScore(address user, uint256 newScore) external onlyReporter {
         require(newScore <= 1000, "Score must be between 0 and 1000");
         scores[user] = newScore;

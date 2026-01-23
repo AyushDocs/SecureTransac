@@ -1,2 +1,21 @@
 @import "tailwindcss";
 
+body {
+  @apply bg-gray-950 text-gray-100 font-sans antialiased;
+  background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 40%, #000000 100%);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a; 
+}
+::-webkit-scrollbar-thumb {
+  background: #334155; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569; 
+}

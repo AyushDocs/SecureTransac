@@ -4,7 +4,7 @@ import GlobalSearch from "../search/GlobalSearch";
 // Search page with global address lookup
 function Search() {
   return (
-    <PageWrapper>
+    <PageWrapper title="SecureTransac: Global Search">
       <div className="min-h-[60vh] flex items-center justify-center">
         <GlobalSearch />
       </div>

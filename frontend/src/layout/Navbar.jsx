@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -56,15 +56,25 @@ function Navbar() {
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white text-sm font-medium">
-            {user?.name?.charAt(0) || "A"}
+        <div className="flex items-center gap-3 pr-4 border-r border-gray-800">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+            {user?.name?.charAt(0) || "U"}
           </div>
           <div className="hidden md:block">
-            <p className="text-sm font-medium text-white">{user?.name}</p>
-            <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+            <p className="text-sm font-bold text-white leading-tight">{user?.name}</p>
+            <p className="text-[10px] text-gray-500 font-mono leading-tight">{user?.address?.slice(0, 6)}...{user?.address?.slice(-4)}</p>
           </div>
         </div>
+
+        <button 
+          onClick={logout}
+          className="text-gray-400 hover:text-red-500 transition-colors p-2"
+          title="Logout"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
       </div>
     </header>
   );

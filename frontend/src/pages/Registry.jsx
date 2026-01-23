@@ -68,7 +68,7 @@ function Registry() {
 
   if (loading) {
     return (
-      <PageWrapper title="Registry Management">
+      <PageWrapper title="SecureTransac: Registry Management">
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-400">Loading ACL...</div>
         </div>
@@ -77,7 +77,7 @@ function Registry() {
   }
 
   return (
-    <PageWrapper title="Registry Management">
+    <PageWrapper title="SecureTransac: Registry Management">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <ACLTable entries={aclEntries} onRemove={handleRemove} />

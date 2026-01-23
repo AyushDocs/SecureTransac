@@ -12,6 +12,8 @@ class PersistenceService {
             const initial = { 
                 users: {}, 
                 authorities: {},
+                verificationRequests: [],
+                nonces: {},
                 analytics: { 
                     totalEvaluations: 0, 
                     blockedTransactions: 0,
@@ -49,6 +51,8 @@ class PersistenceService {
                 { label: 'Sun', value: 0 }
             ];
         }
+        if (!data.verificationRequests) data.verificationRequests = [];
+        if (!data.nonces) data.nonces = {};
         return data;
     }
 
@@ -59,7 +63,21 @@ class PersistenceService {
     }
 
     getUser(address) {
-        return this.data.users[address.toLowerCase()] || { transactions: [], complaints: [], trustScore: 0.5 };
+        const addr = address.toLowerCase();
+        return this.data.users[addr] || { transactions: [], complaints: [], trustScore: 0.5, role: 'user' };
+    }
+
+    register(address, role, metadata = {}) {
+        const addr = address.toLowerCase();
+        const existing = this.getUser(addr);
+        this.data.users[addr] = {
+            ...existing,
+            ...metadata,
+            role: role || 'user',
+            registrationDate: new Date().toISOString()
+        };
+        this._save(this.data);
+        return this.data.users[addr];
     }
 
     updateUser(address, update) {
@@ -131,9 +149,50 @@ class PersistenceService {
         this.data.authorities[addr] = {
             id: addr,
             ...metadata,
+            totalReports: 0,
+            rejectedReports: 0,
+            status: 'active',
             timestamp: Date.now()
         };
         this._save(this.data);
+    }
+
+    updateAuthority(address, metadata) {
+        const addr = address.toLowerCase();
+        if (!this.data.authorities[addr]) return null;
+        this.data.authorities[addr] = {
+            ...this.data.authorities[addr],
+            ...metadata,
+            updatedAt: Date.now()
+        };
+        this._save(this.data);
+        return this.data.authorities[addr];
+    }
+
+    recordAuthorityReport(address) {
+        const addr = address.toLowerCase();
+        if (this.data.authorities[addr]) {
+            this.data.authorities[addr].totalReports++;
+            this._save(this.data);
+        }
+    }
+
+    recordAuthorityRejection(address) {
+        const addr = address.toLowerCase();
+        if (this.data.authorities[addr]) {
+            this.data.authorities[addr].rejectedReports++;
+            
+            // Auto-revocation logic: > 25% rejection rate after at least 5 reports
+            const auth = this.data.authorities[addr];
+            if (auth.totalReports >= 5) {
+                const rejectionRate = auth.rejectedReports / auth.totalReports;
+                if (rejectionRate > 0.25) {
+                    auth.status = 'revoked';
+                    console.log(`[SecureTransac] Authority ${addr} auto-revoked due to low accuracy (${(rejectionRate * 100).toFixed(1)}%)`);
+                }
+            }
+            this._save(this.data);
+        }
     }
 
     removeAuthority(address) {
@@ -151,6 +210,65 @@ class PersistenceService {
     updateEvaluationVelocity(velocityData) {
         if (!Array.isArray(velocityData) || velocityData.length !== 7) return;
         this.data.analytics.evaluationVelocity = velocityData;
+        this._save(this.data);
+    }
+
+    getVerificationRequests(companyAddress = null) {
+        if (companyAddress) {
+            return this.data.verificationRequests.filter(r => r.companyAddress.toLowerCase() === companyAddress.toLowerCase());
+        }
+        return this.data.verificationRequests;
+    }
+
+    getVerificationRequestsForUser(userAddress) {
+        return this.data.verificationRequests.filter(r => r.userAddress.toLowerCase() === userAddress.toLowerCase());
+    }
+
+    createVerificationRequest(userAddress, companyAddress, metadata = {}) {
+        const request = {
+            id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userAddress: userAddress.toLowerCase(),
+            companyAddress: companyAddress.toLowerCase(),
+            status: 'pending',
+            timestamp: Date.now(),
+            ...metadata
+        };
+        this.data.verificationRequests.push(request);
+        this._save(this.data);
+        return request;
+    }
+
+    updateVerificationRequestStatus(requestId, status, reviewerAddress) {
+        const index = this.data.verificationRequests.findIndex(r => r.id === requestId);
+        if (index === -1) return null;
+        
+        this.data.verificationRequests[index].status = status;
+        this.data.verificationRequests[index].reviewedBy = reviewerAddress.toLowerCase();
+        this.data.verificationRequests[index].reviewTimestamp = Date.now();
+        
+        this._save(this.data);
+        return this.data.verificationRequests[index];
+    }
+
+    getNonce(address) {
+        const addr = address.toLowerCase();
+        if (!this.data.nonces[addr]) {
+            this.rotateNonce(addr);
+        }
+        return this.data.nonces[addr];
+    }
+
+    rotateNonce(address) {
+        const addr = address.toLowerCase();
+        const nonce = `SECURE_TRANSAC_AUTH_CHALLENGE_${Math.floor(Math.random() * 1000000)}_${Date.now()}`;
+        this.data.nonces[addr] = nonce;
+        this._save(this.data);
+        return nonce;
+    }
+
+    clearNonce(address) {
+        const addr = address.toLowerCase();
+        delete this.data.nonces[addr];
         this._save(this.data);
     }
 }

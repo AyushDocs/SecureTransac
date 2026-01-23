@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title TrustRegistry
+ * @title TrustRegistry (SecureTransac Core)
  * @dev Manages trust scores for addresses. Scores are between 0 and 1000 (0.0 to 1.0).
  */
 contract TrustRegistry is Ownable {

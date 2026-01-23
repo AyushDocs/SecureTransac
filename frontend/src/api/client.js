@@ -14,6 +14,13 @@ if (window.ethereum) {
 } else {
   logger.warn("No Web3 provider detected. On-chain features will be disabled.");
 }
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("userToken");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+  };
+};
 
 const scoreCache = new Map();
 const CACHE_TTL = 30000; // 30 seconds
@@ -53,7 +60,9 @@ export async function fetchTrustScore(address) {
 export async function fetchDashboardMetrics() {
   logger.info("Fetching dashboard metrics from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/analytics`);
+    const response = await fetch(`${API_BASE_URL}/analytics`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error("Failed to fetch analytics");
     const data = await response.json();
     logger.info("Dashboard metrics fetched successfully", data);
@@ -78,12 +87,46 @@ export async function searchAddress(address) {
   }
 }
 
+export async function registerUser(address, role, metadata = {}) {
+  logger.info(`Registering user ${address} as ${role}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/register`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ address, role, metadata }),
+    });
+    if (!response.ok) throw new Error("Failed to register user");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error registering user:", error);
+    throw error;
+  }
+}
+
+export async function submitComment(from, target, txId, text, rating) {
+  logger.info(`Submitting comment: ${from} on ${target} for ${txId}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/comment`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ from, target, txId, text, rating }),
+    });
+    if (!response.ok) throw new Error("Failed to submit comment");
+    const data = await response.json();
+    logger.info("Comment submitted successfully", data);
+    return data;
+  } catch (error) {
+    logger.error("Error submitting comment:", error);
+    throw error;
+  }
+}
+
 export async function processReport(reporter, target, text) {
   logger.info(`Submitting report: ${reporter} -> ${target}`);
   try {
     const response = await fetch(`${API_BASE_URL}/report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ reporter, target, text }),
     });
     if (!response.ok) throw new Error("Failed to submit report");
@@ -96,13 +139,13 @@ export async function processReport(reporter, target, text) {
   }
 }
 
-export async function submitManualOverride(address, action, reason) {
-  logger.info(`Submitting manual override: ${action} for ${address}`);
+export async function submitManualOverride(address, action, reason, targetScore = null) {
+  logger.info(`Submitting manual override: ${action} for ${address} (Target: ${targetScore})`);
   try {
     const response = await fetch(`${API_BASE_URL}/manual-override`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address, action, reason }),
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ address, action, reason, targetScore }),
     });
     if (!response.ok) throw new Error("Failed to submit manual override");
     const data = await response.json();
@@ -137,7 +180,9 @@ export async function setAuthorityStatus(authorityAddress, status) {
 export async function fetchAuthorities() {
   logger.info("Fetching authorities from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/authorities`);
+    const response = await fetch(`${API_BASE_URL}/authorities`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error("Failed to fetch authorities");
     return await response.json();
   } catch (error) {
@@ -151,13 +196,29 @@ export async function saveAuthorityMetadata(address, name, email) {
   try {
     const response = await fetch(`${API_BASE_URL}/authorities`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ address, name, email, level: "security" }),
     });
     if (!response.ok) throw new Error("Failed to save authority metadata");
     return await response.json();
   } catch (error) {
     logger.error("Error saving authority metadata:", error);
+    throw error;
+  }
+}
+
+export async function updateAuthorityMetadata(address, metadata) {
+  logger.info(`Updating authority metadata for: ${address}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/authorities/${address}`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ metadata }),
+    });
+    if (!response.ok) throw new Error("Failed to update authority metadata");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error updating authority metadata:", error);
     throw error;
   }
 }
@@ -179,11 +240,33 @@ export async function deleteAuthorityMetadata(address) {
 export async function fetchACL() {
   logger.info("Fetching ACL entries from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/acl`);
+    const response = await fetch(`${API_BASE_URL}/acl`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error("Failed to fetch ACL");
     return await response.json();
   } catch (error) {
     logger.error("Error fetching ACL:", error);
+    throw error;
+  }
+}
+
+export async function setReporterStatus(reporterAddress, status) {
+  logger.info(`Setting reporter status: ${reporterAddress} -> ${status}`);
+  if (!contract) {
+    logger.error("TrustRegistry contract not initialized");
+    throw new Error("TrustRegistry contract not initialized");
+  }
+
+  try {
+    const accounts = await web3.eth.getAccounts();
+    const result = await contract.methods.setReporterStatus(reporterAddress, status).send({
+      from: accounts[0],
+    });
+    logger.info("Reporter status updated successfully", result);
+    return result;
+  } catch (error) {
+    logger.error("Error setting reporter status:", error);
     throw error;
   }
 }
@@ -196,6 +279,126 @@ export async function fetchScoreUpdates() {
     return await response.json();
   } catch (error) {
     logger.error("Error fetching score updates:", error);
+    throw error;
+  }
+}
+
+export async function fetchVerifications(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  logger.info(`Fetching verifications with query: ${query}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/verifications?${query}`);
+    if (!response.ok) throw new Error("Failed to fetch verifications");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching verifications:", error);
+    throw error;
+  }
+}
+
+export async function requestVerification(userAddress, companyAddress, metadata = {}) {
+  logger.info(`Requesting verification: ${userAddress} -> ${companyAddress}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/request-verification`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ userAddress, companyAddress, metadata }),
+    });
+    if (!response.ok) throw new Error("Failed to request verification");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error requesting verification:", error);
+    throw error;
+  }
+}
+
+export async function verifyUser(requestId, reviewerAddress, status, targetScore = 900) {
+  logger.info(`Processing verification: ${requestId} (${status})`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/verify-user`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ requestId, reviewerAddress, status, targetScore }),
+    });
+    if (!response.ok) throw new Error("Failed to verify user");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error verifying user:", error);
+    throw error;
+  }
+}
+
+export async function getNonce(address) {
+  logger.info(`Fetching nonce for: ${address}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/nonce/${address}`);
+    if (!response.ok) throw new Error("Failed to fetch nonce");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching nonce:", error);
+    throw error;
+  }
+}
+
+export async function verifySignature(address, signature) {
+  logger.info(`Verifying signature for: ${address}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address, signature }),
+    });
+    if (!response.ok) throw new Error("Authentication failed");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error verifying signature:", error);
+    throw error;
+  }
+}
+
+export async function pinMetadata(metadata) {
+  logger.info("Pinning metadata to IPFS...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/ipfs/pin`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ metadata }),
+    });
+    if (!response.ok) throw new Error("Failed to pin metadata");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error pinning metadata:", error);
+    throw error;
+  }
+}
+
+export async function storeIdentityData(cid) {
+  logger.info(`Storing Identity CID on-chain: ${cid}`);
+  if (!vaultContract) throw new Error("IdentityVault contract not initialized");
+
+  try {
+    const accounts = await web3.eth.getAccounts();
+    const result = await vaultContract.methods.storeData(cid).send({
+      from: accounts[0],
+    });
+    logger.info("Identity CID stored successfully", result);
+    return result;
+  } catch (error) {
+    logger.error("Error storing identity data:", error);
+    throw error;
+  }
+}
+
+export async function getIdentityData(userAddress) {
+  logger.info(`Fetching Identity CID for: ${userAddress}`);
+  if (!vaultContract) throw new Error("IdentityVault contract not initialized");
+
+  try {
+    const cid = await vaultContract.methods.requestData(userAddress).call();
+    logger.info(`Fetched CID: ${cid}`);
+    return cid;
+  } catch (error) {
+    logger.error("Error fetching identity data:", error);
     throw error;
   }
 }

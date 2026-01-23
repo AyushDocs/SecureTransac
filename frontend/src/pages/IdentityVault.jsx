@@ -85,7 +85,7 @@ function IdentityVault() {
   const handleDeny = (id) => logger.info("Deny request:", id);
 
   return (
-    <PageWrapper title="Identity Vault">
+    <PageWrapper title="SecureTransac: Identity Vault">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <form onSubmit={handleAddAuthority} className="mb-6 space-y-4 bg-secondary/50 p-4 rounded-lg border border-border">
