@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { deleteAuthorityMetadata, fetchAuthorities, saveAuthorityMetadata, setAuthorityStatus, setReporterStatus } from "../api/client";
+import AdminScoreViewer from "../components/AdminScoreViewer";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
 
@@ -89,7 +90,7 @@ function DeployerDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                  {authorities.map((auth, i) => (
+                  {(Array.isArray(authorities) ? authorities : []).map((auth, i) => (
                     <tr key={i} className="hover:bg-gray-800/30 transition-colors">
                       <td className="p-4">
                         <div className="text-white font-bold">{auth.name}</div>
@@ -118,6 +119,8 @@ function DeployerDashboard() {
         </div>
 
         <div className="lg:col-span-1 space-y-6">
+          <AdminScoreViewer />
+
           <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl">
             <h2 className="text-xl font-bold text-white mb-4">Register New Reporter</h2>
             <form onSubmit={handleRegister} className="space-y-4">

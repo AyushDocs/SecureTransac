@@ -22,17 +22,17 @@ contract VerificationRegistry is Ownable {
 
     constructor() Ownable(msg.sender) {}
 
-    function requestVerification(address company, string calldata proofCid) external {
+    function requestVerification(address user, address company, string calldata proofCid) external {
         uint256 requestId = requests.length;
         requests.push(Request({
-            user: msg.sender,
+            user: user,
             timestamp: uint96(block.timestamp),
             company: company,
             status: Status.Pending,
             proofCid: proofCid
         }));
         
-        emit VerificationRequested(requestId, msg.sender, company, proofCid);
+        emit VerificationRequested(requestId, user, company, proofCid);
     }
 
     function processVerification(uint256 requestId, Status status) external {

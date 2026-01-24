@@ -1,7 +1,23 @@
 {
-  "name": "server",
+  "name": "secure-transac-backend",
+  "description": "Backend for SecureTransac",
+  "author": "AyushDocs",
+  "license": "MIT",
+  "keywords": [
+    "secure-transac",
+    "backend",
+    "express",
+    "web3",
+    "blockchain",
+    "ai",
+    "zk",
+    "decentralized"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AyushDocs/SecureTransac"
+  },
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -11,20 +27,25 @@
     "dev": "nodemon --ignore data index.js",
     "test": "mocha test/**/*.test.js --exit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@pinata/sdk": "^2.1.0",
+    "big-integer": "^1.6.52",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.2.3",
+    "elliptic": "^6.6.1",
     "eth-crypto": "^3.1.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "node-cache": "^5.1.2",
+    "paillier-bigint": "^3.4.3",
+    "snarkjs": "^0.7.6",
     "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "web3": "^4.16.0"
   },
   "devDependencies": {

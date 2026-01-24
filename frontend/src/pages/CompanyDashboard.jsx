@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchACL, fetchVerifications, processReport, verifyUser } from "../api/client";
+import CreditBalance from "../components/CreditBalance";
+import ScoreSearchWidget from "../components/ScoreSearchWidget";
 import { useAuth } from "../context/AuthContext";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
@@ -14,22 +16,23 @@ function CompanyDashboard() {
   const [actionLoading, setActionLoading] = useState(null);
   const [viewingProof, setViewingProof] = useState(null);
 
-  useEffect(() => {
-    async function loadData() {
-      if (!user?.address) return;
-      try {
-        const [aclData, reqData] = await Promise.all([
-          fetchACL(),
-          fetchVerifications({ companyAddress: user.address })
-        ]);
-        setUsers(aclData);
-        setRequests(reqData.filter(r => r.status === 'pending'));
-      } catch (error) {
-        logger.error("CompanyDashboard: Failed to load data", error);
-      } finally {
-        setLoading(false);
-      }
+  async function loadData() {
+    if (!user?.address) return;
+    try {
+      const [aclData, reqData] = await Promise.all([
+        fetchACL(),
+        fetchVerifications({ companyAddress: user.address })
+      ]);
+      setUsers(aclData);
+      setRequests(reqData.filter(r => r.status === 'pending'));
+    } catch (error) {
+      logger.error("CompanyDashboard: Failed to load data", error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadData();
   }, [user?.address]);
 
@@ -39,12 +42,7 @@ function CompanyDashboard() {
       await verifyUser(requestId, user.address, status);
       alert(`User ${status === 'approved' ? 'Verified' : 'Rejected'} successfully!`);
       // Refresh
-      const [aclData, reqData] = await Promise.all([
-        fetchACL(),
-        fetchVerifications({ companyAddress: user.address })
-      ]);
-      setUsers(aclData);
-      setRequests(reqData.filter(r => r.status === 'pending'));
+      await loadData();
     } catch (error) {
       alert("Verification action failed");
     } finally {
@@ -114,35 +112,43 @@ function CompanyDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                  {users.map((u, i) => (
-                    <tr key={i} className="hover:bg-gray-800/30 transition-colors">
-                      <td className="p-4 font-mono text-xs text-gray-300">{u.address}</td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                           <div className="w-16 h-2 bg-gray-800 rounded-full overflow-hidden">
-                             <div 
-                               className={`h-full ${u.trustScore >= 0.8 ? "bg-green-500" : u.trustScore >= 0.4 ? "bg-yellow-500" : "bg-red-500"}`}
-                               style={{ width: `${u.trustScore * 100}%` }}
-                             ></div>
-                           </div>
-                           <span className="text-sm font-bold text-white">{(u.trustScore * 1000).toFixed(0)}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${u.trustScore >= 0.8 ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"}`}>
-                          {u.trustScore >= 0.8 ? "Verified" : "Under Review"}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <button 
-                          onClick={() => setSelectedUser(u)}
-                          className="text-red-500 hover:text-red-400 text-sm font-medium"
-                        >
-                          Report / Blacklist
-                        </button>
-                      </td>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="p-8 text-center text-gray-500 italic">No registered users found</td>
                     </tr>
-                  ))}
+                  ) : (
+                    users.map((u, i) => (
+                      <tr key={i} className="hover:bg-gray-800/30 transition-colors">
+                        <td className="p-4 font-mono text-xs text-gray-300">
+                          {u.address.slice(0, 10)}...{u.address.slice(-8)}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                             <div className="w-16 h-2 bg-gray-800 rounded-full overflow-hidden">
+                               <div 
+                                 className={`h-full ${u.trustScore >= 0.8 ? "bg-green-500" : u.trustScore >= 0.4 ? "bg-yellow-500" : "bg-red-500"}`}
+                                 style={{ width: `${(u.trustScore || 0.5) * 100}%` }}
+                               ></div>
+                             </div>
+                             <span className="text-sm font-bold text-white">{(u.trustScore || 0.5).toFixed(2)}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${u.trustScore >= 0.8 ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"}`}>
+                            {u.trustScore >= 0.8 ? "Verified" : "Under Review"}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <button 
+                            onClick={() => setSelectedUser(u)}
+                            className="text-red-500 hover:text-red-400 text-sm font-medium"
+                          >
+                            Report / Blacklist
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -165,7 +171,7 @@ function CompanyDashboard() {
                 <tbody className="divide-y divide-gray-800">
                   {requests.length === 0 ? (
                     <tr>
-                      <td colSpan="3" className="p-8 text-center text-gray-500 italic">No pending requests</td>
+                      <td colSpan="4" className="p-8 text-center text-gray-500 italic">No pending requests</td>
                     </tr>
                   ) : (
                     requests.map((req, i) => (
@@ -213,8 +219,11 @@ function CompanyDashboard() {
             </div>
           </div>
         </div>
-
+        
         <div className="lg:col-span-1 space-y-6">
+            <CreditBalance />
+            <ScoreSearchWidget />
+
            <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl">
              <h2 className="text-xl font-bold text-white mb-2">Company Insights</h2>
              <p className="text-gray-400 text-sm mb-6">As a trusted entity, your reports have 4x the impact of a normal user on the AI scoring model.</p>

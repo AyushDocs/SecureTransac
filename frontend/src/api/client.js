@@ -1,18 +1,39 @@
 import Web3 from "web3";
 import { logger } from "../utils/logger";
-import { API_BASE_URL, CONTRACT_ADDRESSES, IDENTITY_VAULT_ABI, TRUST_REGISTRY_ABI } from "./config";
+import { API_BASE_URL, CONTRACT_ADDRESSES, ERC721S_ABI, IDENTITY_VAULT_ABI, TRUST_REGISTRY_ABI } from "./config";
 
 let web3;
 let contract;
 let vaultContract;
+let sbtContract;
 
 if (window.ethereum) {
   web3 = new Web3(window.ethereum);
   contract = new web3.eth.Contract(TRUST_REGISTRY_ABI, CONTRACT_ADDRESSES.TrustRegistry);
   vaultContract = new web3.eth.Contract(IDENTITY_VAULT_ABI, CONTRACT_ADDRESSES.IdentityVault);
+  sbtContract = new web3.eth.Contract(ERC721S_ABI, CONTRACT_ADDRESSES.SecureTransacSBT);
   logger.info("Web3 initialized with window.ethereum");
 } else {
   logger.warn("No Web3 provider detected. On-chain features will be disabled.");
+}
+
+export async function checkSBTMinted(address) {
+  if (!sbtContract) return false;
+  try {
+    const balance = await sbtContract.methods.balanceOf(address).call();
+    return Number(balance) > 0;
+  } catch (error) {
+    logger.error("Error checking SBT status (Contract might not be deployed):", error);
+    // Return null instead of false if it's a connection/contract error
+    // This prevents the UI from resetting 'minted' to false if it was already true
+    return null;
+  }
+}
+
+export async function mintSBT() {
+  if (!sbtContract) throw new Error("SBT Contract not connected");
+  const accounts = await web3.eth.getAccounts();
+  return await sbtContract.methods.mint().send({ from: accounts[0] });
 }
 const getAuthHeaders = () => {
   const token = localStorage.getItem("userToken");
@@ -42,7 +63,7 @@ export async function fetchTrustScore(address) {
 
   try {
     const rawScore = await contract.methods.getScore(address).call();
-    const score = Number(rawScore) / 1000;
+    const score = Number(rawScore) / 100;
     const riskLevel = score >= 0.8 ? "low" : score >= 0.4 ? "medium" : "high";
     logger.info(`Score fetched: ${score} (${riskLevel})`);
     const result = { address, score, riskLevel, source: "chain" };
@@ -191,13 +212,13 @@ export async function fetchAuthorities() {
   }
 }
 
-export async function saveAuthorityMetadata(address, name, email) {
-  logger.info(`Saving authority metadata for: ${address}`);
+export async function saveAuthorityMetadata(address, name, email, tier = 1) {
+  logger.info(`Saving authority metadata for: ${address} (Tier: ${tier})`);
   try {
     const response = await fetch(`${API_BASE_URL}/authorities`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ address, name, email, level: "security" }),
+      body: JSON.stringify({ address, name, email, level: tier === 3 ? "diamond" : tier === 2 ? "institutional" : "security" }),
     });
     if (!response.ok) throw new Error("Failed to save authority metadata");
     return await response.json();
@@ -251,8 +272,8 @@ export async function fetchACL() {
   }
 }
 
-export async function setReporterStatus(reporterAddress, status) {
-  logger.info(`Setting reporter status: ${reporterAddress} -> ${status}`);
+export async function setReporterStatus(reporterAddress, status, tier = 1) {
+  logger.info(`Setting reporter status: ${reporterAddress} -> ${status} (Tier: ${tier})`);
   if (!contract) {
     logger.error("TrustRegistry contract not initialized");
     throw new Error("TrustRegistry contract not initialized");
@@ -260,7 +281,7 @@ export async function setReporterStatus(reporterAddress, status) {
 
   try {
     const accounts = await web3.eth.getAccounts();
-    const result = await contract.methods.setReporterStatus(reporterAddress, status).send({
+    const result = await contract.methods.setReporterStatus(reporterAddress, status, tier).send({
       from: accounts[0],
     });
     logger.info("Reporter status updated successfully", result);
@@ -287,7 +308,9 @@ export async function fetchVerifications(params = {}) {
   const query = new URLSearchParams(params).toString();
   logger.info(`Fetching verifications with query: ${query}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/verifications?${query}`);
+    const response = await fetch(`${API_BASE_URL}/verifications?${query}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error("Failed to fetch verifications");
     return await response.json();
   } catch (error) {
@@ -399,6 +422,246 @@ export async function getIdentityData(userAddress) {
     return cid;
   } catch (error) {
     logger.error("Error fetching identity data:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// RBAC API Functions
+// ============================================
+
+/**
+ * Fetch current user info with all assigned roles
+ * @returns {Promise<{walletAddress: string, roles: string[], activeRole: string}>}
+ */
+export async function fetchCurrentUser() {
+  logger.info("Fetching current user info from /me");
+  try {
+    const response = await fetch(`${API_BASE_URL}/me`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch user info");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching current user:", error);
+    throw error;
+  }
+}
+
+export async function generateZKProof(address, threshold, secret) {
+  logger.info("Requesting server-side ZK Proof...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/proof`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ address, threshold, secret }),
+    });
+    if (!response.ok) {
+       const err = await response.json();
+       throw new Error(err.error || "Proof generation failed");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error generating ZK proof:", error);
+    throw error;
+  }
+}
+
+export async function generateStealthAddress() {
+  logger.info("Requesting Stealth Address...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/stealth`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    return await response.json();
+  } catch (error) {
+    logger.error("Error generating stealth address:", error);
+    throw error;
+  }
+}
+
+export async function fetchAuditLogs() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/audit-logs`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch audit logs");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching audit logs:", error);
+    throw error;
+  }
+}
+
+export async function fetchUserReport(address) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/reports/user/${address}`, {
+       headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch report");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching user report:", error);
+    throw error;
+  }
+}
+
+/**
+ * Switch active role/dashboard context
+ * @param {string} role - The role to switch to
+ * @returns {Promise<{success: boolean, roles: string[], activeRole: string}>}
+ */
+export async function switchUserRole(role) {
+  logger.info(`Switching to role: ${role}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/switch-role`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to switch role");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error switching role:", error);
+    throw error;
+  }
+}
+
+/**
+ * Assign roles to a wallet (admin only)
+ * @param {string} walletAddress 
+ * @param {string[]} roles 
+ * @returns {Promise<{success: boolean, roles: string[], activeRole: string}>}
+ */
+export async function assignUserRoles(walletAddress, roles) {
+  logger.info(`Assigning roles to ${walletAddress}:`, roles);
+  try {
+    const response = await fetch(`${API_BASE_URL}/assign-roles`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ walletAddress, roles }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to assign roles");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error assigning roles:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get roles for a specific wallet address
+ * @param {string} address 
+ * @returns {Promise<{roles: string[], activeRole: string}>}
+ */
+export async function getUserRoles(address) {
+  logger.info(`Fetching roles for: ${address}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/user-roles/${address}`);
+    if (!response.ok) throw new Error("Failed to fetch user roles");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching user roles:", error);
+    throw error;
+  }
+}
+
+export async function getBlindKeys() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/blind/keys`);
+    if (!response.ok) throw new Error("Failed to fetch blind keys");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching blind keys:", error);
+    throw error;
+  }
+}
+
+export async function signBlind(blinded) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/blind/sign`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ blinded }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to sign blinded message");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error signing blinded message:", error);
+    throw error;
+  }
+}
+
+export async function submitAnonymousReport(data) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/blind/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to submit anonymous report");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error submitting anonymous report:", error);
+    throw error;
+  }
+}
+export async function submitAppeal(reason, currentScore, metadata = {}) {
+  logger.info("Submitting trust score appeal...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/appeals`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason, currentScore, metadata }),
+    });
+    if (!response.ok) throw new Error("Failed to submit appeal");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error submitting appeal:", error);
+    throw error;
+  }
+}
+
+export async function fetchAppeals() {
+  logger.info("Fetching appeals...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/appeals`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch appeals");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching appeals:", error);
+    throw error;
+  }
+}
+
+export async function processAppeal(appealId, status, comment, adjustmentScore) {
+  logger.info(`Processing appeal ${appealId} -> ${status}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/appeals/process`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ appealId, status, comment, adjustmentScore }),
+    });
+    if (!response.ok) throw new Error("Failed to process appeal");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error processing appeal:", error);
     throw error;
   }
 }

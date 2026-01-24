@@ -1,98 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ScoringSystem.sol";
+import "./TransactionLogger.sol";
+import "./ReportingSystem.sol";
 
 /**
  * @title TrustRegistry
- * @dev Manages trust scores for addresses. Scores are between 0 and 1000 (0.0 to 1.0).
+ * @dev Aggregator contract inheriting split functionality.
+ * Kept for backward compatibility with existing deployment scripts and frontend.
+ * Ideally, frontend would interact with specific contracts, but this wrapper simplifies migration.
  */
-contract TrustRegistry is Ownable {
-    mapping(address => uint256) public scores;
-    mapping(address => bool) public isAuthorizedReporter;
-
-    uint256 public whitelistThreshold = 800; // 0.8
-    uint256 public blacklistThreshold = 200; // 0.2
-
-    event ScoreUpdated(address indexed user, uint256 newScore);
-    event ReporterStatusChanged(address indexed reporter, bool status);
-    event ThresholdUpdated(
-        uint256 whitelistThreshold,
-        uint256 blacklistThreshold
-    );
-
-    constructor() Ownable(msg.sender) {
-        // Owner is the default reporter
-        isAuthorizedReporter[msg.sender] = true;
+contract TrustRegistry is ScoringSystem, TransactionLogger, ReportingSystem {
+    constructor() AccessControl() {
+        // Constructor logic if any necessary beyond inherited ones
+        // AccessControl constructor (via ScoringSystem -> AccessControl) sets msg.sender as reporter
     }
-
-    modifier onlyReporter() {
-        require(isAuthorizedReporter[msg.sender], "Not an authorized reporter");
-        _;
-    }
-
-    function setReporterStatus(
-        address reporter,
-        bool status
-    ) external onlyOwner {
-        isAuthorizedReporter[reporter] = status;
-        emit ReporterStatusChanged(reporter, status);
-    }
-
-    function setThresholds(
-        uint256 _whitelistThreshold,
-        uint256 _blacklistThreshold
-    ) external onlyOwner {
-        require(
-            _whitelistThreshold <= 1000,
-            "Whitelist threshold must be <= 1000"
-        );
-        require(
-            _blacklistThreshold <= 1000,
-            "Blacklist threshold must be <= 1000"
-        );
-        require(
-            _whitelistThreshold > _blacklistThreshold,
-            "Whitelist must be > blacklist"
-        );
-
-        whitelistThreshold = _whitelistThreshold;
-        blacklistThreshold = _blacklistThreshold;
-        emit ThresholdUpdated(_whitelistThreshold, _blacklistThreshold);
-    }
-
-    event TransactionLogged(address indexed from, address indexed to, uint256 amount, uint256 timestamp);
-    event ReportSubmitted(address indexed reporter, address indexed target, string reason, uint256 timestamp);
-
-    function recordTransaction(address from, address to, uint256 amount) external onlyReporter {
-        emit TransactionLogged(from, to, amount, block.timestamp);
-    }
-
-    function submitReport(address target, string calldata reason) external {
-        emit ReportSubmitted(msg.sender, target, reason, block.timestamp);
-    }
-
-    function updateScore(address user, uint256 newScore) external onlyReporter {
-        require(newScore <= 1000, "Score must be between 0 and 1000");
-        scores[user] = newScore;
-        emit ScoreUpdated(user, newScore);
-    }
-
-    function getScore(address user) external view returns (uint256) {
-        // Default score is 500 (0.5) if never set
-        uint256 score = scores[user];
-        return score == 0 ? 500 : score;
-    }
-
-    function isWhitelisted(address user) external view returns (bool) {
-        uint256 score = scores[user];
-        if (score == 0) score = 500;
-        return score >= whitelistThreshold;
-    }
-
-    function isBlacklisted(address user) external view returns (bool) {
-        uint256 score = scores[user];
-        if (score == 0) return false; // Default is not blacklisted
-        return score <= blacklistThreshold;
-    }
+    
+    // Wrapper functions if needed to expose inherited public functions generally work automatically.
+    // However, Solidity inheritance rules for functions with same name (if any) need overrides.
+    // Here we have distinct functions so it should be fine.
 }

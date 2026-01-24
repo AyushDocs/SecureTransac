@@ -4,6 +4,17 @@ body {
   @apply bg-gray-950 text-gray-100 font-sans antialiased;
   background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 40%, #000000 100%);
   min-height: 100vh;
+  overscroll-behavior-y: none; /* Disable pull-to-refresh for PWA feel */
+  -webkit-tap-highlight-color: transparent; /* Remove the blue overlay on touch */
+}
+
+/* Base Utility for safe areas (iOS Notch support) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
 
 ::-webkit-scrollbar {

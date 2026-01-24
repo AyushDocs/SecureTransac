@@ -3,7 +3,8 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localho
 
 export const CONTRACT_ADDRESSES = {
   TrustRegistry: import.meta.env.VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+  SecureTransacSBT: "0x998abeb3E57409262aE5b751f60747921B33613E", // Updated to current deployment
 };
 
 export const TRUST_REGISTRY_ABI = [
@@ -88,6 +89,26 @@ export const IDENTITY_VAULT_ABI = [
     "name": "requestData",
     "outputs": [
       { "internalType": "string", "name": "", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+export const ERC721S_ABI = [
+  {
+    "inputs": [],
+    "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"

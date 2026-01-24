@@ -24,7 +24,7 @@ contract IdentityVault is Guardian {
     error NotAuthorizedAuthority(address authority);
     error DataNotFound(address user);
 
-    constructor(address _registry) Guardian(_registry, 600) {
+    constructor(address _registry) Guardian(_registry, 60) {
         // Owner/Registry owner can set authorities
     }
 
@@ -35,7 +35,8 @@ contract IdentityVault is Guardian {
         emit AuthorityStatusChanged(authority, status);
     }
 
-    function storeData(string calldata _ipfsHash) external onlyTrusted {
+    // Store user's own encrypted identity data - no trust score required for own data
+    function storeData(string calldata _ipfsHash) external {
         userToData[msg.sender] = EncryptedData({
             ipfsHash: _ipfsHash,
             timestamp: block.timestamp,

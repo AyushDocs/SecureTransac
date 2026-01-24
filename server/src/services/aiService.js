@@ -10,7 +10,7 @@ class AIScoreService {
         ]);
         
         // Base score from contract
-        let baseScore = onChainScore / 1000;
+        let baseScore = Number(onChainScore) / 100;
         
         // 1. Historical Analytics Weight
         const historyScore = (transactions.length * 0.02) - (reports.length * 0.15);
@@ -50,17 +50,17 @@ class AIScoreService {
         const avgPartnerScore = totalPartnerScore / partners.size;
 
         // Algorithm:
-        // - If average partner score < 300 (Bad neighborhood) -> Penalty -0.15
-        // - If average partner score > 800 (Elite circle) -> Boost +0.05
-        // - Individual interaction with Blacklisted user (< 200) -> Immediate Penalty -0.1
+        // - If average partner score < 30 (Bad neighborhood) -> Penalty -0.15
+        // - If average partner score > 80 (Elite circle) -> Boost +0.05
+        // - Individual interaction with Blacklisted user (< 20) -> Immediate Penalty -0.1
         
         let riskModifier = 0;
 
-        if (avgPartnerScore < 300) riskModifier -= 0.15;
-        else if (avgPartnerScore > 800) riskModifier += 0.05;
+        if (avgPartnerScore < 30) riskModifier -= 0.15;
+        else if (avgPartnerScore > 80) riskModifier += 0.05;
 
         // Check for direct bad actor contact
-        const hasBadActorContact = scores.some(s => s <= 200);
+        const hasBadActorContact = scores.some(s => Number(s) <= 20);
         if (hasBadActorContact) riskModifier -= 0.1;
 
         return riskModifier;
@@ -103,14 +103,14 @@ class AIScoreService {
 
         let senderShift = 0;
         // Logic: Interacting with low-trust users reduces your score
-        if (receiverScore < 400) {
+        if (Number(receiverScore) < 40) {
             senderShift = -0.1;
             persistence.incrementBlockedTransactions();
             console.log(`[AI] Penalty: ${from} interacted with suspicious receiver ${to}`);
         }
 
         // Logic: High value transactions increase score IF they are from trusted users
-        if (amount > 100 && senderScore > 700) {
+        if (amount > 100 && Number(senderScore) > 70) {
             senderShift += 0.01;
         }
 
@@ -118,7 +118,7 @@ class AIScoreService {
         await web3Service.recordTransaction(from, to, amount);
 
         if (senderShift !== 0) {
-            const currentScore = senderScore / 1000;
+            const currentScore = Number(senderScore) / 100;
             await web3Service.updateScore(from, currentScore + senderShift);
         }
 
@@ -157,20 +157,22 @@ class AIScoreService {
     async processReport(reporter, target, text) {
         console.log(`[AI] Analyzing Report from ${reporter} against ${target}: "${text}"`);
         
+        const isAnonymous = reporter === 'ANONYMOUS';
+
         const [targetScore, reporterScore] = await Promise.all([
             web3Service.getScore(target),
-            web3Service.getScore(reporter)
+            isAnonymous ? Promise.resolve(60) : web3Service.getScore(reporter)
         ]);
 
         const authorities = persistence.getAuthorities();
-        const auth = authorities[reporter.toLowerCase()];
+        const auth = isAnonymous ? null : authorities.find(a => (a.id || '').toLowerCase() === reporter.toLowerCase());
         
         if (auth && auth.status === 'revoked') {
             console.warn(`[AI] Ignoring report from revoked authority: ${reporter}`);
             return;
         }
 
-        const impactWeight = auth ? 0.3 : (reporterScore > 800 ? 0.2 : 0.05);
+        const impactWeight = auth ? 0.3 : (Number(reporterScore) > 80 ? 0.2 : 0.05);
         
         const redFlags = ['scam', 'fraud', 'steal', 'theft', 'fake', 'stolen'];
         let flagCount = 0;
@@ -180,7 +182,8 @@ class AIScoreService {
 
         if (flagCount > 0 || auth) {
             const finalFlagCount = flagCount || 1;
-            const newScore = (targetScore / 1000) - (impactWeight * finalFlagCount);
+            let newScore = (Number(targetScore) / 100) - (impactWeight * finalFlagCount);
+            newScore = Math.max(0, Math.min(1, newScore));
             
             // Log the report on-chain
             await web3Service.submitReport(target, text);

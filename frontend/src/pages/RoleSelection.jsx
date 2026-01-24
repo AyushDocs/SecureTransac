@@ -1,60 +1,86 @@
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { useNavigate } from "react-router-dom";
+import { useAccount } from 'wagmi';
 import { useAuth } from "../context/AuthContext";
 
 const ROLES = [
   {
     id: "user",
-    title: "Normal User",
-    description: "View your trust score, transactions, and provide feedback.",
-    icon: (
-      <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
+    title: "Individual",
+    subtitle: "Personal Account",
+    description: "View your trust score, manage identity, and provide feedback on transactions.",
+    icon: "👤",
+    color: "from-blue-500 to-cyan-500",
   },
   {
     id: "company",
-    title: "Trusted Company",
-    description: "Assign scores to users and help blacklist fraudulent actors.",
-    icon: (
-      <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
+    title: "Company",
+    subtitle: "Business Account",
+    description: "Verify users, assign trust scores, and manage institutional KYB verification.",
+    icon: "🏢",
+    color: "from-green-500 to-emerald-500",
   },
   {
     id: "admin",
-    title: "System Admin",
-    description: "Manage global statistics and handle one-shot score overrides.",
-    icon: (
-      <svg className="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
+    title: "Network Admin",
+    subtitle: "System Administrator",
+    description: "Manage global analytics, handle score overrides, and monitor network health.",
+    icon: "🛡️",
+    color: "from-purple-500 to-pink-500",
   },
   {
     id: "deployer",
     title: "Contract Deployer",
-    description: "Manage contract reporters and global trust configurations.",
-    icon: (
-      <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      </svg>
-    ),
+    subtitle: "Protocol Manager",
+    description: "Deploy contracts, manage reporters, and configure trust registry parameters.",
+    icon: "🚀",
+    color: "from-orange-500 to-red-500",
   },
+];
+
+const SUPPORTED_WALLETS = [
+  { name: 'MetaMask', icon: '🦊', popular: true },
+  { name: 'Coinbase', icon: '🔵', popular: true },
+  { name: 'WalletConnect', icon: '🔗', popular: true },
+  { name: 'Phantom', icon: '👻', popular: false },
+  { name: 'Rainbow', icon: '🌈', popular: false },
 ];
 
 function RoleSelection() {
   const navigate = useNavigate();
-  const { login, address, connectWallet, isWalletConnecting, logout, user } = useAuth();
+  const { open } = useWeb3Modal();
+  const { address: wagmiAddress, isConnected: wagmiConnected, connector } = useAccount();
+  const { login, address: authAddress, connectWallet, isWalletConnecting, logout, user, roles } = useAuth();
+
+  // Use wagmi address if connected, otherwise fall back to authAddress
+  const address = wagmiConnected ? wagmiAddress : authAddress;
+  const isConnected = wagmiConnected || !!authAddress;
+  const walletName = connector?.name || 'Wallet';
+
+  const handleConnect = async () => {
+    // Open Web3Modal for wallet selection
+    open();
+  };
+
+  const handleLegacyConnect = async () => {
+    // Fallback to MetaMask-only connection
+    await connectWallet();
+  };
 
   const handleSelect = async (roleId) => {
     if (!address) {
-      alert("Please connect your wallet first!");
+      open(); // Open wallet selector
       return;
     }
 
     try {
+      // If user has multiple roles (RBAC), go to dashboard
+      if (roles && roles.length > 0) {
+        login(roleId, address);
+        navigate("/dashboard");
+        return;
+      }
+
       // If user is already registered, just login
       if (user?.registrationDate) {
         login(user.role, address);
@@ -68,45 +94,85 @@ function RoleSelection() {
     }
   };
 
+  const handleDisconnect = () => {
+    logout();
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6">
-      <div className="max-w-4xl w-full">
+      <div className="max-w-5xl w-full">
+        {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-black text-white mb-6 tracking-tight">
-            Secure<span className="text-blue-500">Transac</span>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <span className="text-3xl">🔐</span>
+            </div>
+          </div>
+          <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
+            Secure<span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Transac</span>
           </h1>
-          <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-            Transparent on-chain trust registry and AI-driven risk scoring. 
-            {address ? " Choose your role to register or enter." : " Connect your wallet to begin."}
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            Decentralized Trust Scoring & Identity Verification Platform. 
+            {isConnected ? " Choose your path to continue." : " Connect your wallet to begin."}
           </p>
+        </div>
 
-          <div className="flex flex-col items-center gap-4">
-            {!address ? (
-              <button
-                onClick={connectWallet}
-                disabled={isWalletConnecting}
-                className="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] active:scale-95 disabled:opacity-70"
-              >
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  {isWalletConnecting ? "Connecting to MetaMask..." : "Connect MetaMask Wallet"}
+        {/* Wallet Connection Section */}
+        <div className="mb-12">
+          {!isConnected ? (
+            <div className="max-w-md mx-auto">
+              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+                <h3 className="text-xl font-bold text-white text-center mb-6">Connect Your Wallet</h3>
+                
+                {/* Primary Connect Button */}
+                <button
+                  onClick={handleConnect}
+                  className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-3 mb-6"
+                >
+                  <span className="text-xl">🔌</span>
+                  <span>Connect Wallet</span>
+                </button>
+
+                {/* Supported Wallets */}
+                <div className="pt-6 border-t border-gray-800">
+                  <p className="text-xs text-gray-500 text-center mb-4">Supported Wallets</p>
+                  <div className="flex justify-center gap-3 flex-wrap">
+                    {SUPPORTED_WALLETS.map((wallet) => (
+                      <div 
+                        key={wallet.name}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 rounded-lg"
+                      >
+                        <span>{wallet.icon}</span>
+                        <span className="text-xs text-gray-400">{wallet.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </button>
-            ) : (
-              <div className="flex items-center gap-4 bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+
+                {/* Legacy MetaMask fallback */}
+                <div className="mt-6 pt-6 border-t border-gray-800 text-center">
+                  <button
+                    onClick={handleLegacyConnect}
+                    disabled={isWalletConnecting}
+                    className="text-sm text-gray-500 hover:text-cyan-400 transition-colors"
+                  >
+                    {isWalletConnecting ? "Connecting..." : "Or connect with MetaMask only →"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center gap-4 bg-gray-900 border border-gray-800 px-6 py-4 rounded-2xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-xl shadow-lg">
+                  ✓
                 </div>
                 <div className="text-left">
-                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Connected Wallet</p>
-                  <p className="text-white font-mono">{address.slice(0, 6)}...{address.slice(-4)}</p>
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Connected via {walletName}</p>
+                  <p className="text-white font-mono text-lg">{address?.slice(0, 8)}...{address?.slice(-6)}</p>
                 </div>
                 <button 
-                  onClick={logout}
+                  onClick={handleDisconnect}
                   className="ml-4 p-2 text-gray-500 hover:text-red-500 transition-colors"
                   title="Disconnect"
                 >
@@ -115,50 +181,89 @@ function RoleSelection() {
                   </svg>
                 </button>
               </div>
-            )}
+
+              {/* Switch Wallet Button */}
+              <button
+                onClick={handleConnect}
+                className="p-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+                title="Switch Wallet"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Role Selection Grid */}
+        <div className="mb-8">
+          <h2 className="text-center text-lg font-bold text-white mb-6">Choose Your Path</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {ROLES.map((role) => {
+              const isCurrentRole = user?.role === role.id;
+              const isRegistered = !!user?.registrationDate;
+              const hasThisRole = roles?.includes(role.id);
+              
+              return (
+                <button
+                  key={role.id}
+                  onClick={() => handleSelect(role.id)}
+                  disabled={isRegistered && !isCurrentRole && !hasThisRole}
+                  className={`relative bg-gray-900 border p-6 rounded-2xl text-left transition-all group overflow-hidden ${
+                    isCurrentRole || hasThisRole
+                      ? "border-cyan-500 bg-cyan-500/5 shadow-[0_0_20px_rgba(6,182,212,0.2)]" 
+                      : isRegistered && !hasThisRole
+                        ? "border-gray-800 opacity-50 cursor-not-allowed" 
+                        : "border-gray-800 hover:bg-gray-800 hover:border-cyan-500/50"
+                  }`}
+                >
+                  {/* Icon */}
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${role.color} flex items-center justify-center text-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                    {role.icon}
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-lg font-bold text-white mb-1">{role.title}</h3>
+                  <p className="text-xs text-cyan-400 font-medium mb-2">{role.subtitle}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{role.description}</p>
+
+                  {/* Badge */}
+                  <div className="mt-4">
+                    {isCurrentRole ? (
+                      <span className="text-xs bg-cyan-500 text-white px-3 py-1 rounded-full font-bold">
+                        Current Dashboard
+                      </span>
+                    ) : hasThisRole ? (
+                      <span className="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded-full font-bold">
+                        ✓ Authorized
+                      </span>
+                    ) : isRegistered ? (
+                      <span className="text-xs bg-gray-800 text-gray-500 px-3 py-1 rounded-full font-bold">
+                        Locked
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold group-hover:bg-cyan-500/20 group-hover:text-cyan-400 transition-colors">
+                        Select
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Hover Arrow */}
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ROLES.map((role) => {
-            const isCurrentRole = user?.role === role.id;
-            const isRegistered = !!user?.registrationDate;
-            
-            return (
-              <button
-                key={role.id}
-                onClick={() => handleSelect(role.id)}
-                disabled={isRegistered && !isCurrentRole}
-                className={`bg-gray-900 border p-8 rounded-2xl text-left transition-all group relative overflow-hidden ${
-                  isCurrentRole 
-                    ? "border-blue-500 bg-blue-500/5 shadow-[0_0_20px_rgba(59,130,246,0.2)]" 
-                    : isRegistered 
-                      ? "border-gray-800 opacity-50 cursor-not-allowed" 
-                      : "border-gray-800 hover:bg-gray-800 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
-                }`}
-              >
-                <div className="absolute top-0 right-0 p-4">
-                  {isCurrentRole ? (
-                    <span className="text-blue-500 text-xs font-bold uppercase tracking-widest">Active Profile</span>
-                  ) : (
-                    <svg className="w-6 h-6 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  )}
-                </div>
-                <div className="mb-6 group-hover:scale-110 transition-transform origin-left">{role.icon}</div>
-                <h2 className="text-2xl font-bold text-white mb-2">{role.title}</h2>
-                <p className="text-gray-400 leading-relaxed text-sm">{role.description}</p>
-                <div className="mt-6">
-                   <div className={`text-xs font-bold uppercase px-3 py-1 rounded-full inline-block ${
-                     isCurrentRole ? "bg-blue-500 text-white" : "bg-gray-800 text-gray-400"
-                   }`}>
-                     {isCurrentRole ? "Enter Dashboard" : isRegistered ? "Locked" : "Register as " + role.title}
-                   </div>
-                </div>
-              </button>
-            );
-          })}
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-600">
+          <p>Powered by Ethereum • Zero-Knowledge Proofs • AI Risk Analysis</p>
         </div>
       </div>
     </div>

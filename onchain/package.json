@@ -1,25 +1,31 @@
 {
   "name": "secure-transac-contracts",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Secure Transaction Contracts",
   "main": "index.js",
   "scripts": {
     "test": "truffle test",
-    "dev:ganache": "ganache -p 8545 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\"",
+    "dev:ganache": "ganache -p 7545 --chain.chainId 1337 --chain.networkId 1337 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\"",
     "dev:reset": "rm -Recurse -Force ./ganache_db ; truffle migrate --reset --network development",
-    "dev:deploy": "truffle migrate --network development"
-
+    "dev:deploy": "truffle migrate --network development",
+    "seed": "truffle exec scripts/seed.js --network development"
   },
   "keywords": [
     "secure",
     "transaction",
-    "contracts" 
+    "contracts"
   ],
   "author": "AyushDocs",
   "license": "ISC",
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0"
+    "@openzeppelin/contracts": "^5.4.0",
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "dotenv": "^17.2.3"
   },
+  "files": [
+    "contracts/**/*.sol",
+    "build/contracts/*.json"
+  ],
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.16"
   }

@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const adminRoutes = require('./src/routes/adminRoutes');
+const ipfsRoutes = require('./src/routes/ipfsRoutes');
+const { specs, swaggerUi } = require('./src/config/swagger');
+const { apiLimiter } = require('./src/middleware/rateLimiter');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -11,8 +14,18 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Static files (for PWA icons if needed)
+app.use(express.static('public'));
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+// Apply rate limiter to all API routes
+app.use('/api', apiLimiter);
+
 // Routes
 app.use('/api/admin', adminRoutes);
+app.use('/api/ipfs', ipfsRoutes);
 
 // General
 app.get('/health', (req, res) => res.send('SecureTransac API logic: Online'));

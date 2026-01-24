@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Guardian.sol";
+import "secure-transac-contracts/contracts/Guardian.sol";
 
 /**
  * @title SecureBank
@@ -13,7 +13,7 @@ import "./Guardian.sol";
 contract SecureBank is Guardian {
     mapping(address => uint256) public balances;
 
-    constructor(address _registry) Guardian(_registry, 800) {}
+    constructor(address _registry) Guardian(_registry, 80) {} // 80 represents 0.8 threshold
 
     function deposit() external payable {
         balances[msg.sender] += msg.value;

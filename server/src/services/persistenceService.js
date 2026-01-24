@@ -13,6 +13,8 @@ class PersistenceService {
                 users: {}, 
                 authorities: {},
                 verificationRequests: [],
+                appeals: [],
+                stealthLinks: {},
                 nonces: {},
                 analytics: { 
                     totalEvaluations: 0, 
@@ -52,6 +54,8 @@ class PersistenceService {
             ];
         }
         if (!data.verificationRequests) data.verificationRequests = [];
+        if (!data.appeals) data.appeals = [];
+        if (!data.stealthLinks) data.stealthLinks = {};
         if (!data.nonces) data.nonces = {};
         return data;
     }
@@ -250,6 +254,42 @@ class PersistenceService {
         return this.data.verificationRequests[index];
     }
 
+    // Appeal System Methods
+    getAppeals(userAddress = null) {
+        if (userAddress) {
+            return this.data.appeals.filter(a => a.userAddress.toLowerCase() === userAddress.toLowerCase());
+        }
+        return this.data.appeals;
+    }
+
+    createAppeal(userAddress, reason, currentScore, metadata = {}) {
+        const appeal = {
+            id: `apl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userAddress: userAddress.toLowerCase(),
+            reason,
+            currentScore,
+            status: 'pending',
+            timestamp: Date.now(),
+            ...metadata
+        };
+        this.data.appeals.push(appeal);
+        this._save(this.data);
+        return appeal;
+    }
+
+    updateAppealStatus(appealId, status, reviewerAddress, comment = "") {
+        const index = this.data.appeals.findIndex(a => a.id === appealId);
+        if (index === -1) return null;
+        
+        this.data.appeals[index].status = status;
+        this.data.appeals[index].reviewedBy = reviewerAddress.toLowerCase();
+        this.data.appeals[index].reviewComment = comment;
+        this.data.appeals[index].reviewTimestamp = Date.now();
+        
+        this._save(this.data);
+        return this.data.appeals[index];
+    }
+
     getNonce(address) {
         const addr = address.toLowerCase();
         if (!this.data.nonces[addr]) {
@@ -270,6 +310,25 @@ class PersistenceService {
         const addr = address.toLowerCase();
         delete this.data.nonces[addr];
         this._save(this.data);
+    }
+
+    linkStealthAddress(stealthAddr, mainAddr) {
+        const s = stealthAddr.toLowerCase();
+        const m = mainAddr.toLowerCase();
+        this.data.stealthLinks[s] = m;
+        this._save(this.data);
+        console.log(`[Persistence] Linked Stealth Address ${s} -> ${m}`);
+    }
+
+    resolveAddress(address) {
+        const addr = address.toLowerCase();
+        // If it's a stealth address, return the main address
+        if (this.data.stealthLinks[addr]) {
+            console.log(`[Persistence] Resolved Stealth Address ${addr} -> ${this.data.stealthLinks[addr]}`);
+            return this.data.stealthLinks[addr];
+        }
+        // Otherwise return null or original? The request asks "link back".
+        return null;
     }
 }
 

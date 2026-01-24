@@ -2,13 +2,26 @@ const aiService = require('../services/aiService');
 const persistence = require('../services/persistenceService');
 const web3Service = require('../services/web3Service');
 const ipfsService = require('../services/ipfsService');
+const privacyService = require('../services/privacyService');
+const analyticsService = require('../services/analyticsService');
+const bridgeService = require('../services/bridgeService');
+const rbacService = require('../services/rbacService');
+const socketService = require('../services/socketService');
 const jwt = require('jsonwebtoken');
+
+// Initialize privacy keys on startup
+privacyService.initialize().catch(err => console.error('[Privacy] Init failed:', err));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secure-transac-super-secret-key-123';
 const JWT_EXPIRES_IN = '7d';
 
-const generateToken = (address, role) => {
-    return jwt.sign({ address, role }, JWT_SECRET, {
+const generateToken = (address, role, roles = [], activeRole = null) => {
+    return jwt.sign({ 
+        address, 
+        role,  // Keep for backward compatibility
+        roles: roles.length > 0 ? roles : [role],
+        activeRole: activeRole || role
+    }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN
     });
 };
@@ -42,7 +55,7 @@ exports.getUserDetails = async (req, res) => {
         res.json({ 
             address, 
             ...data, 
-            trustScore: onChainScore / 1000,
+            trustScore: Number(onChainScore) / 1000,
             identityCid: identityCid || data.identityCid,
             transactions,
             complaints
@@ -151,7 +164,7 @@ exports.getAuthorities = async (req, res) => {
             updatedAuthorities[address] = data;
         }
     }
-    res.json(updatedAuthorities);
+    res.json(Object.values(updatedAuthorities));
 };
 
 exports.saveAuthority = (req, res) => {
@@ -211,6 +224,7 @@ exports.getVerificationRequests = async (req, res) => {
         const reqs = await web3Service.getVerificationRequests(companyAddress, 'company');
         res.json(reqs);
     } catch (error) {
+        console.error('[SecureTransac] Error fetching verifications:', error);
         res.status(500).json({ error: 'Failed to fetch on-chain verifications' });
     }
 };
@@ -222,10 +236,38 @@ exports.requestVerification = async (req, res) => {
 
     try {
         const proofCid = metadata?.proofCid || '';
-        await web3Service.requestVerification(companyAddress, proofCid);
+        await web3Service.requestVerification(userAddress, companyAddress, proofCid);
         res.json({ message: 'Verification request submitted on-chain' });
     } catch (error) {
-        res.status(500).json({ error: 'On-chain submission failed' });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getFingerprint = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const fingerprint = await analyticsService.calculateFingerprint(address);
+        res.json(fingerprint);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getGlobalHeatmap = async (req, res) => {
+    try {
+        const heatmap = await analyticsService.getRiskHeatmapData();
+        res.json({ heatmap });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getSybilClusters = async (req, res) => {
+    try {
+        const clusters = await analyticsService.detectSybilClusters();
+        res.json({ clusters });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -277,16 +319,35 @@ exports.verifySignature = async (req, res) => {
             // Success! Rotate nonce for next time
             persistence.rotateNonce(address);
             
-            // Get user info to return
+            // Get user info and RBAC data
             const user = persistence.getUser(address);
             
-            // Generate JWT
-            const token = generateToken(address, user.role);
+            // Get or migrate RBAC roles
+            let rbacData = rbacService.getUserRoles(address);
+            
+            // If user has a legacy role but not in RBAC, migrate them
+            if (user.role && rbacData.roles.length <= 1) {
+                rbacData = rbacService.migrateLegacyUser(address, user.role);
+            }
+            
+            // Generate JWT with RBAC support
+            const token = generateToken(
+                address, 
+                rbacData.activeRole || user.role,
+                rbacData.roles,
+                rbacData.activeRole
+            );
             
             res.json({ 
                 success: true, 
                 message: 'Authentication successful',
-                user,
+                user: {
+                    ...user,
+                    roles: rbacData.roles,
+                    activeRole: rbacData.activeRole
+                },
+                roles: rbacData.roles,
+                activeRole: rbacData.activeRole,
                 token
             });
         } else {
@@ -303,7 +364,7 @@ exports.pinMetadata = async (req, res) => {
     if (!metadata) return res.status(400).json({ error: 'Metadata required' });
 
     try {
-        const result = await ipfsService.pinJson(metadata);
+        const result = await ipfsService.pinJSON(metadata);
         res.json({ success: true, cid: result.IpfsHash });
     } catch (error) {
         console.error('[SecureTransac] IPFS Pinning failed:', error);
@@ -326,4 +387,291 @@ exports.updateAuthorityMetadata = (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Authority not found' });
 
     res.json({ success: true, authority: updated });
+};
+
+exports.getScoreAdmin = async (req, res) => {
+    let { address } = req.params;
+    
+    // Check if this is a stealth address and resolve to true identity
+    const resolvedIdentity = persistence.resolveAddress(address);
+    if (resolvedIdentity) {
+        console.log(`[Score] Redirecting Stealth Address ${address} -> Main Identity ${resolvedIdentity}`);
+        address = resolvedIdentity;
+    }
+
+    console.log(`[Admin] Fetching score for: ${address}`);
+    
+    try {
+        // Admin uses getScore which is free (owner-only on contract)
+        const score = await web3Service.getScore(address);
+        res.json({ score: Number(score) });
+    } catch (error) {
+        console.error('[Admin] Failed to fetch score:', error);
+        res.status(500).json({ error: 'Failed to fetch score' });
+    }
+};
+
+// Privacy & Homomorphic Encryption (Enhanced Privacy)
+exports.getPrivacyPublicKey = (req, res) => {
+    const key = privacyService.getPublicKey();
+    if (!key) return res.status(503).json({ error: 'Privacy service warming up' });
+    res.json(key);
+};
+
+exports.aggregateEncryptedImpacts = (req, res) => {
+    const { ciphertexts } = req.body;
+    if (!Array.isArray(ciphertexts)) return res.status(400).json({ error: 'Ciphertexts array required' });
+    
+    try {
+        const result = privacyService.aggregate(ciphertexts);
+        res.json({ aggregatedCiphertext: result });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.decryptImpact = (req, res) => {
+    const { ciphertext } = req.body;
+    try {
+        const result = privacyService.decrypt(ciphertext);
+        res.json({ decryptedValue: result });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Advanced Analytics
+exports.getFingerprint = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const fingerprint = await analyticsService.calculateFingerprint(address);
+        res.json(fingerprint);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getGlobalHeatmap = async (req, res) => {
+    try {
+        const heatmap = await analyticsService.getRiskHeatmapData();
+        res.json({ heatmap });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getSybilClusters = async (req, res) => {
+    try {
+        const clusters = await analyticsService.detectSybilClusters();
+        res.json({ clusters });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.syncCrossChainScore = async (req, res) => {
+    const { userAddress, sourceChainId, sourceContract, targetChainId, targetContract } = req.body;
+    
+    if (!userAddress || !sourceChainId || !targetChainId) {
+        return res.status(400).json({ error: 'Missing sync parameters' });
+    }
+
+    try {
+        // Step 1: Fetch from source
+        const score = await bridgeService.getScoreFromChain(sourceChainId, sourceContract, userAddress);
+        
+        // Step 2: Push to target
+        const result = await bridgeService.syncScoreToChain(targetChainId, targetContract, userAddress, score);
+        
+        res.json({
+            message: 'Cross-chain sync successful',
+            score,
+            ...result
+        });
+    } catch (error) {
+        console.error('[Bridge] Sync failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+const zkProofService = require('../services/zkProofService');
+
+exports.generateProof = async (req, res) => {
+    const { address, threshold, secret } = req.body;
+    
+    // Authorization check
+    if (req.user && req.user.role !== 'admin' && req.user.address.toLowerCase() !== address.toLowerCase()) {
+         return res.status(403).json({ error: 'Not authorized for this address' });
+    }
+
+    if (!address || !threshold || !secret) {
+        return res.status(400).json({ error: 'Address, threshold, and secret required' });
+    }
+
+    try {
+        const score = await web3Service.getScore(address);
+        // Ensure inputs are numbers/strings as expected
+        const proofData = await zkProofService.generateScoreProof(score, threshold, secret);
+        res.json({ success: true, ...proofData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const stealthService = require('../services/stealthService');
+exports.generateStealthAddress = (req, res) => {
+    try {
+        const result = stealthService.generateStealthMeta(null);
+        // Link the generated stealth address to the requesting user
+        if (req.user && req.user.address) {
+            persistence.linkStealthAddress(result.stealthAddress, req.user.address);
+        }
+        res.json({ success: true, ...result });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getUserReport = (req, res) => {
+    const userId = req.params.address || req.user.address; 
+    
+    // Security check
+    if (req.user.role !== 'admin' && req.user.address.toLowerCase() !== userId.toLowerCase()) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const user = persistence.getUser(userId);
+    const history = user.scoreHistory || [];
+    
+    const statement = history.map(entry => ({
+        date: entry.timestamp ? new Date(entry.timestamp).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        event: entry.reason || 'Trust Score Update',
+        status: 'Verified'
+    }));
+
+    if (statement.length === 0) {
+        statement.push({
+            date: new Date(user.registrationDate || Date.now()).toISOString().split('T')[0],
+            event: 'System Registration',
+            status: 'Active'
+        });
+    }
+
+    res.json({ statement });
+};
+
+const blindService = require('../services/blindSignatureService');
+
+exports.getBlindKeys = (req, res) => {
+    res.json(blindService.getPublicKeys());
+};
+
+exports.signBlind = (req, res) => {
+    const { blinded } = req.body;
+    if (!blinded) return res.status(400).json({ error: 'Blinded message required' });
+    try {
+        const signature = blindService.signBlindedMessage(blinded);
+        res.json({ signature });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.submitAnonymousReport = async (req, res) => {
+    const { targetAddress, intent, hash, signature } = req.body;
+    
+    if (!targetAddress || !intent || !hash || !signature) {
+        return res.status(400).json({ error: 'Missing required report fields' });
+    }
+
+    try {
+        // 1. Verify the Blind Signature (Unblinded)
+        // This proves the reporter was authenticated when gettting the signature,
+        // but because it's unblinded, the server can't link it to the request session.
+        const isValid = blindService.verifySignature(hash, signature);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid anonymous signature' });
+        }
+
+        console.log(`[BlindReport] Verified Protocol-Signature. Processing AI Intent for target ${targetAddress}`);
+
+        // 2. Use AI to analyze intent and generate score decrease
+        // aiService.processReport handles the logic: intent -> flags -> weight -> score decrease
+        await aiService.processReport('ANONYMOUS', targetAddress, intent);
+
+        res.json({ 
+            success: true, 
+            message: 'Anonymous report analyzed by AI and submitted successfully.',
+            target: targetAddress,
+            status: 'Score adjusted'
+        });
+    } catch (error) {
+        console.error('[BlindReport] Submission failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+exports.submitAppeal = async (req, res) => {
+    const { reason, currentScore, metadata } = req.body;
+    const userAddress = req.user.address;
+
+    if (!reason || currentScore === undefined) {
+        return res.status(400).json({ error: 'Reason and Current Score required' });
+    }
+
+    try {
+        const appeal = persistence.createAppeal(userAddress, reason, currentScore, metadata);
+        
+        // Notify admins via socket
+        socketService.broadcast('appeal_event', { 
+            type: 'appeal_requested', 
+            user: userAddress,
+            id: appeal.id 
+        });
+
+        res.status(201).json(appeal);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getAppeals = async (req, res) => {
+    try {
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'deployer';
+        const appeals = persistence.getAppeals(isAdmin ? null : req.user.address);
+        res.json(appeals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.processAppeal = async (req, res) => {
+    const { appealId, status, comment, adjustmentScore } = req.body;
+    const reviewerAddress = req.user.address;
+
+    if (!appealId || !status) {
+        return res.status(400).json({ error: 'AppealId and Status required' });
+    }
+
+    try {
+        const result = persistence.updateAppealStatus(appealId, status, reviewerAddress, comment);
+        if (!result) return res.status(404).json({ error: 'Appeal not found' });
+
+        // If approved and adjustmentScore provided, push to blockchain
+        if (status === 'approved' && adjustmentScore !== undefined) {
+            console.log(`[Appeals] Approving appeal for ${result.userAddress}. Pushing score ${adjustmentScore}`);
+            await web3Service.updateScore(result.userAddress, adjustmentScore);
+        }
+
+        socketService.broadcast('appeal_event', { 
+            type: 'appeal_processed', 
+            id: appealId, 
+            status,
+            user: result.userAddress
+        });
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };

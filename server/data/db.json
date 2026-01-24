@@ -370,7 +370,14 @@
           "severity": 0
         }
       ],
-      "trustScore": 1
+      "trustScore": 1,
+      "name": "Ayush Dubey",
+      "email": "a@g.co",
+      "companyName": "",
+      "description": "",
+      "identityCid": "QmQAbmroFyHK91m3SzaZSojLrTErstxxeoUaAzDGZjgnjM",
+      "role": "user",
+      "registrationDate": "2026-01-24T20:32:09.572Z"
     },
     "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
       "transactions": [
@@ -1203,9 +1210,9 @@
     }
   },
   "analytics": {
-    "totalEvaluations": 220,
+    "totalEvaluations": 221,
     "riskDistribution": {
-      "high": 20,
+      "high": 21,
       "medium": 81,
       "low": 119
     },
@@ -1282,16 +1289,16 @@
   "authorities": {
     "0x2222222222222222222222222222222222222222": {
       "id": "0x2222222222222222222222222222222222222222",
-      "name": "Gamy",
-      "email": "gamy@info.com",
-      "level": "security",
+      "name": "CypherSense Analytics",
+      "email": "contact@cyphersense.io",
+      "level": "institutional",
       "timestamp": 1767702805702
     },
     "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65": {
       "id": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
-      "name": "HealthTrust Inc.",
-      "email": "verify@healthtrust.io",
-      "level": "verified_reporter",
+      "name": "Aether Guard",
+      "email": "security@aetherguard.io",
+      "level": "diamond",
       "timestamp": 1769194485755
     },
     "0x123": {
@@ -1301,23 +1308,35 @@
     },
     "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
       "id": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "name": "ChainSafe Audit",
-      "email": "audit@chainsafe.io",
+      "name": "Sentinel Ledger",
+      "email": "reports@sentinel-ledger.com",
       "totalReports": 0,
       "rejectedReports": 0,
-      "status": "active",
+      "status": "revoked",
       "timestamp": 1769199846024
     },
     "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
       "id": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-      "name": "OpenZeppelin Security",
-      "email": "security@openzeppelin.com",
+      "name": "Verivault Systems",
+      "email": "verify@verivault.xyz",
       "totalReports": 0,
       "rejectedReports": 0,
-      "status": "active",
+      "status": "revoked",
       "timestamp": 1769199846025
     }
   },
   "verificationRequests": [],
-  "nonces": {}
+  "nonces": {
+    "0xffcf8fdee72ac11b5c542428b35eef5769c409f0": "SECURE_TRANSAC_AUTH_CHALLENGE_111702_1769232969568",
+    "0x90f79bf6eb2c4f870365e785982e1f101e93b906": "SECURE_TRANSAC_AUTH_CHALLENGE_941122_1769237649061",
+    "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": "SECURE_TRANSAC_AUTH_CHALLENGE_815945_1769284587409",
+    "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": "SECURE_TRANSAC_AUTH_CHALLENGE_534982_1769298267516"
+  },
+  "stealthLinks": {
+    "0xa717f468e81b8ab3625e63aaf84d35399224ae98": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+    "0xf4bee0cc50b7b7495e3ed210236842934aabe1c5": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+    "0x291bda10d96b8dabcde5a08281d0ce663ed1bbc0": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+    "0x23c1092c2f9bac78e937d08adad1929a46f168c8": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+  },
+  "appeals": []
 }
