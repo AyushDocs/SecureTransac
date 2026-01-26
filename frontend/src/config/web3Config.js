@@ -23,7 +23,7 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project
 const metadata = {
   name: 'SecureTransac',
   description: 'Decentralized Trust Scoring & Identity Verification Platform',
-  url: 'https://securetransac.io',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://securetransac.io',
   icons: ['/pwa-192x192.png']
 };
 
@@ -65,7 +65,13 @@ export function initWeb3Modal() {
       '225affb176778569276e484e1b92637ad061b01e13a048b35a9d280c3b58970f', // Safe
     ],
     enableAnalytics: false, // Disable analytics for privacy
+    enableOnramp: false, // Disable onramp to reduce API calls
+    enableSwaps: false, // Disable swaps
   });
+  
+  if (projectId === 'demo-project-id') {
+      console.warn("[SecureTransac] Using 'demo-project-id'. You may see 401 errors from WalletConnect RPC. This is normal until you add a valid VITE_WALLETCONNECT_PROJECT_ID in .env");
+  }
 }
 
 // Wallet display info for UI
@@ -103,3 +109,4 @@ export const WALLET_INFO = {
 };
 
 export { chains };
+

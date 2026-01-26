@@ -55,7 +55,7 @@ echo ""
 
 # Compile circuit
 echo "[4/9] Compiling circuit..."
-circom circuits/${CIRCUIT_NAME}.circom --r1cs --wasm --sym -o $BUILD_DIR
+circom circuits/${CIRCUIT_NAME}.circom --r1cs --wasm --sym -l node_modules -o $BUILD_DIR
 echo "✓ Circuit compiled successfully"
 echo ""
 

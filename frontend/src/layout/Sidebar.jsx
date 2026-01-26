@@ -1,6 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+// Role Definitions:
+// - user: Standard individual participant with a reputation identity.
+// - viewer: Read-only access for auditing or public transparency.
+// - company: Trusted institutional entity (Business/Enterprise).
+// - admin: Platform administrator (Governance & Operations).
+// - deployer: System Developer managing smart contract integrations.
+
 // Role-based navigation permissions
 // Define which roles can access each route
 const NAV_PERMISSIONS = {
@@ -8,17 +15,20 @@ const NAV_PERMISSIONS = {
   "/dashboard": ["user", "viewer", "company", "creator", "admin", "deployer"],
   "/search": ["company", "creator", "admin", "deployer"], // Not for regular users
   "/registry": ["company", "creator", "admin", "deployer"], // Not for regular users
-  "/identity": ["user", "viewer", "company", "creator", "admin", "deployer"], // All users
-  "/certified": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/kyb": ["company", "creator", "admin", "deployer"], // Corporate only
+  "/identity": ["user", "viewer", "creator"], // All users except admin/deployer
+  "/certified": ["user", "viewer", "creator"],
+  "/kyb": ["company", "creator"], // Corporate only
   "/reports": ["user", "viewer", "company", "creator", "admin", "deployer"], // All can report
-  "/appeals": ["user", "viewer", "company", "creator", "admin", "deployer"], // All can appeal
-  "/privacy": ["user", "viewer", "company", "creator", "admin", "deployer"], // All users
+  "/submit-report": ["user", "viewer", "company", "creator", "admin", "deployer"],
+  "/appeals": ["user", "viewer","creator"], // All can appeal
+  "/privacy": ["user", "viewer", "creator"], // All users
   "/analytics": ["admin", "deployer"], // Admin only
-  "/ecosystem": ["company", "creator", "admin", "deployer"], // Partners only
-  "/bridge": ["admin", "deployer"], // Admin only
+  "/ecosystem": ["creator", "admin", "deployer"], // Partners only
+  "/bridge": ["user","viewer"], // Admin only
   "/war-room": ["admin", "deployer"], // Admin only
+  "/system": ["admin"], // Admin only
   "/dao": ["user", "viewer", "company", "creator", "admin", "deployer"], // All can participate
+  "/verification-requests": ["company", "creator", "admin", "deployer"], // Verifiers only
 };
 
 // Sidebar navigation with route links
@@ -33,34 +43,26 @@ function Sidebar() {
     { path: "/", label: "Dashboard", icon: "grid", section: "main" },
     { path: "/search", label: "Search", icon: "search", section: "main" },
     { path: "/registry", label: "Registry", icon: "list", section: "main" },
+    { path: "/verification-requests", label: "Verification Requests", icon: "clipboard", section: "main" },
     { path: "/identity", label: "Identity Vault", icon: "shield", section: "user" },
     { path: "/certified", label: "Get Certified", icon: "activity", section: "user" },
-    { path: "/kyb", label: "Corporate KYB", icon: "briefcase", section: "business" },
-    { path: "/reports", label: "Reports", icon: "file", section: "user" },
+    { path: "/kyb", label: "Business Verification (KYB)", icon: "briefcase", section: "business" },
+    { path: "/submit-report", label: "File Report", icon: "alert", section: "user" },
+    { path: "/reports", label: "My Reports", icon: "file", section: "user" },
     { path: "/appeals", label: "Appeals", icon: "radar", section: "user" },
     { path: "/privacy", label: "Privacy", icon: "lock", section: "user" },
     { path: "/analytics", label: "Analytics", icon: "chart", section: "admin" },
     { path: "/ecosystem", label: "Ecosystem", icon: "globe", section: "business" },
     { path: "/bridge", label: "Bridge", icon: "bridge", section: "admin" },
     { path: "/war-room", label: "War Room", icon: "radar", section: "admin" },
+    { path: "/system", label: "System Controls", icon: "settings", section: "admin" },
     { path: "/dao", label: "Governance", icon: "dao", section: "main" },
   ];
 
-  // Filter navigation items based on current role
+  // Filter navigation items strictly based on current ACTIVE role
   const filteredNavItems = navItems.filter(item => {
     const allowedRoles = NAV_PERMISSIONS[item.path] || [];
-    
-    // Check if current role is allowed
-    if (allowedRoles.includes(currentRole)) {
-      return true;
-    }
-    
-    // Also check if user has ANY of the allowed roles (for multi-role users)
-    if (roles && roles.length > 0) {
-      return allowedRoles.some(r => roles.includes(r));
-    }
-    
-    return false;
+    return allowedRoles.includes(currentRole);
   });
 
   // Group items by section for visual organization
@@ -146,8 +148,26 @@ function Sidebar() {
       case "radar":
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 12m-2 0a2 2 0 104 0a2 2 0 10-4 0" />
+          </svg>
+        );
+      case "settings":
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        );
+      case "alert":
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        );
+      case "clipboard":
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
         );
       default:
@@ -199,7 +219,7 @@ function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav className="flex-1 p-4 overflow-y-auto no-scrollbar">
         <ul className="space-y-1">
           {renderSection(mainSection, null)}
           {renderSection(userSection, "Personal")}

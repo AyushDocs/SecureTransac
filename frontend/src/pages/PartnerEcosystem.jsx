@@ -1,43 +1,37 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { applyForLoan } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
 
 const PartnerEcosystem = () => {
     const { user } = useAuth();
-    const [score, setScore] = useState(500);
-    const [loading, setLoading] = useState(true);
+    const [loanFile, setLoanFile] = useState(null);
+    const [applying, setApplying] = useState(false);
 
-    useEffect(() => {
-        if (user?.address) {
-            fetchScore();
+    // DeFi Logic Simulation (Frontend Display Only - Backend decides actual rate)
+    // Removed local calculation based on score.
+
+    const handleApplyLoan = async () => {
+        if (!user?.address) return;
+        if (!loanFile) {
+            alert("Please upload a supporting document (e.g. Identity Proof or Collateral Info)");
+            return;
         }
-    }, [user?.address]);
 
-    const fetchScore = async () => {
+        setApplying(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/admin/score/${user.address}`);
-            setScore(res.data.score || 500);
-        } catch (err) {
-            console.error("Failed to fetch score for ecosystem demo", err);
+            const result = await applyForLoan(user.address, loanFile);
+            
+            if (result.decision === "APPROVED") {
+                alert(`Loan Approved! \n\nQualified APR: ${result.apr}\nMax Amount: ${result.maxLoan}\nDocument IPFS CID: ${result.ipfsCid}`);
+            } else {
+                alert(`Loan Application Status: ${result.decision}\n\nReason: Trust score criteria not met.`);
+            }
+        } catch (error) {
+            alert("Application Failed: " + error.message);
         } finally {
-            setLoading(false);
+            setApplying(false);
         }
-    };
-
-    // DeFi Logic Simulation
-    const calculateLendingRate = () => {
-        if (score > 800) return "1.5%"; // Prime
-        if (score > 600) return "4.2%"; // Standard
-        if (score > 400) return "8.5%"; // Risk
-        return "15.0% + High Collateral"; // Subprime
-    };
-
-    const calculateMaxLoan = () => {
-        if (score > 900) return "100 ETH (Uncollateralized)";
-        if (score > 750) return "50 ETH (Reputation Backed)";
-        if (score > 600) return "25 ETH (30% Collateral)";
-        return "5 ETH (150% Collateral)";
     };
 
     return (
@@ -53,16 +47,16 @@ const PartnerEcosystem = () => {
                     <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
                         <div className="bg-black/40 px-4 py-2 rounded-lg border border-white/10 shrink-0">
                             <div className="text-[10px] text-gray-500 font-bold uppercase">My Verified Score</div>
-                            <div className="text-xl font-mono font-bold text-cyan-400">{score}</div>
+                            <div className="text-xl font-mono font-bold text-gray-500">HIDDEN (Privacy)</div>
                         </div>
                         <div className="bg-black/40 px-4 py-2 rounded-lg border border-white/10 shrink-0">
-                            <div className="text-[10px] text-gray-500 font-bold uppercase">Virtual Collateral</div>
-                            <div className="text-xl font-mono font-bold text-green-400">${(score * 12).toLocaleString()}</div>
+                            <div className="text-[10px] text-gray-500 font-bold uppercase">Collateral Check</div>
+                            <div className="text-xl font-mono font-bold text-green-400">ON-CHAIN</div>
                         </div>
                         <div className="bg-black/40 px-4 py-2 rounded-lg border border-white/10 shrink-0">
                             <div className="text-[10px] text-gray-500 font-bold uppercase">Status</div>
-                            <div className={`text-xl font-bold ${score > 700 ? 'text-green-500' : 'text-yellow-500'}`}>
-                                {score > 700 ? 'ECOSYSTEM PRIME' : 'STANDARD TIER'}
+                            <div className="text-xl font-bold text-blue-500">
+                                ACTIVE
                             </div>
                         </div>
                     </div>
@@ -84,12 +78,12 @@ const PartnerEcosystem = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-gray-950 border border-gray-800 rounded-xl">
                                     <div className="text-[10px] text-gray-500 font-bold mb-1 uppercase">APR (Interest Rate)</div>
-                                    <div className="text-2xl font-black text-white">{calculateLendingRate()}</div>
+                                    <div className="text-sm font-black text-white">Dynamic (1.5% - 15%)</div>
                                     <div className="text-[10px] text-blue-500 mt-2">Verified by SecureTransac</div>
                                 </div>
                                 <div className="p-4 bg-gray-950 border border-gray-800 rounded-xl">
                                     <div className="text-[10px] text-gray-500 font-bold mb-1 uppercase">Max Borrow Limit</div>
-                                    <div className="text-sm font-bold text-white leading-tight">{calculateMaxLoan()}</div>
+                                    <div className="text-sm font-bold text-white leading-tight">Up to 100 ETH</div>
                                     <div className="text-[10px] text-cyan-500 mt-2">Dynamic risk adjustment</div>
                                 </div>
                             </div>
@@ -101,9 +95,23 @@ const PartnerEcosystem = () => {
                                 </p>
                             </div>
 
-                            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20">
-                                Apply for Partner Loan
-                            </button>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Upload Collateral/Identity Proof</label>
+                                    <input 
+                                        type="file" 
+                                        onChange={(e) => setLoanFile(e.target.files[0])}
+                                        className="w-full mt-1 text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={handleApplyLoan}
+                                    disabled={applying}
+                                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                                >
+                                    {applying ? "Evaluating Trust Score..." : "Apply for Partner Loan"}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -144,7 +152,10 @@ const PartnerEcosystem = () => {
                                 resulting in 3x faster trade completion times.
                             </p>
 
-                            <button className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20 mt-auto">
+                            <button 
+                                onClick={() => alert("Profile Synced! Your Trust Score is now visible on SecureMarket.")}
+                                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20 mt-auto"
+                            >
                                 Sync with SecureMarket
                             </button>
                         </div>

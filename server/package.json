@@ -18,13 +18,13 @@
     "url": "https://github.com/AyushDocs/SecureTransac"
   },
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.mjs",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon --ignore data index.js",
+    "start": "node index.mjs",
+    "dev": "nodemon --ignore data index.mjs",
     "test": "mocha test/**/*.test.js --exit"
   },
   "dependencies": {

@@ -236,6 +236,7 @@ router.get('/analytics/sybil', protect, restrictTo('admin'), adminController.get
 // Cross-Chain Bridge
 router.post('/bridge/sync', protect, restrictTo('admin'), adminController.syncCrossChainScore);
 router.post('/proof', protect, adminController.generateProof);
+router.post('/verify-proof', adminController.verifyProof); // Public verification tool
 router.post('/stealth', protect, adminController.generateStealthAddress);
 router.get('/reports/user/:address', protect, adminController.getUserReport);
 router.get('/blind/keys', adminController.getBlindKeys);

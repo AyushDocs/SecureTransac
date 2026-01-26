@@ -195,7 +195,8 @@ export function AuthProvider({ children }) {
 
   // Switch active role/dashboard without re-authenticating
   const switchRole = useCallback(async (newRole) => {
-    if (!roles.includes(newRole)) {
+    const isAdmin = roles.includes('admin') || roles.includes('deployer');
+    if (!roles.includes(newRole) && !isAdmin) {
       throw new Error(`You don't have the ${newRole} role`);
     }
     

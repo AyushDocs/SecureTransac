@@ -2,6 +2,8 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { keccak256, stringToHex } from 'viem';
 import { generateStealthAddress, getBlindKeys, signBlind, submitAnonymousReport } from '../api/client';
+import ProofVerifierTool from '../components/ProofVerifierTool';
+import ZKProofSystem from '../components/ZKProofSystem';
 import PageWrapper from '../layout/PageWrapper';
 
 const PrivacyPortal = () => {
@@ -15,10 +17,7 @@ const PrivacyPortal = () => {
     
     // Separate loading states
     const [loadingHE, setLoadingHE] = useState(false);
-    const [loadingZK, setLoadingZK] = useState(false);
     const [loadingStealth, setLoadingStealth] = useState(false);
-
-    const [identityProof, setIdentityProof] = useState(null);
     const [stealthData, setStealthData] = useState(null);
     
     // Blind Signature states
@@ -28,6 +27,7 @@ const PrivacyPortal = () => {
     const [loadingBlind, setLoadingBlind] = useState(false);
     const [submittingReport, setSubmittingReport] = useState(false);
     const [blindKeys, setBlindKeys] = useState(null);
+    const [useStealthReporter, setUseStealthReporter] = useState(false);
 
     const handleStealthAddress = async () => {
         setLoadingStealth(true);
@@ -44,18 +44,6 @@ const PrivacyPortal = () => {
         }
     };
 
-    const downloadIdentityProof = () => {
-        if (!identityProof) return;
-        const blob = new Blob([JSON.stringify(identityProof, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `identity_proof_${Date.now()}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
 
     useEffect(() => {
         fetchPublicKey();
@@ -109,37 +97,6 @@ const PrivacyPortal = () => {
         }
     };
 
-    const handleZKProof = async () => {
-        setLoadingZK(true);
-        try {
-            // Simulate ZK-SNARK proof generation
-            console.log("Generating ZK-SNARK proof using Circom + Groth16...");
-            
-            // In production, this would:
-            // 1. Fetch user's actual score from contract
-            // 2. Generate witness using circom
-            // 3. Generate proof using snarkjs
-            // 4. Return proof + public signals
-            
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate computation
-            
-            const mockProof = {
-                pi_a: ["0x1234...", "0x5678..."],
-                pi_b: [["0xabcd...", "0xef01..."], ["0x2345...", "0x6789..."]],
-                pi_c: ["0x9abc...", "0xdef0..."],
-                publicSignals: ["1"] // 1 = proof valid (score > 600)
-            };
-            
-            setIdentityProof(mockProof);
-            // alert(`✅ ZK-SNARK Proof Generated!\n\nYou have proven that your trust score is above 600 WITHOUT revealing the actual score.\n\nProof Type: Groth16\nCircuit: trust_score_verifier.circom\nPublic Output: ${mockProof.publicSignals[0] === "1" ? "VERIFIED ✓" : "FAILED ✗"}\n\nThis proof can now be submitted on-chain for verification.`);
-            
-        } catch (error) {
-            console.error("ZK Proof generation failed:", error);
-            alert("❌ Proof generation failed. Ensure Circom circuits are compiled.");
-        } finally {
-            setLoadingZK(false);
-        }
-    };
 
     // Modular inverse using Extended Euclidean Algorithm
     const modInverse = (a, n) => {
@@ -238,7 +195,8 @@ const PrivacyPortal = () => {
                 targetAddress: targetAddress,
                 intent: blindResult.message,
                 hash: blindResult.hash,
-                signature: blindResult.signature
+                signature: blindResult.signature,
+                reporterAddress: useStealthReporter && stealthData ? stealthData.stealthAddress : "ANONYMOUS"
             };
             const res = await submitAnonymousReport(data);
             if (res.success) {
@@ -310,38 +268,18 @@ const PrivacyPortal = () => {
                 </div>
 
                 <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl">
-                    <h2 className="text-xl font-bold text-white mb-4">Zero-Knowledge Proofs (ZKP)</h2>
+                    <h2 className="text-xl font-bold text-white mb-4">Zero-Knowledge Attestations</h2>
                     <p className="text-gray-400 text-sm mb-4">
                         Prove your identity or trust level without revealing sensitive details. 
                         <b>Selective Disclosure</b> allows you to show a badge (e.g. "Trusted Partner") while keeping your score secret.
                     </p>
                     
-                    <div className="space-y-4">
-                        <div className="p-4 bg-gray-950 border border-gray-800 rounded-lg">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-gray-300">Identity Verifier</span>
-                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded font-bold">READY</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-4">Generating a ZK-SNARK proof for: <i>Score &gt; 600</i></div>
-                            <button 
-                                onClick={handleZKProof}
-                                disabled={loadingZK}
-                                className="w-full bg-gray-800 border border-gray-700 py-2 rounded text-xs font-bold text-white hover:bg-gray-700 transition-colors disabled:opacity-50"
-                            >
-                                {loadingZK ? '⏳ Generating Proof...' : '🛡️ Generate Identity Proof (Circom)'}
-                            </button>
-                        </div>
+                    <div className="space-y-6">
+                        <ZKProofSystem />
                         
-                        {identityProof && (
-                            <div className="mt-2 text-center">
-                                <button 
-                                    onClick={downloadIdentityProof}
-                                    className="text-xs text-green-400 font-bold hover:underline flex items-center justify-center gap-1"
-                                >
-                                    ✅ Proof Ready: Download JSON ⬇️
-                                </button>
-                            </div>
-                        )}
+                        <div className="pt-4 border-t border-gray-800">
+                             <ProofVerifierTool />
+                        </div>
 
                         <div className="p-4 bg-gray-950 border border-gray-800 rounded-lg">
                             <div className="flex justify-between items-center mb-2">
@@ -472,6 +410,28 @@ const PrivacyPortal = () => {
                                         <div className="mt-4 p-2 bg-black/40 rounded text-[9px] text-gray-400 border border-white/5 italic">
                                             Mathematically proven: Signature verification <b>s^e mod n == H</b> is TRUE, yet server cannot link 's' to 's'.
                                         </div>
+
+                                        {stealthData && (
+                                            <div className="mt-4 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm">👻</span>
+                                                    <div>
+                                                        <div className="text-[10px] text-white font-bold">Use Stealth Reporter</div>
+                                                        <div className="text-[8px] text-indigo-400 font-mono truncate w-32">{stealthData.stealthAddress}</div>
+                                                    </div>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="sr-only peer" 
+                                                        checked={useStealthReporter}
+                                                        onChange={() => setUseStealthReporter(!useStealthReporter)}
+                                                    />
+                                                    <div className="w-8 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                        )}
+
                                         <button 
                                             onClick={handleSubmitAnonymous}
                                             disabled={submittingReport}

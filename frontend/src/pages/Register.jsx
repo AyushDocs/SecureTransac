@@ -138,7 +138,7 @@ function Register() {
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 >
                   <option value="user">Normal User</option>
-                  <option value="company">Trusted Company</option>
+                  <option value="company">Company</option>
                   <option value="admin">System Admin</option>
                   <option value="deployer">Contract Deployer</option>
                 </select>

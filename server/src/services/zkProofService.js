@@ -4,6 +4,7 @@ const fs = require("fs");
 
 const WASM_PATH = path.resolve(__dirname, "../../../zk/build/trust_score_verifier_js/trust_score_verifier.wasm");
 const ZKEY_PATH = path.resolve(__dirname, "../../../zk/build/trust_score_verifier_final.zkey");
+const VKEY_PATH = path.resolve(__dirname, "../../../zk/build/verification_key.json");
 
 class ZKProofService {
     async generateScoreProof(trustScore, threshold, userSecret) {
@@ -32,6 +33,24 @@ class ZKProofService {
         } catch (error) {
             console.error("[ZK-Server] Proof failed:", error);
             throw new Error("Proof generation failed. Score likely assumes incorrect scale or threshold not met.");
+        }
+    }
+
+    async verifyScoreProof(proof, publicSignals) {
+        console.log("[ZK-Server] Verifying proof...");
+        
+        if (!fs.existsSync(VKEY_PATH)) {
+            throw new Error("Verification key not found on server.");
+        }
+
+        const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, 'utf8'));
+        
+        try {
+            const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+            return res;
+        } catch (error) {
+            console.error("[ZK-Server] Verification error:", error);
+            return false;
         }
     }
 }

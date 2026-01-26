@@ -369,7 +369,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-24T20:23:03.762Z",
+  "updatedAt": "2026-01-25T20:11:06.361Z",
   "devdoc": {
     "events": {
       "EIP712DomainChanged()": {

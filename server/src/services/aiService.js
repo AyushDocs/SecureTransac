@@ -1,7 +1,19 @@
 const persistence = require('./persistenceService');
 const web3Service = require('./web3Service');
+const { SimpleNeuralNetwork } = require('../utils/SimpleNeuralNetwork');
+const modelWeights = require('../utils/model_weights.json');
 
 class AIScoreService {
+    constructor() {
+        try {
+            this.model = SimpleNeuralNetwork.fromJSON(modelWeights);
+            console.log("[AI] Neural Network Model Loaded Successfully");
+        } catch (error) {
+            console.error("[AI] Failed to load model weights:", error.message);
+            this.model = null; 
+        }
+    }
+
     async calculateScore(address) {
         const [transactions, reports, onChainScore] = await Promise.all([
             web3Service.getTransactionHistory(address),
@@ -9,31 +21,56 @@ class AIScoreService {
             web3Service.getScore(address)
         ]);
         
-        // Base score from contract
-        let baseScore = Number(onChainScore) / 100;
+        // --- Feature Extraction & Normalization ---
         
-        // 1. Historical Analytics Weight
-        const historyScore = (transactions.length * 0.02) - (reports.length * 0.15);
+        // 1. TxVolume (Normalized 0-1)
+        let avgAmount = 0;
+        if (transactions.length > 0) {
+            avgAmount = transactions.reduce((sum, t) => sum + Number(t.amount), 0) / transactions.length;
+        }
+        const txVolume = Math.tanh(avgAmount / 100); 
 
-        // 2. Temporal Anomaly Detection
-        const anomalyPenalty = this.detectTemporalAnomalies(transactions);
-        if (anomalyPenalty > 0) {
-            console.log(`[AI] Temporal Anomaly Detected for ${address}: Penalty -${anomalyPenalty}`);
+        // 2. TxFrequency (0-1)
+        const txFrequency = Math.tanh(transactions.length / 50);
+
+        // 3. AccountAge (0-1)
+        let accountAge = 0;
+        if (transactions.length > 0) {
+            const firstTxTime = transactions.reduce((min, t) => Math.min(min, t.timestamp), Date.now());
+            const daysActive = (Date.now() - firstTxTime) / (1000 * 60 * 60 * 24);
+            accountAge = Math.tanh(daysActive / 365);
         }
 
-        // 3. Social Graph Scoring (Guilt by Association)
-        const socialRisk = await this.calculateSocialGraphRisk(address, transactions);
-        if (socialRisk !== 0) {
-            console.log(`[AI] Social Graph Impact for ${address}: ${socialRisk > 0 ? '+' : ''}${socialRisk}`);
+        // 4. ReportCount (0 or 1)
+        const reportCount = reports.length > 0 ? 1.0 : 0.0;
+
+        // 5. SocialScore (0-1)
+        const socialRiskModifier = await this.calculateSocialGraphRisk(address, transactions);
+        let socialScore = 0.8 + socialRiskModifier;
+        socialScore = Math.max(0, Math.min(1, socialScore));
+
+        // --- Prediction ---
+        let predictedScore = 0.5;
+
+        if (this.model) {
+            const features = [txVolume, txFrequency, accountAge, reportCount, socialScore];
+            try {
+                predictedScore = this.model.predict(features);
+                predictedScore = Math.max(0, Math.min(1, predictedScore));
+            } catch (e) {
+                console.error(`[AI] Prediction failed for ${address}:`, e.message);
+                predictedScore = (Number(onChainScore) / 100);
+            }
+        } else {
+             predictedScore = (Number(onChainScore) / 100) + socialRiskModifier;
         }
         
-        return Math.max(0, Math.min(1, baseScore + historyScore - anomalyPenalty + socialRisk));
+        return predictedScore;
     }
 
     async calculateSocialGraphRisk(targetAddress, transactions) {
         if (!transactions || transactions.length === 0) return 0;
 
-        // Get unique partners (limit to last 10 for performance)
         const partners = new Set();
         transactions.slice(0, 10).forEach(tx => {
             if (tx.from.toLowerCase() !== targetAddress.toLowerCase()) partners.add(tx.from);
@@ -42,24 +79,16 @@ class AIScoreService {
 
         if (partners.size === 0) return 0;
 
-        // Fetch scores of partners
         const scores = await Promise.all(Array.from(partners).map(addr => web3Service.getScore(addr)));
         
-        // Calculate Average Network Trust
         const totalPartnerScore = scores.reduce((sum, s) => sum + Number(s), 0);
         const avgPartnerScore = totalPartnerScore / partners.size;
 
-        // Algorithm:
-        // - If average partner score < 30 (Bad neighborhood) -> Penalty -0.15
-        // - If average partner score > 80 (Elite circle) -> Boost +0.05
-        // - Individual interaction with Blacklisted user (< 20) -> Immediate Penalty -0.1
-        
         let riskModifier = 0;
 
         if (avgPartnerScore < 30) riskModifier -= 0.15;
         else if (avgPartnerScore > 80) riskModifier += 0.05;
 
-        // Check for direct bad actor contact
         const hasBadActorContact = scores.some(s => Number(s) <= 20);
         if (hasBadActorContact) riskModifier -= 0.1;
 
@@ -73,18 +102,14 @@ class AIScoreService {
         const oneHour = 60 * 60 * 1000;
         const oneDay = 24 * 60 * 60 * 1000;
 
-        // Anomaly 1: Frequency Spike (More than 10 tx in last hour)
         const recentTx = transactions.filter(tx => (now - tx.timestamp) < oneHour);
-        if (recentTx.length > 10) return 0.2; // High penalty for spamming
+        if (recentTx.length > 10) return 0.2;
 
-        // Anomaly 2: Volume/Value Spike
-        // Calculate average volume of past transactions (excluding last 24h to establish baseline)
         const pastTx = transactions.filter(tx => (now - tx.timestamp) > oneDay);
         if (pastTx.length > 5) {
             const avgVolume = pastTx.reduce((sum, tx) => sum + tx.amount, 0) / pastTx.length;
             const recentVolume = recentTx.reduce((sum, tx) => sum + tx.amount, 0);
             
-            // If recent volume is > 5x average -> Suspicious
             if (recentVolume > (avgVolume * 5) && recentVolume > 10) { 
                 return 0.15; 
             }
@@ -102,19 +127,16 @@ class AIScoreService {
         ]);
 
         let senderShift = 0;
-        // Logic: Interacting with low-trust users reduces your score
         if (Number(receiverScore) < 40) {
             senderShift = -0.1;
             persistence.incrementBlockedTransactions();
             console.log(`[AI] Penalty: ${from} interacted with suspicious receiver ${to}`);
         }
 
-        // Logic: High value transactions increase score IF they are from trusted users
         if (amount > 100 && Number(senderScore) > 70) {
             senderShift += 0.01;
         }
 
-        // Record the transaction ON-CHAIN as an event
         await web3Service.recordTransaction(from, to, amount);
 
         if (senderShift !== 0) {
@@ -132,12 +154,8 @@ class AIScoreService {
         
         const targetUser = persistence.getUser(target);
         const fromUser = persistence.getUser(from);
-
-        // Logic: Sentiment-based adjustment.
-        // rating is 1-5. 3 is neutral.
-        let sentimentShift = (rating - 3) * 0.05;
         
-        // Weight by reporter trust
+        let sentimentShift = (rating - 3) * 0.05;
         sentimentShift *= fromUser.trustScore;
 
         targetUser.trustScore += sentimentShift;
@@ -172,22 +190,33 @@ class AIScoreService {
             return;
         }
 
-        const impactWeight = auth ? 0.3 : (Number(reporterScore) > 80 ? 0.2 : 0.05);
+        const reporterUser = !isAnonymous ? persistence.getUser(reporter) : null;
+        const isCompany = reporterUser && reporterUser.role === 'company';
+
+        let impactWeight = 0.05; // Default
+
+        if (auth) {
+            impactWeight = 0.3;
+            console.log(`[AI] Authority Report (Weight: 0.3)`);
+        } else if (isCompany) {
+            impactWeight = 0.25; // 4x-5x normal impact (Strong)
+            console.log(`[AI] Trusted Company Report (Weight: 0.25)`);
+        } else if (Number(reporterScore) > 80) {
+            impactWeight = 0.2; // High Rep User
+        }
         
-        const redFlags = ['scam', 'fraud', 'steal', 'theft', 'fake', 'stolen'];
         let flagCount = 0;
+        const redFlags = ['scam', 'fraud', 'steal', 'theft', 'fake', 'stolen'];
         redFlags.forEach(word => {
             if (text.toLowerCase().includes(word)) flagCount++;
         });
 
-        if (flagCount > 0 || auth) {
+        if (flagCount > 0 || auth || isCompany) {
             const finalFlagCount = flagCount || 1;
             let newScore = (Number(targetScore) / 100) - (impactWeight * finalFlagCount);
             newScore = Math.max(0, Math.min(1, newScore));
             
-            // Log the report on-chain
             await web3Service.submitReport(target, text);
-            // Update the score on-chain
             await web3Service.updateScore(target, newScore);
             
             if (auth) {
@@ -230,7 +259,6 @@ class AIScoreService {
 
         const user = persistence.getUser(address);
         
-        // REPUTATION LOGIC: If unblocking/resetting, check for authority reports to penalize
         if (action === 'whitelist' || action === 'reset') {
             const authorityReports = user.complaints.filter(c => c.isAuthority);
             authorityReports.forEach(report => {
@@ -240,7 +268,6 @@ class AIScoreService {
         }
 
         user.trustScore = newScore;
-        // Record the override as a complaint with ADMIN reporter
         user.complaints.push({ 
             reporter: 'ADMIN', 
             text: `Manual ${action}: ${reason}`, 

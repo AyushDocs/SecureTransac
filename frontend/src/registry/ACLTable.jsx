@@ -6,7 +6,7 @@ function ACLTable({ entries, onRemove }) {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="p-4 border-b border-border">
-        <h3 className="text-lg font-semibold text-foreground">Access Control List</h3>
+        <h3 className="text-lg font-semibold text-foreground">Recently Authorized Accounts: </h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">

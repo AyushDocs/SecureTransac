@@ -20,10 +20,13 @@ abstract contract Guardian {
     }
 
     modifier onlyTrusted() {
-        uint256 userScore = registry.getScore(msg.sender);
+        // Use ZK verified lower bound instead of raw encrypted score
+        uint256 userScore = registry.provenScoreLowerBound(msg.sender);
         
         require(!registry.isBlacklisted(msg.sender), "Address blacklisted");
-        require(userScore >= minRequiredScore, "Insufficient trust score");
+        if (userScore < minRequiredScore) {
+             revert InsufficientTrustScore(msg.sender, userScore, minRequiredScore);
+        }
         _;
     }
 

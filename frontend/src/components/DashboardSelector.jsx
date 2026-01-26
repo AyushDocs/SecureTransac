@@ -20,25 +20,19 @@ const ROLE_INFO = {
     color: 'from-purple-500 to-indigo-500',
     path: '/dashboard'
   },
-  creator: {
-    title: 'Creator Dashboard',
-    description: 'Content creation and verification services',
-    icon: '🏢',
-    color: 'from-blue-500 to-cyan-500',
-    path: '/dashboard'
-  },
+
   company: {
-    title: 'Company Dashboard',
+    title: 'Trusted Company Dashboard',
     description: 'Business verification and KYB services',
     icon: '🏢',
     color: 'from-blue-500 to-cyan-500',
     path: '/dashboard'
   },
   viewer: {
-    title: 'User Dashboard',
-    description: 'Personal trust score and identity management',
-    icon: '👤',
-    color: 'from-green-500 to-emerald-500',
+    title: 'Public Viewer',
+    description: 'Read-only access for auditing and transparency',
+    icon: '👁️',
+    color: 'from-gray-500 to-slate-500',
     path: '/dashboard'
   },
   user: {
@@ -157,7 +151,15 @@ export function RoleSwitcher() {
   const { roles, activeRole, switchRole } = useAuth();
   const navigate = useNavigate();
 
-  if (!roles || roles.length <= 1) {
+  const isAdmin = roles && (roles.includes('admin') || roles.includes('deployer'));
+  
+  // For admins, ensure company role is available for switching/demo
+  let displayRoles = roles ? [...roles] : [];
+  if (isAdmin && !displayRoles.includes('company')) {
+    displayRoles.push('company');
+  }
+
+  if (!displayRoles || displayRoles.length <= 1) {
     return null;
   }
 
@@ -173,7 +175,7 @@ export function RoleSwitcher() {
 
   return (
     <div className="flex items-center gap-1 p-1 bg-gray-800 rounded-lg">
-      {roles.map((role) => {
+      {displayRoles.map((role) => {
         const info = ROLE_INFO[role] || ROLE_INFO.user;
         const isActive = role === activeRole;
 

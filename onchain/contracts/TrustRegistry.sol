@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./ScoringSystem.sol";
 import "./TransactionLogger.sol";
 import "./ReportingSystem.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title TrustRegistry
@@ -12,12 +13,36 @@ import "./ReportingSystem.sol";
  * Ideally, frontend would interact with specific contracts, but this wrapper simplifies migration.
  */
 contract TrustRegistry is ScoringSystem, TransactionLogger, ReportingSystem {
+    IERC20 public trustToken;
+
+    event TierUpgraded(address indexed user, AuthorityTier tier, uint256 stakedAmount);
+
     constructor() AccessControl() {
         // Constructor logic if any necessary beyond inherited ones
         // AccessControl constructor (via ScoringSystem -> AccessControl) sets msg.sender as reporter
     }
     
-    // Wrapper functions if needed to expose inherited public functions generally work automatically.
-    // However, Solidity inheritance rules for functions with same name (if any) need overrides.
-    // Here we have distinct functions so it should be fine.
+    function setTrustToken(address _token) external onlyOwner {
+        trustToken = IERC20(_token);
+    }
+
+    function upgradeTier(uint8 tierIndex) external {
+        require(address(trustToken) != address(0), "Token not set");
+        require(tierIndex == 2 || tierIndex == 3, "Invalid tier"); // 2=INSTITUTIONAL, 3=DIAMOND
+        
+        uint256 cost;
+        if (tierIndex == 2) {
+             cost = 5000 * 10**18;
+        } else {
+             cost = 50000 * 10**18;
+        }
+        
+        require(trustToken.transferFrom(msg.sender, address(this), cost), "Stake transfer failed");
+        
+        isAuthorizedReporter[msg.sender] = true;
+        reporterTier[msg.sender] = AuthorityTier(tierIndex);
+        
+        emit TierUpgraded(msg.sender, AuthorityTier(tierIndex), cost);
+        emit ReporterStatusChanged(msg.sender, true, AuthorityTier(tierIndex));
+    }
 }

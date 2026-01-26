@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import Web3 from "web3";
+import CreditManager from '../components/CreditManager';
 import { useAuth } from '../context/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
 
@@ -10,182 +12,227 @@ const TrustDAO = () => {
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [proposalText, setProposalText] = useState("");
-    const [votedProposals, setVotedProposals] = useState({}); // Track user's votes: { proposalId: 'for' | 'against' }
+    const [votedProposals, setVotedProposals] = useState({});
+    const [refresh, setRefresh] = useState(0);
 
     useEffect(() => {
         if (user?.address) {
-            fetchDAOInfo();
+            loadData();
         }
-    }, [user?.address]);
+    }, [user?.address, refresh]);
 
-    const fetchDAOInfo = async () => {
-        // Mocking DAO data for demo
-        setTimeout(() => {
-            setBalance("5,000");
-            setStaked("1,000");
-            setRewards("124.50");
-            setProposals([
-                { id: 1, title: "Lower Whitelist Threshold to 750", for: 450000, against: 12000, status: "Active", endTime: Date.now() + 86400000 },
-                { id: 2, title: "Add 'BlockFi' as Trusted Authority", for: 980000, against: 0, status: "Executed", endTime: Date.now() - 86400000 }
-            ]);
+    const loadData = async () => {
+        try {
+            const w3 = new Web3(window.ethereum);
+            const netId = await w3.eth.net.getId();
+            
+            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+
+            const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+
+            if (!tokenData || !daoData) {
+                setLoading(false);
+                return;
+            }
+
+            const token = new w3.eth.Contract(TokenArtifact.default.abi, tokenData.address);
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+
+            // Fetch Stats
+            const bal = await token.methods.balanceOf(user.address).call();
+            const stk = await dao.methods.stakes(user.address).call();
+            const rew = await dao.methods.claimableRewards(user.address).call();
+            const nextId = await dao.methods.nextProposalId().call();
+
+            setBalance(parseFloat(w3.utils.fromWei(bal, 'ether')).toLocaleString());
+            setStaked(parseFloat(w3.utils.fromWei(stk, 'ether')).toLocaleString());
+            setRewards(parseFloat(w3.utils.fromWei(rew, 'ether')).toLocaleString());
+
+            // Fetch Proposals
+            const pList = [];
+            const votesMap = {};
+            for (let i = 0; i < nextId; i++) {
+                const p = await dao.methods.proposals(i).call();
+                const voted = await dao.methods.getHasVoted(i, user.address).call();
+                
+                pList.push({
+                    id: p.id,
+                    title: p.description,
+                    for: parseFloat(w3.utils.fromWei(p.forVotes, 'ether')),
+                    against: parseFloat(w3.utils.fromWei(p.againstVotes, 'ether')),
+                    status: p.executed ? "Executed" : (Date.now() > p.endTime * 1000 ? "Pending Execution" : "Active"),
+                    endTime: p.endTime * 1000,
+                    pType: p.pType,
+                    proposer: p.proposer
+                });
+                if (voted) votesMap[p.id] = true;
+            }
+            setProposals(pList.reverse());
+            setVotedProposals(votesMap);
             setLoading(false);
-        }, 1000);
+        } catch (err) {
+            console.error("DAO Load Error:", err);
+            setLoading(false);
+        }
     };
 
     const handleStake = async () => {
-        alert("Staking 1,000 $TRUST tokens. This will grant you 'Trusted Reporter' status on the main registry.");
-        setStaked("1,000");
-    };
+        try {
+            const w3 = new Web3(window.ethereum);
+            const netId = await w3.eth.net.getId();
+            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+            const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+            
+            const token = new w3.eth.Contract(TokenArtifact.default.abi, tokenData.address);
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+            const amount = w3.utils.toWei("1000", "ether");
 
-    const handleClaim = () => {
-        alert("Rewards claimed! 124.50 $TRUST added to your wallet.");
-        setRewards("0");
-        setBalance("5,124.50");
-    };
-
-    const handleCreateProposal = (e) => {
-        e.preventDefault();
-        if (!proposalText) return;
-        const newP = {
-            id: proposals.length + 1,
-            title: proposalText,
-            for: 0,
-            against: 0,
-            status: "Active",
-            endTime: Date.now() + 259200000
-        };
-        setProposals([newP, ...proposals]);
-        setProposalText("");
-        alert("Proposal submitted to the DAO!");
-    };
-
-    const handleVote = (proposalId, voteType) => {
-        // Check if user has staked tokens (required for voting)
-        if (staked === "0") {
-            alert("You must stake $TRUST tokens to vote on proposals.");
-            return;
+            alert("Approving 1,000 $TRUST for staking...");
+            await token.methods.approve(daoData.address, amount).send({ from: user.address });
+            alert("Staking...");
+            await dao.methods.stake().send({ from: user.address });
+            setRefresh(r => r + 1);
+        } catch (err) {
+            alert("Stake failed: " + err.message);
         }
-
-        setProposals(prevProposals => 
-            prevProposals.map(p => {
-                if (p.id === proposalId) {
-                    // Check if proposal is still active
-                    if (p.status !== "Active") {
-                        alert("This proposal is no longer active.");
-                        return p;
-                    }
-                    
-                    // Add vote (using staked amount as voting power)
-                    const votingPower = parseInt(staked.replace(/,/g, '')) || 1000;
-                    
-                    if (voteType === 'for') {
-                        return { ...p, for: p.for + votingPower };
-                    } else {
-                        return { ...p, against: p.against + votingPower };
-                    }
-                }
-                return p;
-            })
-        );
-
-        // Record that user has voted on this proposal
-        setVotedProposals(prev => ({
-            ...prev,
-            [proposalId]: voteType
-        }));
-
-        alert(`Vote ${voteType === 'for' ? 'FOR' : 'AGAINST'} recorded! Your voting power: ${staked} $TRUST`);
     };
 
-    // Check if user has already voted on a proposal
-    const hasVoted = (proposalId) => votedProposals[proposalId] !== undefined;
-    const getVoteType = (proposalId) => votedProposals[proposalId];
+    const handleCreateProposal = async (e) => {
+        e.preventDefault();
+        try {
+            const w3 = new Web3(window.ethereum);
+            const netId = await w3.eth.net.getId();
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+
+            await dao.methods.createProposal(proposalText).send({ from: user.address });
+            setProposalText("");
+            setRefresh(r => r + 1);
+            alert("Proposal submitted!");
+        } catch (err) {
+            alert("Proposal failed: " + err.message);
+        }
+    };
+
+    const handleVote = async (proposalId, support) => {
+        try {
+            const w3 = new Web3(window.ethereum);
+            const netId = await w3.eth.net.getId();
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+
+            await dao.methods.vote(proposalId, support).send({ from: user.address });
+            setRefresh(r => r + 1);
+        } catch (err) {
+            alert("Vote failed: " + err.message);
+        }
+    };
+
+    const handleExecute = async (proposalId) => {
+        try {
+            const w3 = new Web3(window.ethereum);
+            const netId = await w3.eth.net.getId();
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+
+            await dao.methods.executeProposal(proposalId).send({ from: user.address });
+            setRefresh(r => r + 1);
+            alert("Proposal executed!");
+        } catch (err) {
+            alert("Execution failed: " + err.message);
+        }
+    };
 
     return (
         <PageWrapper title="Governance DAO Portal">
             <div className="space-y-8">
-                {/* Stats Row */}
+                <div className="md:col-span-1">
+                    <CreditManager />
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
-                        <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">My Governance Balance</div>
+                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center">
+                        <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">My Wallet Balance</div>
                         <div className="text-3xl font-black text-white">{balance} <span className="text-sm text-cyan-500">$TRUST</span></div>
                     </div>
-                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
+                    
+                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center">
                         <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">My Locked Stake</div>
                         <div className="text-3xl font-black text-white">{staked} <span className="text-sm text-purple-500">$TRUST</span></div>
                     </div>
-                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
+
+                    <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center text-center">
                         <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">Claimable Rewards</div>
                         <div className="text-3xl font-black text-white">{rewards} <span className="text-sm text-green-500">$TRUST</span></div>
-                        {rewards !== "0" && (
-                            <button onClick={handleClaim} className="mt-2 text-[10px] text-green-400 font-black uppercase hover:underline">Claim Now</button>
-                        )}
                     </div>
+
                     <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl flex flex-col justify-center">
                         <button 
                             onClick={handleStake}
                             disabled={staked !== "0"}
-                            className={`w-full py-3 rounded-xl font-bold transition-all ${staked === "0" ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}
+                            className={`w-full py-4 rounded-xl font-bold transition-all ${staked === "0" ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}
                         >
-                            {staked === "0" ? '🛡️ Stake to become Authority' : '✅ Active Authority'}
+                            {staked === "0" ? '🛡️ Stake to join DAO' : '✅ Active Member'}
                         </button>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Proposals List */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
                             <div className="p-6 border-b border-gray-800 flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-white">Active Proposals</h2>
-                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-1 rounded font-bold">SNAPSHOT ACTIVE</span>
+                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-1 rounded font-bold uppercase tracking-widest">Live Chain Data</span>
                             </div>
+                            
                             <div className="divide-y divide-gray-800">
-                                {proposals.map(p => (
+                                {loading ? (
+                                    <div className="p-10 text-center text-gray-500 uppercase tracking-widest text-xs">Loading Governance State...</div>
+                                ) : proposals.length === 0 ? (
+                                    <div className="p-10 text-center text-gray-500 uppercase tracking-widest text-xs">No active proposals found</div>
+                                ) : proposals.map(p => (
                                     <div key={p.id} className="p-6 hover:bg-gray-800/30 transition-colors">
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <div className="text-[10px] text-gray-500 font-mono mb-1">PROPOSAL #{p.id}</div>
-                                                <h3 className="text-lg font-bold text-white">{p.title}</h3>
+                                                <div className="text-[10px] text-gray-500 font-mono mb-1 uppercase">
+                                                    #{p.id} • {p.pType === "1" ? "KYB ADMISSION" : "GENERIC"}
+                                                </div>
+                                                <h3 className="text-lg font-bold text-white leading-tight">{p.title}</h3>
                                             </div>
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${p.status === 'Active' ? 'bg-blue-500/10 text-blue-500' : 'bg-gray-800 text-gray-500'}`}>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${p.status === 'Active' ? 'bg-blue-500/10 text-blue-500' : p.status === 'Executed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
                                                 {p.status}
                                             </span>
                                         </div>
                                         
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-gray-400">For: {p.for.toLocaleString()}</span>
-                                                <span className="text-gray-400">Against: {p.against.toLocaleString()}</span>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between text-[10px] font-bold">
+                                                <span className="text-green-500 uppercase">For: {p.for.toLocaleString()}</span>
+                                                <span className="text-red-500 uppercase">Against: {p.against.toLocaleString()}</span>
                                             </div>
-                                            <div className="h-2 bg-gray-800 rounded-full overflow-hidden flex">
-                                                <div className="h-full bg-green-500" style={{ width: `${(p.for / (p.for + p.against + 1)) * 100}%` }}></div>
-                                                <div className="h-full bg-red-500" style={{ width: `${(p.against / (p.for + p.against + 1)) * 100}%` }}></div>
+                                            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden flex">
+                                                <div className="h-full bg-green-500" style={{ width: `${(p.for / (p.for + p.against + 0.0001)) * 100}%` }}></div>
+                                                <div className="h-full bg-red-500" style={{ width: `${(p.against / (p.for + p.against + 0.0001)) * 100}%` }}></div>
                                             </div>
-                                            {hasVoted(p.id) ? (
-                                                <div className="flex items-center justify-center gap-2 py-2 bg-gray-800/50 rounded-lg">
-                                                    <span className={`text-xs font-bold ${getVoteType(p.id) === 'for' ? 'text-green-500' : 'text-red-500'}`}>
-                                                        ✓ You voted {getVoteType(p.id) === 'for' ? 'FOR' : 'AGAINST'}
-                                                    </span>
+
+                                            {votedProposals[p.id] ? (
+                                                <div className="text-center py-2 bg-gray-800/50 rounded-lg text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    ✓ Participation Recorded
                                                 </div>
-                                            ) : (
+                                            ) : p.status === 'Active' ? (
                                                 <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={() => handleVote(p.id, 'for')}
-                                                        disabled={p.status !== 'Active'}
-                                                        className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${p.status === 'Active' ? 'bg-green-600/10 hover:bg-green-600/20 text-green-500' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
-                                                    >
-                                                        VOTE FOR
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleVote(p.id, 'against')}
-                                                        disabled={p.status !== 'Active'}
-                                                        className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${p.status === 'Active' ? 'bg-red-600/10 hover:bg-red-600/20 text-red-500' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
-                                                    >
-                                                        VOTE AGAINST
-                                                    </button>
+                                                    <button onClick={() => handleVote(p.id, true)} className="flex-1 py-2 rounded-lg bg-green-600/10 hover:bg-green-600/20 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-600/20 transition-all">Support</button>
+                                                    <button onClick={() => handleVote(p.id, false)} className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-600/20 transition-all">Oppose</button>
                                                 </div>
-                                            )}
+                                            ) : p.status === 'Pending Execution' ? (
+                                                <button onClick={() => handleExecute(p.id)} className="w-full py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-all">Tally & Execute</button>
+                                            ) : null}
                                         </div>
                                     </div>
                                 ))}
@@ -193,46 +240,28 @@ const TrustDAO = () => {
                         </div>
                     </div>
 
-                    {/* Propose Panel */}
                     <div className="lg:col-span-1">
-                        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl sticky top-6">
-                            <h2 className="text-xl font-bold text-white mb-2">Create Proposal</h2>
-                            <p className="text-xs text-gray-500 mb-6">Requires 1,000 $TRUST to initiate a vote. Proposals last 3 days.</p>
+                        <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl sticky top-6 shadow-2xl">
+                            <h2 className="text-xl font-bold text-white mb-2">New Proposal</h2>
+                            <p className="text-xs text-gray-500 mb-6 font-medium">Locked stake is required to participate in governance.</p>
                             
                             <form onSubmit={handleCreateProposal} className="space-y-4">
                                 <textarea 
-                                    className="w-full bg-gray-950 border border-gray-800 rounded-xl p-4 text-white text-sm focus:ring-1 focus:ring-cyan-500 outline-none"
-                                    placeholder="I propose that we..."
-                                    rows="5"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-xl p-4 text-white text-sm focus:ring-1 focus:ring-cyan-500 outline-none transition-all placeholder:text-gray-700"
+                                    placeholder="Draft your decentralized proposal..."
+                                    rows="6"
                                     value={proposalText}
                                     onChange={e => setProposalText(e.target.value)}
                                     required
                                 />
                                 <button 
                                     type="submit"
-                                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg"
+                                    disabled={staked === "0"}
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-xl ${staked !== "0" ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
                                 >
-                                    Submit Proposal
+                                    Broadcast Proposal
                                 </button>
                             </form>
-
-                            <div className="mt-8 pt-6 border-t border-gray-800">
-                                <div className="text-[10px] text-gray-500 font-bold uppercase mb-4 text-center">Governance Parameters</div>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-gray-400">Quorum</span>
-                                        <span className="text-white font-bold">400,000 $TRUST</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-gray-400">Voting Period</span>
-                                        <span className="text-white font-bold">72 Hours</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-gray-400">Proposal Threshold</span>
-                                        <span className="text-white font-bold">1,000 $TRUST</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

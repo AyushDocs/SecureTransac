@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../api/config';
 import PageWrapper from '../layout/PageWrapper';
 
 const AdvancedAnalytics = () => {
@@ -15,11 +16,12 @@ const AdvancedAnalytics = () => {
 
     const fetchGlobalData = async () => {
         try {
+            const token = localStorage.getItem('userToken');
+            const headers = { Authorization: `Bearer ${token}` };
+
             const [hRes, sRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/analytics/heatmap'),
-                axios.get('http://localhost:5000/api/admin/analytics/sybil', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                })
+                axios.get(`${API_BASE_URL}/admin/analytics/heatmap`, { headers }),
+                axios.get(`${API_BASE_URL}/admin/analytics/sybil`, { headers })
             ]);
             setHeatmap(hRes.data.heatmap);
             setSybilClusters(sRes.data.clusters);
@@ -33,7 +35,10 @@ const AdvancedAnalytics = () => {
     const handleFingerprintSearch = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.get(`http://localhost:5000/api/admin/analytics/fingerprint/${searchAddr}`);
+            const token = localStorage.getItem('userToken');
+            const res = await axios.get(`${API_BASE_URL}/admin/analytics/fingerprint/${searchAddr}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setFingerprint(res.data);
         } catch (err) {
             alert("No data for this address");

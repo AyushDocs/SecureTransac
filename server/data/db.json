@@ -1159,9 +1159,13 @@
       ],
       "complaints": [],
       "trustScore": 0.56,
-      "name": "System Deployer",
-      "role": "deployer",
-      "registrationDate": "2026-01-23T20:24:06.022Z"
+      "name": "company",
+      "role": "company",
+      "registrationDate": "2026-01-25T09:15:48.516Z",
+      "email": "company@dd.nm",
+      "companyName": "company",
+      "description": "",
+      "identityCid": "QmcFHip4RxMRmj82XiYhrMhAsVDAPAxJUQeVhS6V2Dz5uA"
     },
     "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f": {
       "transactions": [
@@ -1329,14 +1333,15 @@
   "nonces": {
     "0xffcf8fdee72ac11b5c542428b35eef5769c409f0": "SECURE_TRANSAC_AUTH_CHALLENGE_111702_1769232969568",
     "0x90f79bf6eb2c4f870365e785982e1f101e93b906": "SECURE_TRANSAC_AUTH_CHALLENGE_941122_1769237649061",
-    "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": "SECURE_TRANSAC_AUTH_CHALLENGE_815945_1769284587409",
+    "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": "SECURE_TRANSAC_AUTH_CHALLENGE_783897_1769360652490",
     "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": "SECURE_TRANSAC_AUTH_CHALLENGE_534982_1769298267516"
   },
   "stealthLinks": {
     "0xa717f468e81b8ab3625e63aaf84d35399224ae98": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
     "0xf4bee0cc50b7b7495e3ed210236842934aabe1c5": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
     "0x291bda10d96b8dabcde5a08281d0ce663ed1bbc0": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-    "0x23c1092c2f9bac78e937d08adad1929a46f168c8": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+    "0x23c1092c2f9bac78e937d08adad1929a46f168c8": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+    "0x56c1fd9bc446944a8af04278ddac1a94bebe6fcc": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
   },
   "appeals": []
 }

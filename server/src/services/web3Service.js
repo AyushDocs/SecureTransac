@@ -1,4 +1,8 @@
 const { Web3 } = require('web3');
+const paillier = require('paillier-bigint');
+const fs = require('fs');
+const path = require('path');
+const KEYS_FILE_PATH = path.join(__dirname, '../../paillier_keys.json');
 const TrustRegistry = require('../../../onchain/build/contracts/TrustRegistry.json');
 const IdentityVault = require('../../../onchain/build/contracts/IdentityVault.json');
 const VerificationRegistry = require('../../../onchain/build/contracts/VerificationRegistry.json');
@@ -10,6 +14,7 @@ class Web3Service {
     constructor() {
         try {
             this.web3 = new Web3(process.env.PROVIDER_URL || 'http://127.0.0.1:7545');
+            this.paillier = paillier;
             
             // Priority: Env variables -> Networks from JSON -> Fallbacks
             this.registryAddress = process.env.REGISTRY_ADDRESS;
@@ -51,8 +56,51 @@ class Web3Service {
             if (this.verificationAddress) {
                 this.verificationContract = new this.web3.eth.Contract(VerificationRegistry.abi, this.verificationAddress);
             }
+
+            // Validating keys persistence
+            this._loadKeys();
+
         } catch (e) {
             console.error("[Web3] CRITICAL ERROR IN CONSTRUCTOR:", e);
+        }
+    }
+
+    _loadKeys() {
+        if (fs.existsSync(KEYS_FILE_PATH)) {
+            try {
+                const data = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+                const { PublicKey, PrivateKey } = this.paillier;
+                const pub = new PublicKey(BigInt(data.public.n), BigInt(data.public.g));
+                const priv = new PrivateKey(BigInt(data.private.lambda), BigInt(data.private.mu), pub, BigInt(data.private.p), BigInt(data.private.q));
+                this.paillierKeys = { publicKey: pub, privateKey: priv };
+                console.log("[Web3] Paillier keys loaded from disk.");
+                return true;
+            } catch (e) {
+                console.error("[Web3] Failed to load keys from disk:", e.message);
+            }
+        }
+        return false;
+    }
+
+    _saveKeys() {
+        if (!this.paillierKeys) return;
+        try {
+            const data = {
+                public: {
+                    n: this.paillierKeys.publicKey.n.toString(),
+                    g: this.paillierKeys.publicKey.g.toString()
+                },
+                private: {
+                    lambda: this.paillierKeys.privateKey.lambda.toString(),
+                    mu: this.paillierKeys.privateKey.mu.toString(),
+                    p: this.paillierKeys.privateKey.p.toString(),
+                    q: this.paillierKeys.privateKey.q.toString(),
+                }
+            };
+            fs.writeFileSync(KEYS_FILE_PATH, JSON.stringify(data, null, 2));
+            console.log("[Web3] Paillier keys saved to disk.");
+        } catch (e) {
+            console.error("[Web3] Failed to save keys:", e.message);
         }
     }
 
@@ -67,6 +115,26 @@ class Web3Service {
             gasPrice: await this.web3.eth.getGasPrice(),
         }, process.env.ADMIN_PRIVATE_KEY);
         return await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    }
+
+    // Privacy: compliant with storing multipliable hash (homomorphic property placeholder)
+    async _applyPrivacyHash(score) {
+        if (!this.paillierKeys) {
+            console.log("[Web3] Generating Paillier Keys (1024-bit)...");
+            // keys: { publicKey, privateKey }
+            this.paillierKeys = await this.paillier.generateRandomKeys(1024);
+            console.log("[Web3] Paillier Keys generated.");
+            this._saveKeys();
+        }
+        
+        // Homomorphic Encryption of the score
+        // Score is 0-100 integer.
+        // E(m) = g^m * r^n mod n^2
+        const m = Math.floor(score * 100);
+        const ciphertext = this.paillierKeys.publicKey.encrypt(BigInt(m));
+        
+        console.log(`[Web3] Paillier Encrypted Score (Homomorphic): ${ciphertext.toString().substring(0, 64)}...`);
+        return ciphertext;
     }
 
     async updateScore(targetAddress, score) {
@@ -99,8 +167,16 @@ class Web3Service {
             console.warn("[Web3] Permission check/pre-flight failed:", e.message);
         }
 
-        // Input score is 0-1 float, scale to 0-100 integer
-        return this._sendAdminTx(this.registryAddress, this.contract.methods.updateScore(targetAddress, Math.floor(score * 100)));
+        const encryptedBigInt = await this._applyPrivacyHash(score);
+        
+        // Full Migration: Store Paillier Ciphertext as bytes on-chain
+        let encryptedHex = encryptedBigInt.toString(16);
+        if (encryptedHex.length % 2) encryptedHex = '0' + encryptedHex;
+        const storageValue = '0x' + encryptedHex;
+        
+        console.log(`[Web3] Submitting Full Paillier Ciphertext to Contract (bytes): ${storageValue.substring(0, 64)}...`);
+        
+        return this._sendAdminTx(this.registryAddress, this.contract.methods.updateScore(targetAddress, storageValue));
     }
 
     async recordTransaction(from, to, amount) {
@@ -158,7 +234,31 @@ class Web3Service {
             return await this.contract.methods.getScore(targetAddress).call();
         } catch (error) {
             console.error("[Web3] getScore failed:", error.message);
-            return 50;
+            // In ZK mode, default cannot be 50 (plaintext). Return empty bytes or handle error.
+            return '0x00';
+        }
+    }
+
+    async getDecryptedScore(targetAddress) {
+        try {
+            const scoreHex = await this.getScore(targetAddress);
+            if (!scoreHex || scoreHex === '0x00' || scoreHex === '0x') return 0;
+
+            if (!this.paillierKeys) {
+                // Try load
+                if (!this._loadKeys()) {
+                     console.warn("[Web3] Keys missing and no backup found. Generating NEW keys (Old data will be lost/unreadable).");
+                     await this._applyPrivacyHash(0); // Trigger generation
+                }
+            }
+
+            const cipherBigInt = BigInt(scoreHex);
+            const decrypted = this.paillierKeys.privateKey.decrypt(cipherBigInt);
+            // Decrypted is m = score * 100.
+            return Number(decrypted) / 100;
+        } catch (error) {
+            console.error("[Web3] Decryption failed:", error);
+            return 0;
         }
     }
 
@@ -220,41 +320,93 @@ class Web3Service {
         return this._sendAdminTx(this.verificationAddress, this.verificationContract.methods.processVerification(requestId, status));
     }
 
+    // ZK Proof Submission (Backend Proxy)
+    // In a decentralized app, the user would call this directly.
+    // Here, the backend can relay it if the user authenticates.
+    async submitRangeProof(proofData, threshold) {
+        if (!this.contract) return false;
+        // proofData should have { pi_a, pi_b, pi_c } from snarkjs output
+        
+        try {
+            // Note: Caller must be the user who owns the score for the proof to be valid (msg.sender checked in contract)
+            // If Backend calls this, msg.sender is Admin. Admin proofs Admin's score.
+            // If we want to prove User's score, the User MUST sign/send the tx.
+            // However, this service is often used for Admin actions. 
+            // If this is for testing Admin flow, it's fine.
+            // If for User flow, this method should return the TX data for the frontend to sign.
+            
+            console.log(`[Web3] Submitting ZK Range Proof for threshold ${threshold}`);
+            return this._sendAdminTx(this.registryAddress, this.contract.methods.submitRangeProof(
+                proofData.pi_a,
+                proofData.pi_b,
+                proofData.pi_c,
+                threshold
+            ));
+        } catch (error) {
+            console.error("[Web3] Failed to submit proof:", error);
+            return false;
+        }
+    }
+    
+    // Helper to generate proof payload for frontend users
+    getProofTxData(proofData, threshold) {
+        if (!this.contract) return null;
+        return this.contract.methods.submitRangeProof(
+            proofData.pi_a,
+            proofData.pi_b,
+            proofData.pi_c,
+            threshold
+        ).encodeABI();
+    }
+
     async getVerificationRequests(address, role) {
         if (!this.verificationContract) {
             console.warn("[Web3] getVerificationRequests: contract not initialized");
             return [];
         }
         
+        if (!address) {
+            console.warn("[Web3] getVerificationRequests: missing address");
+            return [];
+        }
+
         const addr = address.toLowerCase();
+        // Correct filter key based on role
         const filter = role === 'user' ? { user: addr } : { company: addr };
         
         console.log(`[Web3] Syncing Verification Events for ${role}: ${addr}`);
-        const events = await this.verificationContract.getPastEvents('VerificationRequested', {
-            filter,
-            fromBlock: 0
-        });
+        try {
+            const events = await this.verificationContract.getPastEvents('VerificationRequested', {
+                filter,
+                fromBlock: 0
+            });
 
-        const requests = await Promise.all(events.map(async (e) => {
-            const id = e.returnValues.requestId;
-            try {
-                // Fetch current status from contract state (source of truth for status)
-                const req = await this.verificationContract.methods.requests(id).call();
-                return {
-                    id: id.toString(),
-                    userAddress: req.user,
-                    companyAddress: req.company,
-                    proofCid: req.proofCid,
-                    status: ['pending', 'approved', 'rejected'][Number(req.status)],
-                    timestamp: Number(req.timestamp) * 1000
-                };
-            } catch (err) {
-                console.warn(`[Web3] Failed to fetch request state for ID ${id}:`, err.message);
-                return null;
-            }
-        }));
+            const requests = await Promise.all(events.map(async (e) => {
+                const id = e.returnValues.requestId;
+                try {
+                    // Fetch current status from contract state (source of truth for status)
+                    const req = await this.verificationContract.methods.requests(id).call();
+                    if (!req) return null;
+                    
+                    return {
+                        id: id.toString(),
+                        userAddress: req.user,
+                        companyAddress: req.company,
+                        proofCid: req.proofCid,
+                        status: ['pending', 'approved', 'rejected'][Number(req.status)],
+                        timestamp: Number(req.timestamp) * 1000
+                    };
+                } catch (err) {
+                    console.warn(`[Web3] Failed to fetch request state for ID ${id}:`, err.message);
+                    return null;
+                }
+            }));
 
-        return requests.filter(r => r !== null).sort((a, b) => b.timestamp - a.timestamp);
+            return requests.filter(r => r !== null).sort((a, b) => b.timestamp - a.timestamp);
+        } catch (error) {
+            console.error(`[Web3] Error fetching history for ${addr}:`, error.message);
+            return [];
+        }
     }
 
     startEventListeners() {

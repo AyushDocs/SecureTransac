@@ -85,39 +85,6 @@ function Navbar() {
             </div>
         </div>
 
-        {/* Search - Only for company/admin/deployer */}
-        {canSearch ? (
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden sm:block">
-              <div className="relative">
-              <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-              >
-                  <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-              </svg>
-              <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search address..."
-                  className="w-full h-9 pl-9 pr-4 bg-gray-950 border border-gray-800 rounded-lg text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
-              />
-              </div>
-          </form>
-        ) : (
-          <div className="flex-1 max-w-xl hidden sm:flex items-center">
-            <span className="text-sm text-gray-500">
-              Welcome, <span className="text-white font-medium">{user?.name || 'User'}</span>
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="flex items-center gap-2 lg:gap-4 ml-2">

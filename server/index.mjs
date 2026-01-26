@@ -1,11 +1,25 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const adminRoutes = require('./src/routes/adminRoutes');
-const ipfsRoutes = require('./src/routes/ipfsRoutes');
-const { specs, swaggerUi } = require('./src/config/swagger');
-const { apiLimiter } = require('./src/middleware/rateLimiter');
+import cors from 'cors';
+import 'dotenv/config';
+import express from 'express';
+import http from 'http';
+import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Import CommonJS modules
+import swaggerConfig from './src/config/swagger.js';
+import rateLimiter from './src/middleware/rateLimiter.js';
+import adminRoutes from './src/routes/adminRoutes.js';
+import ipfsRoutes from './src/routes/ipfsRoutes.js';
+import partnerRoutes from './src/routes/partnerRoutes.js';
+import socketService from './src/services/socketService.js';
+import web3Service from './src/services/web3Service.js';
+
+const { specs, swaggerUi } = swaggerConfig;
+const { apiLimiter } = rateLimiter;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +40,7 @@ app.use('/api', apiLimiter);
 // Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/ipfs', ipfsRoutes);
+app.use('/api/partner', partnerRoutes);
 
 // General
 app.get('/health', (req, res) => res.send('SecureTransac API logic: Online'));
@@ -45,18 +60,17 @@ app.use((err, req, res, next) => {
     });
 });
 
-const http = require('http');
-const socketService = require('./src/services/socketService');
-const web3Service = require('./src/services/web3Service');
-
 const server = http.createServer(app);
 socketService.init(server);
 web3Service.startEventListeners();
 
-if (require.main === module) {
+// Check if running directly (ESM equivalent of require.main === module)
+// In ESM, the file is always the module. We check if it was the entry point.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     server.listen(PORT, () => {
-        console.log(`\x1b[32m[SecureTransac]\x1b[0m Server running on port ${PORT}`);
+        console.log(`\x1b[32m[SecureTransac]\x1b[0m Server running on port ${PORT} (ESM)`);
     });
 }
 
-module.exports = { app, server };
+export { app, server };
+

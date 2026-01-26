@@ -290,8 +290,17 @@ class PersistenceService {
         return this.data.appeals[index];
     }
 
+    rotateNonce(address) {
+        if (!this.data.nonces) this.data.nonces = {};
+        const addr = address.toLowerCase();
+        this.data.nonces[addr] = Math.floor(Math.random() * 1000000).toString();
+        this._save(this.data);
+    }
+
     getNonce(address) {
         const addr = address.toLowerCase();
+        if (!this.data.nonces) this.data.nonces = {};
+        
         if (!this.data.nonces[addr]) {
             this.rotateNonce(addr);
         }

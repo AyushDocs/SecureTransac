@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { deleteAuthorityMetadata, fetchAuthorities, saveAuthorityMetadata, setAuthorityStatus } from "../api/client";
-import CreditManager from "../components/CreditManager";
 import IdentityCard from "../components/IdentityCard";
 import ZKProofSystem from "../components/ZKProofSystem";
 import { useAuth } from "../context/AuthContext";
@@ -10,14 +9,26 @@ import { logger } from "../utils/logger";
 
 // Identity vault page with role-based feature visibility
 function IdentityVault() {
-  const { role, roles, activeRole } = useAuth();
+  const { role, roles, activeRole, isAdmin } = useAuth();
   const currentRole = activeRole || role;
   
-  // Check role permissions
-  const isAdmin = ["admin", "deployer"].includes(currentRole);
+  const isRestricted = ["admin", "deployer"].includes(currentRole);
+
+  if (isRestricted) {
+      return (
+          <PageWrapper title="SecureTransac: Identity Vault">
+              <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-xl text-center">
+                  <h3 className="text-xl font-bold text-red-500 mb-2">Access Restricted</h3>
+                  <p className="text-gray-400">System Developers and Contract Deployers cannot access personal identity vaults to ensure neutrality.</p>
+              </div>
+          </PageWrapper>
+      );
+  }
+
+  // Check role permissions for others
   const isCompany = ["company", "creator"].includes(currentRole);
-  const canManageAuthorities = isAdmin || isCompany;
-  const canViewDecryption = isAdmin; // Only admins can see decryption requests
+  const canManageAuthorities = isCompany; // Admins removed from here
+  const canViewDecryption = false; 
 
   const [authorities, setAuthorities] = useState([]);
   const [newAuth, setNewAuth] = useState({ address: "", name: "", email: "" });
@@ -114,7 +125,7 @@ function IdentityVault() {
         {/* Left Column - Personal Identity Tools (All Users) */}
         <div className="space-y-6">
           <IdentityCard />
-          <CreditManager />
+          {/* CreditManager moved to Governance Dashboard */}
         </div>
 
         {/* Right Column - ZK Proofs & Admin Features */}

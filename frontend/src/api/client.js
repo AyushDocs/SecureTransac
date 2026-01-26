@@ -81,7 +81,7 @@ export async function fetchTrustScore(address) {
 export async function fetchDashboardMetrics() {
   logger.info("Fetching dashboard metrics from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/analytics`, {
+    const response = await fetch(`${API_BASE_URL}/admin/analytics`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch analytics");
@@ -97,7 +97,8 @@ export async function fetchDashboardMetrics() {
 export async function searchAddress(address) {
   logger.info(`Searching for address: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${address}`);
+    // Note: Assuming searchAddress endpoint is under admin for now based on previous config
+    const response = await fetch(`${API_BASE_URL}/admin/score/${address}`);
     if (!response.ok) throw new Error("User not found");
     const data = await response.json();
     logger.info("Address search result:", data);
@@ -111,7 +112,7 @@ export async function searchAddress(address) {
 export async function registerUser(address, role, metadata = {}) {
   logger.info(`Registering user ${address} as ${role}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/register`, {
+    const response = await fetch(`${API_BASE_URL}/admin/register`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ address, role, metadata }),
@@ -127,7 +128,7 @@ export async function registerUser(address, role, metadata = {}) {
 export async function submitComment(from, target, txId, text, rating) {
   logger.info(`Submitting comment: ${from} on ${target} for ${txId}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/comment`, {
+    const response = await fetch(`${API_BASE_URL}/admin/comment`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ from, target, txId, text, rating }),
@@ -145,7 +146,7 @@ export async function submitComment(from, target, txId, text, rating) {
 export async function processReport(reporter, target, text) {
   logger.info(`Submitting report: ${reporter} -> ${target}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/report`, {
+    const response = await fetch(`${API_BASE_URL}/admin/report`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ reporter, target, text }),
@@ -201,7 +202,7 @@ export async function setAuthorityStatus(authorityAddress, status) {
 export async function fetchAuthorities() {
   logger.info("Fetching authorities from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/authorities`, {
+    const response = await fetch(`${API_BASE_URL}/admin/authorities`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch authorities");
@@ -215,7 +216,7 @@ export async function fetchAuthorities() {
 export async function saveAuthorityMetadata(address, name, email, tier = 1) {
   logger.info(`Saving authority metadata for: ${address} (Tier: ${tier})`);
   try {
-    const response = await fetch(`${API_BASE_URL}/authorities`, {
+    const response = await fetch(`${API_BASE_URL}/admin/authorities`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ address, name, email, level: tier === 3 ? "diamond" : tier === 2 ? "institutional" : "security" }),
@@ -231,7 +232,7 @@ export async function saveAuthorityMetadata(address, name, email, tier = 1) {
 export async function updateAuthorityMetadata(address, metadata) {
   logger.info(`Updating authority metadata for: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/authorities/${address}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/authorities/${address}`, {
       method: "PATCH",
       headers: getAuthHeaders(),
       body: JSON.stringify({ metadata }),
@@ -247,7 +248,7 @@ export async function updateAuthorityMetadata(address, metadata) {
 export async function deleteAuthorityMetadata(address) {
   logger.info(`Deleting authority metadata for: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/authorities/${address}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/authorities/${address}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to delete authority metadata");
@@ -261,7 +262,7 @@ export async function deleteAuthorityMetadata(address) {
 export async function fetchACL() {
   logger.info("Fetching ACL entries from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/acl`, {
+    const response = await fetch(`${API_BASE_URL}/admin/acl`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch ACL");
@@ -274,14 +275,22 @@ export async function fetchACL() {
 
 export async function setReporterStatus(reporterAddress, status, tier = 1) {
   logger.info(`Setting reporter status: ${reporterAddress} -> ${status} (Tier: ${tier})`);
+  
   if (!contract) {
     logger.error("TrustRegistry contract not initialized");
     throw new Error("TrustRegistry contract not initialized");
   }
 
+  if (!reporterAddress) {
+      throw new Error("setReporterStatus: reporterAddress is missing/null");
+  }
+
   try {
     const accounts = await web3.eth.getAccounts();
-    const result = await contract.methods.setReporterStatus(reporterAddress, status, tier).send({
+    logger.info(`Sending transaction from ${accounts[0]} to set status for ${reporterAddress}`);
+    
+    // ABI only has 2 arguments: reporter (address), status (bool)
+    const result = await contract.methods.setReporterStatus(reporterAddress, status).send({
       from: accounts[0],
     });
     logger.info("Reporter status updated successfully", result);
@@ -295,7 +304,7 @@ export async function setReporterStatus(reporterAddress, status, tier = 1) {
 export async function fetchScoreUpdates() {
   logger.info("Fetching recent score updates from server");
   try {
-    const response = await fetch(`${API_BASE_URL}/score-updates`);
+    const response = await fetch(`${API_BASE_URL}/admin/score-updates`);
     if (!response.ok) throw new Error("Failed to fetch score updates");
     return await response.json();
   } catch (error) {
@@ -308,14 +317,15 @@ export async function fetchVerifications(params = {}) {
   const query = new URLSearchParams(params).toString();
   logger.info(`Fetching verifications with query: ${query}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/verifications?${query}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/verifications?${query}`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch verifications");
     return await response.json();
   } catch (error) {
     logger.error("Error fetching verifications:", error);
-    throw error;
+    // Graceful fallback to prevent UI crash
+    return [];
   }
 }
 
@@ -354,7 +364,7 @@ export async function verifyUser(requestId, reviewerAddress, status, targetScore
 export async function getNonce(address) {
   logger.info(`Fetching nonce for: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/nonce/${address}`);
+    const response = await fetch(`${API_BASE_URL}/admin/auth/nonce/${address}`);
     if (!response.ok) throw new Error("Failed to fetch nonce");
     return await response.json();
   } catch (error) {
@@ -366,7 +376,7 @@ export async function getNonce(address) {
 export async function verifySignature(address, signature) {
   logger.info(`Verifying signature for: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+    const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address, signature }),
@@ -382,7 +392,7 @@ export async function verifySignature(address, signature) {
 export async function pinMetadata(metadata) {
   logger.info("Pinning metadata to IPFS...");
   try {
-    const response = await fetch(`${API_BASE_URL}/ipfs/pin`, {
+    const response = await fetch(`${API_BASE_URL}/admin/ipfs/pin`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ metadata }),
@@ -403,6 +413,7 @@ export async function storeIdentityData(cid) {
     const accounts = await web3.eth.getAccounts();
     const result = await vaultContract.methods.storeData(cid).send({
       from: accounts[0],
+      gas: 500000 // Force gas limit to prevent estimation errors
     });
     logger.info("Identity CID stored successfully", result);
     return result;
@@ -451,7 +462,7 @@ export async function fetchCurrentUser() {
 export async function generateZKProof(address, threshold, secret) {
   logger.info("Requesting server-side ZK Proof...");
   try {
-    const response = await fetch(`${API_BASE_URL}/proof`, {
+    const response = await fetch(`${API_BASE_URL}/admin/proof`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ address, threshold, secret }),
@@ -467,10 +478,29 @@ export async function generateZKProof(address, threshold, secret) {
   }
 }
 
+export async function verifyZKProof(proof, publicSignals) {
+  logger.info("Requesting ZK Proof Verification...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/verify-proof`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proof, publicSignals }),
+    });
+    if (!response.ok) {
+       const err = await response.json();
+       throw new Error(err.error || "Verification failed");
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error("Error verifying ZK proof:", error);
+    throw error;
+  }
+}
+
 export async function generateStealthAddress() {
   logger.info("Requesting Stealth Address...");
   try {
-    const response = await fetch(`${API_BASE_URL}/stealth`, {
+    const response = await fetch(`${API_BASE_URL}/admin/stealth`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({}),
@@ -484,7 +514,7 @@ export async function generateStealthAddress() {
 
 export async function fetchAuditLogs() {
   try {
-    const response = await fetch(`${API_BASE_URL}/audit-logs`, {
+    const response = await fetch(`${API_BASE_URL}/admin/audit-logs`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch audit logs");
@@ -497,7 +527,7 @@ export async function fetchAuditLogs() {
 
 export async function fetchUserReport(address) {
   try {
-    const response = await fetch(`${API_BASE_URL}/reports/user/${address}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/reports/user/${address}`, {
        headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch report");
@@ -516,7 +546,7 @@ export async function fetchUserReport(address) {
 export async function switchUserRole(role) {
   logger.info(`Switching to role: ${role}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/switch-role`, {
+    const response = await fetch(`${API_BASE_URL}/admin/switch-role`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ role }),
@@ -541,7 +571,7 @@ export async function switchUserRole(role) {
 export async function assignUserRoles(walletAddress, roles) {
   logger.info(`Assigning roles to ${walletAddress}:`, roles);
   try {
-    const response = await fetch(`${API_BASE_URL}/assign-roles`, {
+    const response = await fetch(`${API_BASE_URL}/admin/assign-roles`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ walletAddress, roles }),
@@ -565,7 +595,7 @@ export async function assignUserRoles(walletAddress, roles) {
 export async function getUserRoles(address) {
   logger.info(`Fetching roles for: ${address}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/user-roles/${address}`);
+    const response = await fetch(`${API_BASE_URL}/admin/user-roles/${address}`);
     if (!response.ok) throw new Error("Failed to fetch user roles");
     return await response.json();
   } catch (error) {
@@ -576,7 +606,7 @@ export async function getUserRoles(address) {
 
 export async function getBlindKeys() {
   try {
-    const response = await fetch(`${API_BASE_URL}/blind/keys`);
+    const response = await fetch(`${API_BASE_URL}/admin/blind/keys`);
     if (!response.ok) throw new Error("Failed to fetch blind keys");
     return await response.json();
   } catch (error) {
@@ -587,7 +617,7 @@ export async function getBlindKeys() {
 
 export async function signBlind(blinded) {
   try {
-    const response = await fetch(`${API_BASE_URL}/blind/sign`, {
+    const response = await fetch(`${API_BASE_URL}/admin/blind/sign`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ blinded }),
@@ -605,7 +635,7 @@ export async function signBlind(blinded) {
 
 export async function submitAnonymousReport(data) {
   try {
-    const response = await fetch(`${API_BASE_URL}/blind/submit`, {
+    const response = await fetch(`${API_BASE_URL}/admin/blind/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -662,6 +692,71 @@ export async function processAppeal(appealId, status, comment, adjustmentScore) 
     return await response.json();
   } catch (error) {
     logger.error("Error processing appeal:", error);
+    throw error;
+  }
+}
+
+export async function setContractThreshold(contractAddress, minScore) {
+  logger.info(`Setting threshold for ${contractAddress} to ${minScore}`);
+  if (!contract) throw new Error("TrustRegistry contract not initialized");
+
+  try {
+    const accounts = await web3.eth.getAccounts();
+    const result = await contract.methods.setContractThreshold(contractAddress, minScore).send({
+      from: accounts[0],
+    });
+    logger.info("Contract threshold updated successfully", result);
+    return result;
+  } catch (error) {
+    logger.error("Error setting contract threshold:", error);
+    throw error;
+  }
+}
+
+export async function getContractMaintainer(contractAddress) {
+  if (!contract) return null;
+  try {
+    return await contract.methods.contractMaintainer(contractAddress).call();
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function getContractsByMaintainer(address) {
+  if (!contract) return [];
+  try {
+    return await contract.methods.getContractsByMaintainer(address).call();
+  } catch (error) {
+    logger.error("Error fetching maintainer contracts:", error);
+    return [];
+  }
+}
+export async function applyForLoan(address, file) {
+  logger.info(`Applying for loan: ${address}`);
+  try {
+    const formData = new FormData();
+    formData.append("address", address);
+    if (file) {
+        formData.append("document", file);
+    }
+
+    // Since this endpoint uses Multer, we don't set Content-Type JSON
+    // fetch will automatically set multipart/form-data with boundary
+    const token = localStorage.getItem("userToken");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+    const response = await fetch(`${API_BASE_URL}/partner/apply-loan`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Loan application failed");
+    const data = await response.json();
+    logger.info("Loan application result:", data);
+    return data;
+  } catch (error) {
+    logger.error("Error applying for loan:", error);
     throw error;
   }
 }

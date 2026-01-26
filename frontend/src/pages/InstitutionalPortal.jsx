@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
-
 const InstitutionalPortal = () => {
     const { user } = useAuth();
     const [bizInfo, setBizInfo] = useState({ 
@@ -25,11 +24,59 @@ const InstitutionalPortal = () => {
         e.preventDefault();
         setStatus('submitting');
         
-        // Simulating DAO Proposal creation for Institutional Whitelisting
-        setTimeout(() => {
-            setStatus('pending_dao');
-            alert("Corporate verification documents submitted. A DAO proposal has been initiated to grant your address " + bizInfo.tier + " status.");
-        }, 1500);
+        try {
+            if (!user?.address) throw new Error("Wallet not connected");
+
+            const { web3, contract } = window.web3Container || {};
+            // Note: We use the local web3 instance we ensure below
+
+            const Web3 = (await import("web3")).default;
+            const w3 = new Web3(window.ethereum);
+
+            // 1. Determine Tier & Cost
+            const tierIndex = bizInfo.tier === 'INSTITUTIONAL' ? 2 : 3;
+            const stakeAmountStr = bizInfo.tier === 'INSTITUTIONAL' ? "5000" : "50000"; 
+            
+            const netId = await w3.eth.net.getId();
+            
+            // 2. Load Contracts
+            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const DaoArtifact = await import("../contracts/TrustDAO.json");
+
+            const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];
+            const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
+            
+            if (!tokenData) throw new Error("TRUST Token not deployed");
+            if (!daoData) throw new Error("TrustDAO not deployed");
+            
+            const token = new w3.eth.Contract(TokenArtifact.default.abi, tokenData.address);
+            const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
+
+            const weiAmount = w3.utils.toWei(stakeAmountStr, 'ether'); 
+
+            // 3. Check Balance
+            const balance = await token.methods.balanceOf(user.address).call();
+            if (BigInt(balance) < BigInt(weiAmount)) {
+                 throw new Error(`Insufficient TRUST balance. Have ${w3.utils.fromWei(balance, 'ether')}, Need ${stakeAmountStr}.`);
+            }
+
+            // 4. Approve DAO
+            console.log(`Approving ${stakeAmountStr} TRUST for DAO...`);
+            await token.methods.approve(daoData.address, weiAmount).send({ from: user.address });
+
+            // 5. Submit Proposal
+            console.log(`Submitting DAO Proposal for Tier ${tierIndex}...`);
+            const desc = `Application for ${bizInfo.tier} Authority by ${bizInfo.name}`;
+            await dao.methods.submitKYBProposal(tierIndex, desc).send({ from: user.address });
+
+            setStatus('approved'); // Reuses existing success UI
+            alert(`Proposal Submitted! ${stakeAmountStr} TRUST locked. Please wait for DAO voting.`);
+            
+        } catch (error) {
+            console.error(error);
+            alert("Application Failed: " + (error.reason || error.message));
+            setStatus('idle');
+        }
     };
 
     return (
@@ -39,9 +86,12 @@ const InstitutionalPortal = () => {
                     {/* Left: Form */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl">
-                            <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-2">
+                            <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-2">
                                 <span className="text-blue-500">🏢</span> Business Onboarding
                             </h2>
+                            <p className="text-gray-400 text-sm mb-6">
+                                Upgrade your Business to Institutional Tier/Diamond Tier
+                            </p>
                             
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -57,10 +107,10 @@ const InstitutionalPortal = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Tax ID / Registration</label>
+                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">GSTIN / PAN Number</label>
                                         <input 
                                             type="text" 
-                                            placeholder="US-123456789"
+                                            placeholder="22AAAAA0000A1Z5"
                                             value={bizInfo.taxId}
                                             onChange={e => setBizInfo({...bizInfo, taxId: e.target.value})}
                                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white text-sm focus:ring-1 focus:ring-blue-500"
@@ -71,10 +121,10 @@ const InstitutionalPortal = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">LEI Number (Optional)</label>
+                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">CIN / UDYAM / LEI</label>
                                         <input 
                                             type="text" 
-                                            placeholder="549300..."
+                                            placeholder="U12345MH2023PTC123456"
                                             value={bizInfo.lei}
                                             onChange={e => setBizInfo({...bizInfo, lei: e.target.value})}
                                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white text-sm focus:ring-1 focus:ring-blue-500"
@@ -87,8 +137,8 @@ const InstitutionalPortal = () => {
                                             onChange={e => setBizInfo({...bizInfo, tier: e.target.value})}
                                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white text-sm focus:ring-1 focus:ring-blue-500"
                                         >
-                                            <option value="INSTITUTIONAL">Institutional ($5,000 TRUST Stake)</option>
-                                            <option value="DIAMOND">Diamond Bank Tier ($50,000 TRUST Stake)</option>
+                                            <option value="INSTITUTIONAL">Institutional (5,000 TRUST Stake)</option>
+                                            <option value="DIAMOND">Diamond Bank Tier (50,000 TRUST Stake)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -98,7 +148,7 @@ const InstitutionalPortal = () => {
                                     <div className="border-2 border-dashed border-gray-800 rounded-2xl p-8 text-center hover:border-blue-500 transition-colors cursor-pointer relative">
                                         <input type="file" onChange={handleUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         <div className="text-4xl mb-2">📁</div>
-                                        <p className="text-gray-400 text-sm">Upload Certificate of Incorporation, Articles of Associaiton, or Regulatory License</p>
+                                        <p className="text-gray-400 text-sm">Upload GST Certificate, CIN, MOA, or Udyam Registration</p>
                                         <p className="text-[10px] text-gray-600 mt-2">Files are encrypted and pinned to IPFS Private Clusters</p>
                                     </div>
                                     {docs.length > 0 && (
@@ -150,10 +200,37 @@ const InstitutionalPortal = () => {
                         </div>
 
                         <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-3xl">
-                            <h3 className="text-blue-500 font-bold mb-2 uppercase text-xs tracking-widest">Authority Perk</h3>
-                            <p className="text-gray-400 text-xs leading-relaxed">
-                                Diamond Authorities have **10x higher weight** in global reputation impacts and receive a larger share of bridge transaction fees.
-                            </p>
+                            <h3 className="text-blue-500 font-bold mb-4 uppercase text-xs tracking-widest">Authority Tier Structure</h3>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="text-gray-400 font-bold">Standard Business</span>
+                                        <span className="text-gray-600">No Stake</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">Verified identity. access to basic scores. 1x Reputation Weight.</p>
+                                </div>
+
+                                <div className="pt-3 border-t border-blue-500/20">
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="text-white font-bold">Institutional Authority</span>
+                                        <span className="text-blue-400 font-mono">5k TRUST</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400">
+                                        <strong className="text-white">4x Weight</strong> in scoring. Can issue attestations. Governance voting rights.
+                                    </p>
+                                </div>
+
+                                <div className="pt-3 border-t border-blue-500/20">
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="text-cyan-400 font-bold">Diamond Authority</span>
+                                        <span className="text-cyan-400 font-mono">50k TRUST</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400">
+                                        <strong className="text-white">10x Weight</strong>. Priority bridge access. Revenue share from verification fees.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -58,14 +58,10 @@ function MobileNav() {
 
   const navItems = getNavItems();
 
-  // Filter based on role permissions
+  // Filter based strictly on active role permissions
   const filteredNavItems = navItems.filter(item => {
     const allowedRoles = MOBILE_NAV_PERMISSIONS[item.path] || [];
-    if (allowedRoles.includes(currentRole)) return true;
-    if (roles && roles.length > 0) {
-      return allowedRoles.some(r => roles.includes(r));
-    }
-    return false;
+    return allowedRoles.includes(currentRole);
   });
 
   const getIcon = (icon) => {

@@ -13,14 +13,17 @@ function Reports() {
   const [exportLoading, setExportLoading] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'deployer';
+  const { user, activeRole, role } = useAuth();
+  const currentRole = activeRole || role;
+
+  const isAdminOrDeployer = ["admin", "deployer"].includes(currentRole);
+  const isCompany = ["company", "creator"].includes(currentRole);
   
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        if (isAdmin) {
+        if (isAdminOrDeployer) {
           const logs = await fetchAuditLogs();
           setAuditLogs(logs);
         } else if (user?.address) {
@@ -44,7 +47,7 @@ function Reports() {
     };
 
     loadData();
-  }, [isAdmin, user?.address]);
+  }, [isAdminOrDeployer, user?.address]);
 
   const adminExportTypes = [
     { id: "transactions", label: "System Transaction Report", format: "CSV" },
@@ -58,7 +61,18 @@ function Reports() {
     { id: "my_access", label: "Who Viewed My Profile", format: "CSV" }
   ];
 
-  const exportTypes = isAdmin ? adminExportTypes : userExportTypes;
+  const companyExportTypes = [
+    { id: "kyb_logs", label: "KYB Verification Logs", format: "CSV" },
+    { id: "ecosystem_activity", label: "Ecosystem Partner Activity", format: "PDF" },
+    ...userExportTypes, // Companies can also see their own basic reports
+  ];
+
+  let exportTypes = userExportTypes;
+  if (isAdminOrDeployer) {
+      exportTypes = adminExportTypes;
+  } else if (isCompany) {
+      exportTypes = companyExportTypes;
+  }
 
   const generatePDF = (title, columns, data, filename) => {
     const doc = new jsPDF();
@@ -160,6 +174,21 @@ function Reports() {
              generateCSV(mockTx, "transactions.csv");
         }
       }
+      else if (type === "kyb_logs") {
+          const logs = [
+              { verificationId: "KYB_001", entity: "Tesla Inc", status: "Verified", date: "2024-12-01" },
+              { verificationId: "KYB_002", entity: "SpaceX LLC", status: "Pending", date: "2025-01-15" }
+          ];
+          generateCSV(logs, "kyb_logs.csv");
+      }
+      else if (type === "ecosystem_activity") {
+          const columns = ["Partner", "Interaction", "Date"];
+          const rows = [
+             ["ChainLink", "Oracle Update", "2025-01-20"],
+             ["Aave", "Liquidity Provision", "2025-01-18"]
+          ];
+          generatePDF("Ecosystem Activity Report", columns, rows, "ecosystem_activity.pdf");
+      }
       logger.info(`Report generated: ${type}`);
     } catch (error) {
       logger.error(`Failed to generate report: ${type}`, error);
@@ -219,7 +248,7 @@ function Reports() {
         <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
           <div className="p-4 border-b border-gray-800">
             <h3 className="text-lg font-semibold text-white">
-              {isAdmin ? "System Audit Log" : "Recent Personal Activity"}
+              {isAdminOrDeployer ? "System Audit Log" : "Recent Personal Activity"}
             </h3>
           </div>
           <div className="overflow-x-auto">

@@ -22,9 +22,12 @@ import ReputationActivity from "./pages/ReputationActivity";
 import RiskWarRoom from "./pages/RiskWarRoom";
 import RoleSelection from "./pages/RoleSelection";
 import Search from "./pages/Search";
+import SystemControl from "./pages/SystemControl";
+
+import SubmitReport from "./pages/SubmitReport";
 import TrustDAO from "./pages/TrustDAO";
 import UserDashboard from "./pages/UserDashboard";
-
+import VerificationRequests from "./pages/VerificationRequests";
 // Component to redirect to the correct dashboard based on active role
 const DashboardSwitch = () => {
   const { role, activeRole, roles, isMultiRole, showDashboardSelector, setShowDashboardSelector } = useAuth();
@@ -117,11 +120,11 @@ function AppContent() {
       )}
       
       {/* MANDATORY LAYOUT START */}
-      <div className="flex min-h-screen bg-gray-950 font-sans text-gray-400">
+      <div className="flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden">
         {role && <Sidebar />}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col h-full min-w-0">
           {role && <Navbar />}
-          <main className="flex-1 p-4 lg:p-6 bg-gray-950 overflow-x-hidden pb-24 lg:pb-6">
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-950 pb-24 lg:pb-6 scroll-smooth no-scrollbar">
             <Routes>
               <Route path="/" element={role ? <Navigate to="/dashboard" /> : <RoleSelection />} />
               <Route path="/register" element={<Register />} />
@@ -148,6 +151,7 @@ function AppContent() {
                 </RoleRoute>
               } />
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/submit-report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
               <Route path="/appeals" element={<ProtectedRoute><Appeals /></ProtectedRoute>} />
               <Route path="/privacy" element={<ProtectedRoute><PrivacyPortal /></ProtectedRoute>} />
               <Route path="/analytics" element={
@@ -166,7 +170,17 @@ function AppContent() {
                   <RiskWarRoom />
                 </RoleRoute>
               } />
+              <Route path="/system" element={
+                <RoleRoute allowedRoles={['admin', 'deployer']}>
+                   <SystemControl />
+                </RoleRoute>
+              } />
               <Route path="/dao" element={<ProtectedRoute><TrustDAO /></ProtectedRoute>} />
+              <Route path="/verification-requests" element={
+                <RoleRoute allowedRoles={['company', 'creator', 'admin', 'deployer']}>
+                  <VerificationRequests />
+                </RoleRoute>
+              } />
             </Routes>
           </main>
           {role && <MobileNav />}
