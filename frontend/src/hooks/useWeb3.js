@@ -59,13 +59,15 @@ export function useWeb3() {
 
                     // Listen for account changes
                     window.ethereum.on('accountsChanged', (newAccounts) => {
+                        console.log('[Web3] Account changed:', newAccounts[0]);
                         setAccount(newAccounts[0]);
-                        window.location.reload(); 
+                        // Removed reload - state update is sufficient
                     });
 
                     window.ethereum.on('chainChanged', (newChainId) => {
+                        console.log('[Web3] Chain changed:', newChainId);
                         setChainId(newChainId);
-                        window.location.reload();
+                        // Removed reload - state update triggers re-render
                     });
 
                 } catch (error) {

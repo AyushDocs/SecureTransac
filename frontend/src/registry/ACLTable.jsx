@@ -1,5 +1,4 @@
 import Badge from "../components/common/Badge";
-import Button from "../components/common/Button";
 
 // Access Control List table component
 function ACLTable({ entries, onRemove }) {
@@ -24,9 +23,6 @@ function ACLTable({ entries, onRemove }) {
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -45,17 +41,6 @@ function ACLTable({ entries, onRemove }) {
                 </td>
                 <td className="px-4 py-3">
                   <span className="text-sm text-muted-foreground">{entry.date}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemove && onRemove(entry.address)}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </Button>
                 </td>
               </tr>
             ))}

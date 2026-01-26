@@ -513,6 +513,79 @@ class Web3Service {
             }
         }
     }
+
+    /**
+     * Fetch all transactions from TransactionLogger events
+     */
+    async getAllTransactions() {
+        try {
+            const TransactionLogger = require('../../../onchain/build/contracts/TransactionLogger.json');
+            const networks = Object.keys(TransactionLogger.networks);
+            const networkId = networks[networks.length - 1];
+            const loggerAddress = TransactionLogger.networks[networkId]?.address;
+            
+            if (!loggerAddress) {
+                console.warn('[Web3] TransactionLogger not deployed');
+                return [];
+            }
+
+            const loggerContract = new this.web3.eth.Contract(TransactionLogger.abi, loggerAddress);
+            
+            // Fetch TransactionLogged events (correct event name)
+            const events = await loggerContract.getPastEvents('TransactionLogged', {
+                fromBlock: 0,
+                toBlock: 'latest'
+            });
+
+            return events.map(event => ({
+                from: event.returnValues.from,
+                to: event.returnValues.to,
+                amount: event.returnValues.amount,
+                timestamp: event.returnValues.timestamp,
+                blockNumber: event.blockNumber
+            }));
+        } catch (error) {
+            console.error('[Web3] Error fetching transactions:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch all reports from TrustRegistry events
+     */
+    async getAllReports() {
+        try {
+            if (!this.contract) return [];
+
+            // Fetch ReportSubmitted events
+            const events = await this.contract.getPastEvents('ReportSubmitted', {
+                fromBlock: 0,
+                toBlock: 'latest'
+            });
+
+            return events.map(event => {
+                const reportData = event.returnValues.reportData || '{}';
+                let parsed = {};
+                try {
+                    parsed = JSON.parse(reportData);
+                } catch (e) {
+                    parsed = { text: reportData };
+                }
+
+                return {
+                    reporter: event.returnValues.reporter,
+                    target: event.returnValues.target,
+                    severity: parsed.severity || 5,
+                    type: parsed.type || 'UNKNOWN',
+                    text: parsed.text || '',
+                    blockNumber: event.blockNumber
+                };
+            });
+        } catch (error) {
+            console.error('[Web3] Error fetching reports:', error);
+            return [];
+        }
+    }
 }
 
 module.exports = new Web3Service();

@@ -1,8 +1,24 @@
 // Evaluation velocity line chart built with SVG
 function VelocityChart({ data }) {
-  const maxValue = Math.max(...data.map(d => d.value));
-  const minValue = Math.min(...data.map(d => d.value));
-  const range = maxValue - minValue || 1;
+  // Handle empty or invalid data
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+        <h3 className="text-lg font-semibold text-white mb-4">Evaluation Velocity</h3>
+        <p className="text-gray-500 text-sm">No velocity data available</p>
+      </div>
+    );
+  }
+
+  // Map backend format {date, count} to {label, value}
+  const chartData = data.map(d => ({
+    label: d.date ? new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A',
+    value: d.count || 0
+  }));
+
+  const maxValue = Math.max(...chartData.map(d => d.value), 1); // Ensure at least 1
+  const minValue = Math.min(...chartData.map(d => d.value), 0);
+  const range = maxValue - minValue || 1; // Prevent division by zero
   
   const width = 500;
   const height = 200;
@@ -10,8 +26,8 @@ function VelocityChart({ data }) {
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
   
-  const points = data.map((d, i) => {
-    const x = padding + (i / (data.length - 1)) * chartWidth;
+  const points = chartData.map((d, i) => {
+    const x = padding + (i / Math.max(chartData.length - 1, 1)) * chartWidth;
     const y = padding + chartHeight - ((d.value - minValue) / range) * chartHeight;
     return { x, y, ...d };
   });

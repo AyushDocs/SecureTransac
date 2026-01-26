@@ -55,6 +55,7 @@ const DashboardSwitch = () => {
     case "viewer":
       return <Dashboard />;
     case "company":
+    case "creator":  // Legacy fallback
       return <CompanyDashboard />;
     case "admin":
       return <AdminDashboard />;

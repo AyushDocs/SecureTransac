@@ -154,10 +154,12 @@ export function RoleSwitcher() {
 
   const isAdmin = roles && (roles.includes('admin') || roles.includes('deployer'));
   
-  // For admins, ensure company role is available for switching/demo
+  // For admins, ensure all roles are available for switching/demo
   let displayRoles = roles ? [...roles] : [];
-  if (isAdmin && !displayRoles.includes('company')) {
-    displayRoles.push('company');
+  if (isAdmin) {
+    if (!displayRoles.includes('company')) displayRoles.push('company');
+    if (!displayRoles.includes('user')) displayRoles.push('user');
+    if (!displayRoles.includes('viewer')) displayRoles.push('viewer');
   }
 
   if (!displayRoles || displayRoles.length <= 1) {

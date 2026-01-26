@@ -7,7 +7,8 @@
 const ROLES = {
     ADMIN: 'admin',
     COMPANY: 'company',
-    VIEWER: 'viewer',   // Same as 'user' for backward compatibility
+    VIEWER: 'viewer',
+    USER: 'user',      // Alias for VIEWER
     DEPLOYER: 'deployer'
 };
 
@@ -16,14 +17,15 @@ const ROLE_HIERARCHY = {
     [ROLES.DEPLOYER]: 4,
     [ROLES.ADMIN]: 3,
     [ROLES.COMPANY]: 2,
-    [ROLES.VIEWER]: 1
+    [ROLES.VIEWER]: 1,
+    [ROLES.USER]: 1     // Same level as VIEWER
 };
 
 // Dashboard route permissions
 const DASHBOARD_PERMISSIONS = {
     '/admin': [ROLES.ADMIN, ROLES.DEPLOYER],
     '/company': [ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER],
-    '/app': [ROLES.VIEWER, ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER]
+    '/app': [ROLES.VIEWER, ROLES.USER, ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER]
 };
 
 // Map legacy roles to RBAC roles
@@ -31,7 +33,9 @@ const LEGACY_ROLE_MAP = {
     'admin': ROLES.ADMIN,
     'deployer': ROLES.DEPLOYER,
     'company': ROLES.COMPANY,
-    'user': ROLES.VIEWER
+    'creator': ROLES.COMPANY,  // Legacy alias for company
+    'user': ROLES.USER,
+    'viewer': ROLES.VIEWER
 };
 
 // Reverse map for backward compatibility
@@ -39,7 +43,8 @@ const RBAC_TO_LEGACY = {
     [ROLES.ADMIN]: 'admin',
     [ROLES.DEPLOYER]: 'deployer',
     [ROLES.COMPANY]: 'company',
-    [ROLES.VIEWER]: 'user'
+    [ROLES.VIEWER]: 'viewer',
+    [ROLES.USER]: 'user'
 };
 
 // In-memory role assignments (in production, use database)
@@ -57,7 +62,7 @@ const TEST_WALLETS = [
  * Initialize test wallets with all roles
  */
 function initializeTestData() {
-    const allRoles = [ROLES.ADMIN, ROLES.COMPANY, ROLES.VIEWER, ROLES.DEPLOYER];
+    const allRoles = [ROLES.ADMIN, ROLES.COMPANY, ROLES.VIEWER, ROLES.USER, ROLES.DEPLOYER];
     
     TEST_WALLETS.forEach(wallet => {
         userRoles.set(wallet, {
@@ -80,11 +85,34 @@ function getUserRoles(walletAddress) {
     const userData = userRoles.get(address);
     
     if (userData) {
+        // Auto-migrate 'creator' to 'company' if found
+        let needsUpdate = false;
+        const migratedRoles = userData.roles.map(role => {
+            if (role === 'creator') {
+                needsUpdate = true;
+                return ROLES.COMPANY;
+            }
+            return role;
+        });
+        
+        let migratedActiveRole = userData.activeRole;
+        if (userData.activeRole === 'creator') {
+            needsUpdate = true;
+            migratedActiveRole = ROLES.COMPANY;
+        }
+        
+        if (needsUpdate) {
+            console.log(`[RBAC] Auto-migrating 'creator' → 'company' for ${address}`);
+            const updated = { roles: migratedRoles, activeRole: migratedActiveRole };
+            userRoles.set(address, updated);
+            return updated;
+        }
+        
         return userData;
     }
     
-    // Default: single VIEWER role for new users (backward compatible)
-    return { roles: [ROLES.VIEWER], activeRole: ROLES.VIEWER };
+    // Default: single USER role for new users
+    return { roles: [ROLES.USER], activeRole: ROLES.USER };
 }
 
 /**
@@ -240,7 +268,7 @@ function migrateLegacyUser(walletAddress, legacyRole) {
     const userData = getUserRoles(walletAddress);
     
     if (userData.roles.length === 0 || 
-        (userData.roles.length === 1 && userData.roles[0] === ROLES.VIEWER)) {
+        (userData.roles.length === 1 && (userData.roles[0] === ROLES.VIEWER || userData.roles[0] === ROLES.USER))) {
         return assignRoles(walletAddress, [rbacRole]);
     }
     

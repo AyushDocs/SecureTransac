@@ -47,12 +47,35 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   // Hydrate state from localStorage for persistent sessions
-  const [role, setRole] = useState(localStorage.getItem("userRole"));
+  const [role, setRole] = useState(() => {
+    const stored = localStorage.getItem("userRole");
+    // Auto-migrate 'creator' to 'company'
+    if (stored === 'creator') {
+      localStorage.setItem("userRole", 'company');
+      return 'company';
+    }
+    return stored;
+  });
   const [roles, setRoles] = useState(() => {
     const stored = localStorage.getItem("userRoles");
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    // Auto-migrate 'creator' to 'company' in roles array
+    const migrated = parsed.map(r => r === 'creator' ? 'company' : r);
+    if (JSON.stringify(parsed) !== JSON.stringify(migrated)) {
+      localStorage.setItem("userRoles", JSON.stringify(migrated));
+    }
+    return migrated;
   });
-  const [activeRole, setActiveRole] = useState(localStorage.getItem("activeRole"));
+  const [activeRole, setActiveRole] = useState(() => {
+    const stored = localStorage.getItem("activeRole");
+    // Auto-migrate 'creator' to 'company'
+    if (stored === 'creator') {
+      localStorage.setItem("activeRole", 'company');
+      return 'company';
+    }
+    return stored;
+  });
   const [address, setAddress] = useState(localStorage.getItem("userAddress"));
   const [token, setToken] = useState(localStorage.getItem("userToken"));
   const [profile, setProfile] = useState(null);

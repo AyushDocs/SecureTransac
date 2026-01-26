@@ -1,18 +1,29 @@
 // Trust distribution donut chart built with SVG
 function TrustDonut({ data }) {
-  const trustData = [
+  const defaultData = [
     { label: "Low Risk", value: 7234, color: "#22c55e" }, // green-500
     { label: "Medium Risk", value: 3891, color: "#facc15" }, // yellow-400
     { label: "High Risk", value: 1722, color: "#ef4444" }, // red-500
   ];
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+  
+  // Use provided data or fall back to default
+  let chartData = data && data.length > 0 ? data : defaultData;
+  let total = chartData.reduce((sum, item) => sum + (item.value || 0), 0);
+  
+  // If total is still 0, use default data
+  if (!total || total <= 0) {
+    console.warn('[TrustDonut] Received invalid data, using defaults:', data);
+    chartData = defaultData;
+    total = chartData.reduce((sum, item) => sum + item.value, 0);
+  }
+  
   const radius = 80;
   const strokeWidth = 24;
   const circumference = 2 * Math.PI * radius;
   
   let currentOffset = 0;
   
-  const segments = data.map((item, index) => {
+  const segments = chartData.map((item, index) => {
     const percentage = item.value / total;
     const strokeDasharray = `${percentage * circumference} ${circumference}`;
     const strokeDashoffset = -currentOffset;
@@ -60,7 +71,7 @@ function TrustDonut({ data }) {
         </div>
         
         <div className="space-y-3">
-          {data.map((item, index) => (
+          {chartData.map((item, index) => (
             <div key={index} className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
               <div>

@@ -15,16 +15,16 @@ const NAV_PERMISSIONS = {
   "/dashboard": ["user", "viewer", "company", "admin", "deployer"],
   "/search": ["company", "admin", "deployer"], // Not for regular users
   "/registry": ["company", "admin", "deployer"], // Not for regular users
-  "/identity": ["user", "viewer"], // All users except admin/deployer
-  "/certified": ["user", "viewer"],
+  "/identity": ["user", "viewer", "company"], // Personal identity management
+  "/certified": ["user", "viewer", "company"], // Get certified
   "/kyb": ["company"], // Corporate only
   "/reports": ["user", "viewer", "company", "admin", "deployer"], // All can report
-  "/submit-report": ["user", "viewer", "company", "admin", "deployer"],
-  "/appeals": ["user", "viewer"], // All can appeal
-  "/privacy": ["user", "viewer"], // All users
+  "/submit-report": ["user", "viewer", "company"],
+  "/appeals": ["user", "viewer", "company"], // All can appeal
+  "/privacy": ["user", "viewer", "company"], // All users
   "/analytics": ["admin", "deployer"], // Admin only
   "/ecosystem": ["company", "admin", "deployer"], // Partners only
-  "/bridge": ["user","viewer"], // Admin only
+  "/bridge": ["admin", "deployer"], // Admin only - FIXED
   "/war-room": ["admin", "deployer"], // Admin only
   "/system": ["admin"], // Admin only
   "/dao": ["user", "viewer", "company", "admin", "deployer"], // All can participate

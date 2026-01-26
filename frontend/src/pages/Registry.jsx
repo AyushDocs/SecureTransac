@@ -33,12 +33,29 @@ function Registry() {
         
         const classified = aclData
           .filter(e => e.trustScore >= 0.8 || e.trustScore <= 0.2)
-          .map(e => ({
-            address: e.address,
-            type: e.trustScore >= 0.8 ? 'whitelist' : 'blacklist',
-            addedBy: e.addedBy,
-            date: e.date
-          }));
+          .map(e => {
+            // Format date to readable format
+            let formattedDate = 'N/A';
+            if (e.date) {
+              try {
+                const dateObj = new Date(e.date);
+                formattedDate = dateObj.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                });
+              } catch (err) {
+                formattedDate = e.date;
+              }
+            }
+            
+            return {
+              address: e.address,
+              type: e.trustScore >= 0.8 ? 'whitelist' : 'blacklist',
+              addedBy: e.addedBy || 'System',
+              date: formattedDate
+            };
+          });
         setAclEntries(classified);
 
         const formatted = updatesData.map(u => {
