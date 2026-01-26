@@ -33,8 +33,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.21+commit.d9974bed\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256[2]\",\"name\":\"_pA\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2][2]\",\"name\":\"_pB\",\"type\":\"uint256[2][2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"_pC\",\"type\":\"uint256[2]\"},{\"internalType\":\"uint256[2]\",\"name\":\"_pubSignals\",\"type\":\"uint256[2]\"}],\"name\":\"verifyProof\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/ZKScoreVerifier.sol\":\"Groth16Verifier\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/ZKScoreVerifier.sol\":{\"keccak256\":\"0xc06679b4a98331ebb2b93bc99b61f2e2e055f1df5117bcb8b242b7c077cf8869\",\"license\":\"GPL-3.0\",\"urls\":[\"bzz-raw://c4a0785b8371ba001535d54bdc5b35a0766e292a9e38619dc8cc5a971a28ed28\",\"dweb:/ipfs/QmW7HVp1tfZLn8iZkjHbVZyjVqU9NeE6NYQ8LEX59YNej4\"]}},\"version\":1}",
@@ -6278,13 +6277,12 @@
     "1337": {
       "events": {},
       "links": {},
-      "address": "0xe8D2A1E88c91DCd5433208d4152Cc4F399a7e91d",
-      "transactionHash": "0xc0d244b593c05c8c1545e5f92c1da5c1571ff83db2773bb75df7abf4d2b9890f"
+      "address": "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
+      "transactionHash": "0x3c9ccbac3a094cfc2c40b5826d20d01b5466435e4c309227b545339213326c8e"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-25T20:31:48.292Z",
-  "networkType": "ethereum",
+  "updatedAt": "2026-01-26T12:43:57.222Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

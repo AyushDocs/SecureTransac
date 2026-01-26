@@ -64,6 +64,7 @@ module.exports = {
       network_id: 11155111,
       confirmations: 2,
       timeoutBlocks: 200,
+      networkCheckTimeout: 1000000,
       skipDryRun: true
     },
 

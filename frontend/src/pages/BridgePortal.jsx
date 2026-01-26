@@ -173,7 +173,7 @@ const BridgePortal = () => {
                             </svg>
                         </div>
                         <h3 className="text-white font-bold text-sm mb-2 uppercase">Economic Settlement</h3>
-                        <p className="text-xs text-gray-500 leading-relaxed">Bridge fees are paid in $TRUST tokens to support the decentralized relayer set.</p>
+                        <p className="text-xs text-gray-500 leading-relaxed">Bridge fees are paid in $AV tokens to support the decentralized relayer set.</p>
                     </div>
                 </div>
             </div>

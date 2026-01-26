@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 // Import CommonJS modules
 import swaggerConfig from './src/config/swagger.js';
 import rateLimiter from './src/middleware/rateLimiter.js';
+// Force restart for new scores - synchronized with updated ACL controller
 import adminRoutes from './src/routes/adminRoutes.js';
 import ipfsRoutes from './src/routes/ipfsRoutes.js';
 import partnerRoutes from './src/routes/partnerRoutes.js';

@@ -97,6 +97,11 @@ function AddressProfile() {
           <Badge variant={displayScore >= 0.7 ? "success" : displayScore >= 0.4 ? "warning" : "destructive"}>
             {displayScore >= 0.7 ? "Trusted" : displayScore >= 0.4 ? "Moderate" : "Risky"}
           </Badge>
+          {profileData?.reporterTier >= 2 && (
+            <Badge variant={profileData.reporterTier == 3 ? "premium" : "info"}>
+              {profileData.reporterTier == 3 ? "💎 Diamond Authority" : "🏛️ Institutional Authority"}
+            </Badge>
+          )}
         </div>
         <p className="text-sm font-mono text-gray-400 break-all">{address}</p>
       </div>

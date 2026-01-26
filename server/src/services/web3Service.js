@@ -233,6 +233,10 @@ class Web3Service {
             // Fallback (might fail if not admin)
             return await this.contract.methods.getScore(targetAddress).call();
         } catch (error) {
+            // Suppress decoding error for empty/new users (0x return vs valid bytes)
+            if (error.message.includes('Parameter decoding error')) {
+                return '0x00';
+            }
             console.error("[Web3] getScore failed:", error.message);
             // In ZK mode, default cannot be 50 (plaintext). Return empty bytes or handle error.
             return '0x00';
@@ -242,22 +246,24 @@ class Web3Service {
     async getDecryptedScore(targetAddress) {
         try {
             const scoreHex = await this.getScore(targetAddress);
+            console.log(`[Web3] Raw Score for ${targetAddress}:`, scoreHex);
             if (!scoreHex || scoreHex === '0x00' || scoreHex === '0x') return 0;
 
             if (!this.paillierKeys) {
-                // Try load
+                console.log("[Web3] Loading keys for decryption...");
                 if (!this._loadKeys()) {
-                     console.warn("[Web3] Keys missing and no backup found. Generating NEW keys (Old data will be lost/unreadable).");
-                     await this._applyPrivacyHash(0); // Trigger generation
+                     console.warn("[Web3] No keys found.");
+                     return 0;
                 }
             }
 
             const cipherBigInt = BigInt(scoreHex);
             const decrypted = this.paillierKeys.privateKey.decrypt(cipherBigInt);
+            console.log(`[Web3] Decrypted m for ${targetAddress}:`, decrypted.toString());
             // Decrypted is m = score * 100.
             return Number(decrypted) / 100;
         } catch (error) {
-            console.error("[Web3] Decryption failed:", error);
+            console.error("[Web3] Decryption failed:", error.message);
             return 0;
         }
     }
@@ -407,6 +413,11 @@ class Web3Service {
             console.error(`[Web3] Error fetching history for ${addr}:`, error.message);
             return [];
         }
+    }
+
+    recoverAddress(message, signature) {
+        // web3.eth.accounts.recover handles "Ethereum Signed Message" prefix automatically
+        return this.web3.eth.accounts.recover(message, signature);
     }
 
     startEventListeners() {

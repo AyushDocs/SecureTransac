@@ -129,7 +129,7 @@ class AIScoreService {
         let senderShift = 0;
         if (Number(receiverScore) < 40) {
             senderShift = -0.1;
-            persistence.incrementBlockedTransactions();
+            await persistence.incrementBlockedTransactions();
             console.log(`[AI] Penalty: ${from} interacted with suspicious receiver ${to}`);
         }
 
@@ -152,23 +152,32 @@ class AIScoreService {
     async processTransactionComment(from, target, txId, text, rating) {
         console.log(`[AI] Processing Comment from ${from} on ${target} for TX ${txId}: "${text}" (Rating: ${rating})`);
         
-        const targetUser = persistence.getUser(target);
-        const fromUser = persistence.getUser(from);
+        // Fetch current scores from Chain
+        const [targetScore, fromScore] = await Promise.all([
+             web3Service.getScore(target),
+             web3Service.getScore(from)
+        ]);
         
         let sentimentShift = (rating - 3) * 0.05;
-        sentimentShift *= fromUser.trustScore;
+        const decryptedReporterScore = await web3Service.getDecryptedScore(from);
+        const decryptedTargetScore = await web3Service.getDecryptedScore(target);
 
-        targetUser.trustScore += sentimentShift;
-        targetUser.complaints.push({ 
-            reporter: from, 
-            text, 
-            timestamp: Date.now(), 
+        sentimentShift *= decryptedReporterScore; // 0-1 weight
+
+        let newScore = decryptedTargetScore + sentimentShift;
+        newScore = Math.max(0, Math.min(1, newScore));
+        
+        const reportText = JSON.stringify({
             type: 'COMMENT',
+            text,
             txId,
-            rating 
+            rating
         });
 
-        persistence.updateUser(target, targetUser);
+        // Submit to Chain
+        await web3Service.submitReport(target, reportText);
+        await web3Service.updateScore(target, newScore);
+        
         await this.processEvaluation(target);
     }
 
@@ -182,7 +191,7 @@ class AIScoreService {
             isAnonymous ? Promise.resolve(60) : web3Service.getScore(reporter)
         ]);
 
-        const authorities = persistence.getAuthorities();
+        const authorities = await persistence.getAuthorities();
         const auth = isAnonymous ? null : authorities.find(a => (a.id || '').toLowerCase() === reporter.toLowerCase());
         
         if (auth && auth.status === 'revoked') {
@@ -190,7 +199,7 @@ class AIScoreService {
             return;
         }
 
-        const reporterUser = !isAnonymous ? persistence.getUser(reporter) : null;
+        const reporterUser = !isAnonymous ? await persistence.getUser(reporter) : null;
         const isCompany = reporterUser && reporterUser.role === 'company';
 
         let impactWeight = 0.05; // Default
@@ -220,7 +229,7 @@ class AIScoreService {
             await web3Service.updateScore(target, newScore);
             
             if (auth) {
-                persistence.recordAuthorityReport(reporter);
+                await persistence.recordAuthorityReport(reporter);
             }
             
             await this.processEvaluation(target);
@@ -233,7 +242,7 @@ class AIScoreService {
         let category = 'medium';
         if (score <= 0.2) category = 'high';
         else if (score >= 0.8) category = 'low';
-        persistence.incrementEvaluations(category);
+        await persistence.incrementEvaluations(category);
 
         try {
             await web3Service.updateScore(address, score);
@@ -257,25 +266,11 @@ class AIScoreService {
             newScore = 0.5;
         }
 
-        const user = persistence.getUser(address);
+        const reportText = `Manual ${action}: ${reason}`;
         
-        if (action === 'whitelist' || action === 'reset') {
-            const authorityReports = user.complaints.filter(c => c.isAuthority);
-            authorityReports.forEach(report => {
-                console.log(`[AI] Penalizing authority ${report.reporter} for incorrect report on ${address}`);
-                persistence.recordAuthorityRejection(report.reporter);
-            });
-        }
-
-        user.trustScore = newScore;
-        user.complaints.push({ 
-            reporter: 'ADMIN', 
-            text: `Manual ${action}: ${reason}`, 
-            timestamp: Date.now(), 
-            severity: action === 'blacklist' ? 5 : 0 
-        });
+        await web3Service.submitReport(address, reportText);
+        await web3Service.updateScore(address, newScore);
         
-        persistence.updateUser(address, user);
         return await this.processEvaluation(address);
     }
 }

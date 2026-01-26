@@ -62,8 +62,8 @@ const TrustDAO = () => {
                     title: p.description,
                     for: parseFloat(w3.utils.fromWei(p.forVotes, 'ether')),
                     against: parseFloat(w3.utils.fromWei(p.againstVotes, 'ether')),
-                    status: p.executed ? "Executed" : (Date.now() > p.endTime * 1000 ? "Pending Execution" : "Active"),
-                    endTime: p.endTime * 1000,
+                    status: p.executed ? "Executed" : (Date.now() > Number(p.endTime) * 1000 ? "Pending Execution" : "Active"),
+                    endTime: Number(p.endTime) * 1000,
                     pType: p.pType,
                     proposer: p.proposer
                 });
@@ -91,7 +91,7 @@ const TrustDAO = () => {
             const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
             const amount = w3.utils.toWei("1000", "ether");
 
-            alert("Approving 1,000 $TRUST for staking...");
+            alert("Approving 1,000 $AV for staking...");
             await token.methods.approve(daoData.address, amount).send({ from: user.address });
             alert("Staking...");
             await dao.methods.stake().send({ from: user.address });
@@ -160,17 +160,17 @@ const TrustDAO = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center">
                         <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">My Wallet Balance</div>
-                        <div className="text-3xl font-black text-white">{balance} <span className="text-sm text-cyan-500">$TRUST</span></div>
+                        <div className="text-3xl font-black text-white">{balance} <span className="text-sm text-cyan-500">$AV</span></div>
                     </div>
                     
                     <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center">
                         <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">My Locked Stake</div>
-                        <div className="text-3xl font-black text-white">{staked} <span className="text-sm text-purple-500">$TRUST</span></div>
+                        <div className="text-3xl font-black text-white">{staked} <span className="text-sm text-purple-500">$AV</span></div>
                     </div>
 
                     <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-full flex flex-col justify-center text-center">
                         <div className="text-[10px] text-gray-500 font-bold uppercase mb-1">Claimable Rewards</div>
-                        <div className="text-3xl font-black text-white">{rewards} <span className="text-sm text-green-500">$TRUST</span></div>
+                        <div className="text-3xl font-black text-white">{rewards} <span className="text-sm text-green-500">$AV</span></div>
                     </div>
 
                     <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl flex flex-col justify-center">
@@ -221,7 +221,9 @@ const TrustDAO = () => {
                                                 <div className="h-full bg-red-500" style={{ width: `${(p.against / (p.for + p.against + 0.0001)) * 100}%` }}></div>
                                             </div>
 
-                                            {votedProposals[p.id] ? (
+                                            {p.status === 'Pending Execution' ? (
+                                                <button onClick={() => handleExecute(p.id)} className="w-full py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-all">Tally & Execute</button>
+                                            ) : votedProposals[p.id] ? (
                                                 <div className="text-center py-2 bg-gray-800/50 rounded-lg text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                                     ✓ Participation Recorded
                                                 </div>
@@ -230,8 +232,6 @@ const TrustDAO = () => {
                                                     <button onClick={() => handleVote(p.id, true)} className="flex-1 py-2 rounded-lg bg-green-600/10 hover:bg-green-600/20 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-600/20 transition-all">Support</button>
                                                     <button onClick={() => handleVote(p.id, false)} className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-600/20 transition-all">Oppose</button>
                                                 </div>
-                                            ) : p.status === 'Pending Execution' ? (
-                                                <button onClick={() => handleExecute(p.id)} className="w-full py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition-all">Tally & Execute</button>
                                             ) : null}
                                         </div>
                                     </div>

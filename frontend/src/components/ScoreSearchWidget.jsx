@@ -84,7 +84,7 @@ const ScoreSearchWidget = () => {
         
         // Check local credit cache first
         if (userCredits < 0.01) {
-            setError("Insufficient TRUST balance. Please swap ETH for TRUST to view scores.");
+            setError("Insufficient Balance. Please swap ETH for AV to view scores.");
             return;
         }
 
@@ -93,17 +93,26 @@ const ScoreSearchWidget = () => {
         setScore(null);
         
         try {
-            const revealedScore = await viewPrivateScore(searchAddress);
+            // 1. Pay for access on-chain (Keep this to ensure usage of credits)
+            await viewPrivateScore(searchAddress);
+            
+            // 2. Fetch decrypted score from Backend (Since contract returns encrypted bytes)
+            const res = await fetch(`http://localhost:5000/api/admin/score/${searchAddress}`);
+            if (!res.ok) throw new Error("Failed to fetch decrypted score from backend");
+            
+            const data = await res.json();
+            
             setScore({
                 address: searchAddress,
-                value: Number(revealedScore)
+                value: data.score // Backend returns 0-1000 scale
             });
+
             // Update credits after spend
             getCredits().then(c => setUserCredits(Number(c)));
         } catch (err) {
             console.error('Failed to view score:', err);
             // Detect revert
-            if (err.message.includes("revert")) {
+            if (err.message && err.message.includes("revert")) {
                  setError("Transaction reverted. Likely insufficient credits or unauthorized.");
             } else {
                  setError(err.message || 'Failed to view score.');
@@ -118,17 +127,17 @@ const ScoreSearchWidget = () => {
             <h2 className="text-xl font-bold text-white mb-4">Search Trust Score</h2>
             <div className="flex justify-between items-center mb-4">
                 <p className="text-gray-400 text-sm">
-                    Cost: <span className="text-cyan-400 font-bold">0.01 TRUST</span>
+                    Cost: <span className="text-cyan-400 font-bold">0.01 AV</span>
                 </p>
                 <div className="text-xs">
                     <span className="text-gray-500">Balance: </span>
                     <span className={`font-mono font-bold ${userCredits < 0.01 ? 'text-red-500' : 'text-green-500'}`}>
-                        {userCredits ? userCredits.toFixed(3) : '0.000'} TRUST
+                        {userCredits ? userCredits.toFixed(3) : '0.000'} AV
                     </span>
                 </div>
             </div>
             <p className="text-gray-400 text-sm mb-4">
-                Pay <span className="text-cyan-400 font-bold">0.01 TRUST</span> to view any user's score.
+                Pay <span className="text-cyan-400 font-bold">0.01 AV</span> to view any user's score.
             </p>
             
             {!account ? (
@@ -180,7 +189,7 @@ const ScoreSearchWidget = () => {
                             ) : (
                                 <>
                                     <span>💳</span>
-                                    <span>Swap 0.1 ETH for 0.1 TRUST</span>
+                                    <span>Swap 0.1 ETH for 0.1 AV</span>
                                 </>
                             )}
                         </button>

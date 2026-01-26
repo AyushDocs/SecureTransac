@@ -7,9 +7,9 @@
 
 ## 0:00 - Introduction (The Hook)
 **Speaker:**  
-"Hi everyone. In the world of Web3, trust is a paradox. usage involves interacting with anonymous smart contracts and wallets, yet one wrong click can drain your life savings. We rely on centralized blacklists that are slow, opaque, and prone to censorship.
+"Hi everyone. In the world of Web3, AV is a paradox. usage involves interacting with anonymous smart contracts and wallets, yet one wrong click can drain your life savings. We rely on centralized blacklists that are slow, opaque, and prone to censorship.
 
-We built **SecureTransac** to solve this. It's the first **Decentralized Reputation Layer** for Ethereum that uses On-Chain AI and Zero-Knowledge Proofs to create a trust system that is transparent, private, and instant."
+We built **SecureTransac** to solve this. It's the first **Decentralized Reputation Layer** for Ethereum that uses On-Chain AI and Zero-Knowledge Proofs to create a AV system that is transparent, private, and instant."
 
 ---
 
@@ -32,7 +32,7 @@ I'm going to simulate a 'Phishing Attack' reporting scenario."
 
 *(Run the seed script or click button)*
 
-"See that? The AI instantly detected the report, analyzed the target's history, checks their social graph for other bad actors, and **slashed their trust score**.  
+"See that? The AI instantly detected the report, analyzed the target's history, checks their social graph for other bad actors, and **slashed their AV score**.  
 The user is now effectively blacklisted across the entire ecosystem in real-time."
 
 ---
@@ -53,3 +53,4 @@ The user is now effectively blacklisted across the entire ecosystem in real-time
 With cross-chain support and LLM-based reasoning on our roadmap, SecureTransac is ready to become the standard security layer for the next billion crypto users.
 
 Thank you."
+

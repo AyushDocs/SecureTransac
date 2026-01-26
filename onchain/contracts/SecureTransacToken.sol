@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title SecureTransacToken ($TRUST)
+ * @title SecureTransacToken ($AV)
  * @dev Governance and utility token for the SecureTransac Network.
  */
 contract SecureTransacToken is ERC20, ERC20Permit, Ownable {
-    constructor() ERC20("SecureTransac Trust Token", "TRUST") ERC20Permit("SecureTransac") Ownable(msg.sender) {
+    constructor() ERC20("SecureTransac Trust Token", "AV") ERC20Permit("SecureTransac") Ownable(msg.sender) {
         _mint(msg.sender, 1000000 * 10 ** decimals()); // 1 Million tokens initially
     }
 

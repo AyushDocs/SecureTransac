@@ -42,3 +42,4 @@
 2.  **Seed Data:** Run the initial seed so graphs aren't empty.
 3.  **Terminal Ready:** Have the seed script command typed and ready to hit "Enter".
 4.  **Zoom Level:** Ensure browser zoom is at 110% for clarity.
+

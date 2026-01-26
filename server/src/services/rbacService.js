@@ -6,7 +6,7 @@
 // Role definitions
 const ROLES = {
     ADMIN: 'admin',
-    CREATOR: 'creator', // Same as 'company' for backward compatibility
+    COMPANY: 'company',
     VIEWER: 'viewer',   // Same as 'user' for backward compatibility
     DEPLOYER: 'deployer'
 };
@@ -15,22 +15,22 @@ const ROLES = {
 const ROLE_HIERARCHY = {
     [ROLES.DEPLOYER]: 4,
     [ROLES.ADMIN]: 3,
-    [ROLES.CREATOR]: 2,
+    [ROLES.COMPANY]: 2,
     [ROLES.VIEWER]: 1
 };
 
 // Dashboard route permissions
 const DASHBOARD_PERMISSIONS = {
     '/admin': [ROLES.ADMIN, ROLES.DEPLOYER],
-    '/creator': [ROLES.CREATOR, ROLES.ADMIN, ROLES.DEPLOYER],
-    '/app': [ROLES.VIEWER, ROLES.CREATOR, ROLES.ADMIN, ROLES.DEPLOYER]
+    '/company': [ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER],
+    '/app': [ROLES.VIEWER, ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER]
 };
 
 // Map legacy roles to RBAC roles
 const LEGACY_ROLE_MAP = {
     'admin': ROLES.ADMIN,
     'deployer': ROLES.DEPLOYER,
-    'company': ROLES.CREATOR,
+    'company': ROLES.COMPANY,
     'user': ROLES.VIEWER
 };
 
@@ -38,12 +38,12 @@ const LEGACY_ROLE_MAP = {
 const RBAC_TO_LEGACY = {
     [ROLES.ADMIN]: 'admin',
     [ROLES.DEPLOYER]: 'deployer',
-    [ROLES.CREATOR]: 'company',
+    [ROLES.COMPANY]: 'company',
     [ROLES.VIEWER]: 'user'
 };
 
 // In-memory role assignments (in production, use database)
-// Format: { walletAddress: { roles: ['admin', 'creator'], activeRole: 'admin' } }
+// Format: { walletAddress: { roles: ['admin'], activeRole: 'admin' } }
 const userRoles = new Map();
 
 // Test wallets with all roles (for development)
@@ -57,7 +57,7 @@ const TEST_WALLETS = [
  * Initialize test wallets with all roles
  */
 function initializeTestData() {
-    const allRoles = [ROLES.ADMIN, ROLES.CREATOR, ROLES.VIEWER, ROLES.DEPLOYER];
+    const allRoles = [ROLES.ADMIN, ROLES.COMPANY, ROLES.VIEWER, ROLES.DEPLOYER];
     
     TEST_WALLETS.forEach(wallet => {
         userRoles.set(wallet, {

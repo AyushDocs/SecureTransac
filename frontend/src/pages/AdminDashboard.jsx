@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchDashboardMetrics } from "../api/client";
+import { fetchACL, fetchDashboardMetrics } from "../api/client";
 import { useSocket } from "../context/SocketContext";
 import MetricCard from "../dashboard/MetricCard";
 import RiskHeatmap from "../dashboard/RiskHeatmap";
@@ -10,21 +10,26 @@ import { logger } from "../utils/logger";
 
 function AdminDashboard() {
   const [metricsData, setMetricsData] = useState(null);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
 
   useEffect(() => {
-    async function loadMetrics() {
+    async function loadData() {
       try {
-        const data = await fetchDashboardMetrics();
+        const [data, aclData] = await Promise.all([
+          fetchDashboardMetrics(),
+          fetchACL()
+        ]);
         setMetricsData(data);
+        setUsers(aclData);
       } catch (error) {
-        logger.error("AdminDashboard: Failed to load metrics", error);
+        logger.error("AdminDashboard: Failed to load data", error);
       } finally {
         setLoading(false);
       }
     }
-    loadMetrics();
+    loadData();
   }, []);
 
 
@@ -59,6 +64,60 @@ function AdminDashboard() {
         </div>
         <VelocityChart data={metricsData?.evaluationVelocity || []} />
         
+        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mt-6">
+          <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+            <div>
+              <h2 className="text-xl font-bold text-white uppercase tracking-tighter">Global User Directory</h2>
+              <p className="text-gray-500 text-xs">Live blockchain-decrypted trust records</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-800/50 text-gray-500 text-[10px] uppercase font-bold">
+                <tr>
+                  <th className="p-4">Identity Hash</th>
+                  <th className="p-4 text-center">Live Score</th>
+                  <th className="p-4">Risk Profile</th>
+                  <th className="p-4">System Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {users.map((u, i) => (
+                  <tr key={i} className="hover:bg-gray-800/20 transition-colors">
+                    <td className="p-4 font-mono text-[11px] text-blue-400">
+                      {u.address}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col items-center">
+                         <span className={`text-lg font-black ${u.trustScore >= 0.8 ? "text-green-400" : u.trustScore >= 0.4 ? "text-yellow-400" : "text-red-400"}`}>
+                           {(u.trustScore || 0).toFixed(2)}
+                         </span>
+                         <div className="w-24 h-1 bg-gray-800 rounded-full mt-1 overflow-hidden">
+                            <div 
+                              className={`h-full ${u.trustScore >= 0.8 ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : u.trustScore >= 0.4 ? "bg-yellow-500" : "bg-red-500"}`}
+                              style={{ width: `${(u.trustScore || 0) * 100}%` }}
+                            ></div>
+                         </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${u.trustScore >= 0.8 ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"}`}>
+                        {u.trustScore >= 0.8 ? "Verified Elite" : "Standard Review"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                       <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                          SYNCED
+                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Live Feed Component */}
         <LiveFeed />
       </div>

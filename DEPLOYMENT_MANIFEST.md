@@ -32,7 +32,7 @@ truffle migrate --network sepolia
 2.  `TrustRegistry` (Main Score Hub)
 3.  `IdentityVault` (CID Storage)
 4.  `VerificationRegistry` (Entity Approvals)
-5.  `SecureTransacToken` ($TRUST Governance)
+5.  `SecureTransacToken` ($AV Governance)
 6.  `TrustDAO` (Staking and Voting)
 7.  `ZKScoreVerifier` (Groth16 Verifier for SNARKs)
 
@@ -101,3 +101,4 @@ npm run build
 - [ ] ZK artifacts correctly placed in `public/zk`.
 - [ ] Caching layer (internal cache) warmed up by initial log scan.
 - [ ] Socket.IO CORS configured to match frontend domain.
+

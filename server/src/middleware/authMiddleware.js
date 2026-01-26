@@ -110,7 +110,7 @@ exports.adminOnly = (req, res, next) => {
  */
 exports.creatorOrHigher = (req, res, next) => {
     const userRoles = req.user.roles || [req.user.role];
-    const allowed = ['admin', 'deployer', 'creator', 'company'];
+    const allowed = ['admin', 'deployer', 'company'];
     const hasAccess = userRoles.some(r => allowed.includes(r));
     
     if (!hasAccess) {

@@ -11,24 +11,24 @@ import { useAuth } from "../context/AuthContext";
 // Role-based navigation permissions
 // Define which roles can access each route
 const NAV_PERMISSIONS = {
-  "/": ["user", "viewer", "company", "creator", "admin", "deployer"], // Dashboard - all
-  "/dashboard": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/search": ["company", "creator", "admin", "deployer"], // Not for regular users
-  "/registry": ["company", "creator", "admin", "deployer"], // Not for regular users
-  "/identity": ["user", "viewer", "creator"], // All users except admin/deployer
-  "/certified": ["user", "viewer", "creator"],
-  "/kyb": ["company", "creator"], // Corporate only
-  "/reports": ["user", "viewer", "company", "creator", "admin", "deployer"], // All can report
-  "/submit-report": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/appeals": ["user", "viewer","creator"], // All can appeal
-  "/privacy": ["user", "viewer", "creator"], // All users
+  "/": ["user", "viewer", "company", "admin", "deployer"], // Dashboard - all
+  "/dashboard": ["user", "viewer", "company", "admin", "deployer"],
+  "/search": ["company", "admin", "deployer"], // Not for regular users
+  "/registry": ["company", "admin", "deployer"], // Not for regular users
+  "/identity": ["user", "viewer"], // All users except admin/deployer
+  "/certified": ["user", "viewer"],
+  "/kyb": ["company"], // Corporate only
+  "/reports": ["user", "viewer", "company", "admin", "deployer"], // All can report
+  "/submit-report": ["user", "viewer", "company", "admin", "deployer"],
+  "/appeals": ["user", "viewer"], // All can appeal
+  "/privacy": ["user", "viewer"], // All users
   "/analytics": ["admin", "deployer"], // Admin only
-  "/ecosystem": ["creator", "admin", "deployer"], // Partners only
+  "/ecosystem": ["company", "admin", "deployer"], // Partners only
   "/bridge": ["user","viewer"], // Admin only
   "/war-room": ["admin", "deployer"], // Admin only
   "/system": ["admin"], // Admin only
-  "/dao": ["user", "viewer", "company", "creator", "admin", "deployer"], // All can participate
-  "/verification-requests": ["company", "creator", "admin", "deployer"], // Verifiers only
+  "/dao": ["user", "viewer", "company", "admin", "deployer"], // All can participate
+  "/verification-requests": ["company", "admin", "deployer"], // Verifiers only
 };
 
 // Sidebar navigation with route links

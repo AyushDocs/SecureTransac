@@ -2,15 +2,15 @@
 
 **A Decentralized Reputation & Identity Layer for the Ethereum Ecosystem.**
 
-SecureTransac leverages **On-Chain AI**, **Zero-Knowledge Proofs**, and **Social Graph Analysis** to create a transparent, privacy-preserving trust system for Web3. It protects smart contracts from malicious actors by assigning dynamic "Trust Scores" to every wallet address based on their behavior and associations.
+SecureTransac leverages **On-Chain AI**, **Zero-Knowledge Proofs**, and **Social Graph Analysis** to create a transparent, privacy-preserving AV system for Web3. It protects smart contracts from malicious actors by assigning dynamic "AV Scores" to every wallet address based on their behavior and associations.
 
 ---
 
 ## 🚀 Key Features
 
-### 🧠 AI-Driven Trust Scoring
+### 🧠 AI-Driven AV Scoring
 -   **Temporal Analysis**: Detects anomalies like sudden transaction bursts (bot activity) or volume spikes (hacked wallets).
--   **Social Graph Scoring**: Implements "Guilt by Association". Interacting with low-trust addresses negatively impacts your score.
+-   **Social Graph Scoring**: Implements "Guilt by Association". Interacting with low-AV addresses negatively impacts your score.
 -   **On-Chain Source of Truth**: All behavioral data is fetched directly from the blockchain event logs, not a centralized database.
 
 ### 🔐 Privacy-First Identity
@@ -112,3 +112,4 @@ See **[DEPLOY_IPFS.md](./DEPLOY_IPFS.md)** for detailed instructions on deployin
 ---
 Built for the **Pecathon Hackathon**.  
 *Secure your code, secure the future.*
+

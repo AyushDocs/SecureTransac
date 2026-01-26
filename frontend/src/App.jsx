@@ -10,6 +10,7 @@ import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import Appeals from "./pages/Appeals";
 import BridgePortal from "./pages/BridgePortal";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import Dashboard from "./pages/Dashboard";
 import DeployerDashboard from "./pages/DeployerDashboard";
 import IdentityVault from "./pages/IdentityVault";
 import InstitutionalPortal from "./pages/InstitutionalPortal";
@@ -33,7 +34,7 @@ const DashboardSwitch = () => {
   const { role, activeRole, roles, isMultiRole, showDashboardSelector, setShowDashboardSelector } = useAuth();
   
   const currentRole = activeRole || role;
-  
+  console.log(currentRole);
   if (!currentRole) return <Navigate to="/" />;
   
   // If user has multiple roles and just logged in, show selector
@@ -46,18 +47,21 @@ const DashboardSwitch = () => {
   }
   
   // Render dashboard based on active role
-  switch (currentRole) {
+  const normalizedRole = (currentRole || "").toLowerCase();
+  
+  switch (normalizedRole) {
     case "user":
-    case "viewer":
       return <UserDashboard />;
+    case "viewer":
+      return <Dashboard />;
     case "company":
-    case "creator":
       return <CompanyDashboard />;
     case "admin":
       return <AdminDashboard />;
     case "deployer":
       return <DeployerDashboard />;
     default:
+      console.warn(`[DashboardSwitch] Unrecognized role: ${normalizedRole}, falling back to UserDashboard`);
       return <UserDashboard />;
   }
 };
@@ -98,9 +102,9 @@ const RoleRoute = ({ children, allowedRoles }) => {
 
 // Define route permissions
 const routePermissions = {
-  "/identity": ["user", "viewer", "company", "creator", "admin", "deployer"], // All users
-  "/certified": ["user", "viewer", "company", "creator", "admin", "deployer"], // All users
-  "/kyb": ["company", "creator", "admin", "deployer"], // Corporate only
+  "/identity": ["user", "viewer", "company", "admin", "deployer"], // All users
+  "/certified": ["user", "viewer", "company", "admin", "deployer"], // All users
+  "/kyb": ["company", "admin", "deployer"], // Corporate only
   "/analytics": ["admin", "deployer"],
   "/bridge": ["admin", "deployer"],
   "/war-room": ["admin", "deployer"],
@@ -177,7 +181,7 @@ function AppContent() {
               } />
               <Route path="/dao" element={<ProtectedRoute><TrustDAO /></ProtectedRoute>} />
               <Route path="/verification-requests" element={
-                <RoleRoute allowedRoles={['company', 'creator', 'admin', 'deployer']}>
+                <RoleRoute allowedRoles={['company', 'admin', 'deployer']}>
                   <VerificationRequests />
                 </RoleRoute>
               } />

@@ -24,13 +24,13 @@ This document provides an overview of the SecureTransac project structure and wh
 - **API Routes**: `/src/routes` - Admin and user endpoints.
 - **Controllers**: `/src/controllers` - Logic for processing reports, transactions, and analytics.
 - **Services**: `/src/services`
-  - [aiService.js](file:///j:/Users/ayush/Desktop/code/Pecathon/server/src/services/aiService.js): The core algorithm for trust scoring.
+  - [aiService.js](file:///j:/Users/ayush/Desktop/code/Pecathon/server/src/services/aiService.js): The core algorithm for AV scoring.
   - [web3Service.js](file:///j:/Users/ayush/Desktop/code/Pecathon/server/src/services/web3Service.js): Handles syncing scores to the blockchain.
   - [persistenceService.js](file:///j:/Users/ayush/Desktop/code/Pecathon/server/src/services/persistenceService.js): Simple JSON-based DB layer.
 
 ## ⛓️ On-Chain Facilities (`/onchain`)
 - **Contracts**: `/contracts`
-  - `TrustRegistry.sol`: Stores user trust scores and risk categories.
+  - `TrustRegistry.sol`: Stores user AV scores and risk categories.
   - `IdentityVault.sol`: Encrypted identity data storage.
   - `Guardian.sol`: Access control layer for other contracts.
 - **Migrations**: `/migrations` - Deployment scripts.
@@ -39,3 +39,4 @@ This document provides an overview of the SecureTransac project structure and wh
 ## 🔐 Security Showcase (`/demo-vulnerable`)
 - **VULNERABLE**: `contracts/VulnerableBank.sol` - Demonstrates reentrancy and lack of access control.
 - **PROTECTED**: `contracts/ProtectedBank.sol` - Uses SecureTransac's `Guardian` to block malicious actors.
+

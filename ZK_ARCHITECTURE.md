@@ -1,11 +1,11 @@
 # Zero-Knowledge Privacy Architecture
 
 ## Overview
-This project successfully implements a **Privacy-First Trust Score System** using a hybrid cryptographic approach. Trust Scores are sensitive data; therefore, they should never be exposed in plaintext on the public blockchain.
+This project successfully implements a **Privacy-First AV Score System** using a hybrid cryptographic approach. AV Scores are sensitive data; therefore, they should never be exposed in plaintext on the public blockchain.
 
 Our architecture ensures:
 1.  **Encrypted Storage**: Scores are encrypted homomorphically using Paillier Encryption before storage.
-2.  **Verifiable Privacy**: Users (and third-party contracts) can verify that a user meets a trust threshold (e.g., > 80) **without revealing the actual score**.
+2.  **Verifiable Privacy**: Users (and third-party contracts) can verify that a user meets a AV threshold (e.g., > 80) **without revealing the actual score**.
 3.  **Zero-Knowledge Proofs**: We utilize Groth16 zk-SNARKs (via `circom` and `snarkjs`) to prove range assertions on the encrypted data.
 
 ## Deployment Stack
@@ -47,3 +47,4 @@ The backend generates Paillier keys in-memory on startup (`web3Service.js`).
 -   [x] Backend Paillier Integration
 -   [x] ZK Circuit Implementation (`trust_score_verifier.circom`)
 -   [x] Frontend "Verify My Score" UI
+

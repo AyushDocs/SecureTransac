@@ -17,7 +17,7 @@ contract SecureBank is Guardian {
 }
 ```
 
-By inheriting `Guardian`, the `withdraw` function is protected by the `onlyTrusted` modifier. Only users with a Trust Score > 800 (AI verified) can withdraw.
+By inheriting `Guardian`, the `withdraw` function is protected by the `onlyTrusted` modifier. Only users with a AV Score > 800 (AI verified) can withdraw.
 
 ## Running the Demo
 
@@ -39,5 +39,6 @@ By inheriting `Guardian`, the `withdraw` function is protected by the `onlyTrust
 ## Package Structure
 The `secure-transac-contracts` package exports:
 - `Guardian.sol`: Access control layer
-- `TrustRegistry.sol`: Interface to the Trust Score system
+- `TrustRegistry.sol`: Interface to the AV Score system
 - `IdentityVault.sol`: Secure identity management
+

@@ -26,9 +26,10 @@ const generateToken = (address, role, roles = [], activeRole = null) => {
     });
 };
 
-exports.getAnalytics = (req, res) => {
+exports.getAnalytics = async (req, res) => {
     console.log('[SecureTransac] Fetching global analytics');
-    res.json(persistence.getAnalytics());
+    const analytics = await persistence.getAnalytics();
+    res.json(analytics);
 };
 
 exports.evaluateAddress = async (req, res) => {
@@ -43,35 +44,58 @@ exports.evaluateAddress = async (req, res) => {
 exports.getUserDetails = async (req, res) => {
     const { address } = req.params;
     console.log(`[SecureTransac] Fetching user details for: ${address}`);
-    const data = persistence.getUser(address);
+    
+    // Get basic local data (transaction history, complaints) which are still indexed locally
+    // but Trust Score and Identity Metadata are now On-Chain driven.
+    const localData = await persistence.getUser(address);
     
     try {
-        const [onChainScore, identityCid, transactions, complaints] = await Promise.all([
+        // Parallel Fetch:
+        // 1. Decrypted Score (Chain -> Backend Key)
+        // 2. Identity CID (Chain Contract)
+        // 3. Chain History (Events)
+        // 4. Reports (Events)
+        const [onChainScore, identityCid, transactions, complaints, reporterTier] = await Promise.all([
             web3Service.getDecryptedScore(address),
             web3Service.getIdentityCID(address),
             web3Service.getTransactionHistory(address),
-            web3Service.getReports(address)
+            web3Service.getReports(address),
+            web3Service.getReporterTier(address)
         ]);
+
+        let identityData = {};
+        // If CID exists on chain, fetch the JSON from IPFS
+        if (identityCid && identityCid.length > 0) {
+            console.log(`[Identity] Found on-chain CID for ${address}: ${identityCid}. Fetching IPFS...`);
+            const ipfsProfile = await ipfsService.fetchJSON(identityCid);
+            if (ipfsProfile) {
+                identityData = ipfsProfile;
+            }
+        }
+
         res.json({ 
             address, 
-            ...data, 
-            trustScore: onChainScore * 1000, // Convert 0-1 float to 0-1000 display
-            identityCid: identityCid || data.identityCid,
-            transactions,
-            complaints
+            ...localData, // Keeps local analytics links if any
+            ...identityData, // IPFS data overrides local defaults
+            trustScore: onChainScore * 1000, // Normalized 0-1000
+            identityCid: identityCid || localData.identityCid,
+            reporterTier: reporterTier,
+            transactions: transactions.length > 0 ? transactions : localData.transactions,
+            complaints: complaints.length > 0 ? complaints : localData.complaints
         });
     } catch (error) {
         console.error(`[SecureTransac] Failed to fetch on-chain data for ${address}:`, error);
-        res.json({ address, ...data });
+        // Fallback to local if chain fails
+        res.json({ address, ...localData });
     }
 };
 
-exports.registerUser = (req, res) => {
+exports.registerUser = async (req, res) => {
     const { address, role, metadata } = req.body;
     console.log(`[SecureTransac] Registering user: ${address} as ${role}`);
     if (!address || !role) return res.status(400).json({ error: 'Address and Role required' });
 
-    const user = persistence.register(address, role, metadata);
+    const user = await persistence.register(address, role, metadata);
     res.json({ message: 'User registered successfully', user });
 };
 
@@ -104,16 +128,16 @@ exports.processReport = async (req, res) => {
     res.json({ message: 'Report analyzed and target score adjusted' });
 };
 
-exports.addEvent = (req, res) => {
+exports.addEvent = async (req, res) => {
     const { address, type, details } = req.body;
     console.log(`[SecureTransac] Recording event: ${type} for ${address}`);
     if (!address || !type) return res.status(400).json({ error: 'Missing fields' });
 
-    const user = persistence.getUser(address);
+    const user = await persistence.getUser(address);
     if (type === 'TRANSACTION') user.transactions.push(details);
     if (type === 'COMPLAINT') user.complaints.push(details);
 
-    persistence.updateUser(address, user);
+    await persistence.updateUser(address, user);
     res.json({ message: 'Event recorded', address });
 };
 
@@ -143,21 +167,24 @@ exports.getAuditLogs = (req, res) => {
 };
 
 // Authority Metadata Handlers
+// Authority Metadata Handlers
 exports.getAuthorities = async (req, res) => {
     console.log('[SecureTransac] Fetching authorities and syncing with blockchain');
-    const authorities = persistence.getAuthorities();
+    const authorities = await persistence.getAuthorities();
+    // Assuming authorities is an array of objects
     const updatedAuthorities = {};
 
-    for (const [address, data] of Object.entries(authorities)) {
+    for (const data of authorities) {
+        const address = data.id || data.address; // Ensure address access
         try {
             const onChainStatus = await web3Service.isReporter(address);
             // Sync local DB if on-chain status is the source of truth
             if (onChainStatus && data.status === 'revoked') {
                 data.status = 'active';
-                persistence.updateAuthority(address, { status: 'active' });
+                await persistence.updateAuthority(address, { status: 'active' });
             } else if (!onChainStatus && data.status === 'active') {
                 data.status = 'revoked';
-                persistence.updateAuthority(address, { status: 'revoked' });
+                await persistence.updateAuthority(address, { status: 'revoked' });
             }
             updatedAuthorities[address] = data;
         } catch (e) {
@@ -167,50 +194,63 @@ exports.getAuthorities = async (req, res) => {
     res.json(Object.values(updatedAuthorities));
 };
 
-exports.saveAuthority = (req, res) => {
+exports.saveAuthority = async (req, res) => {
     const { address, name, email, level } = req.body;
     console.log(`[SecureTransac] Saving authority metadata for ${address}`);
     if (!address || !name || !email) return res.status(400).json({ error: 'Missing address, name, or email' });
     
-    persistence.saveAuthority(address, { name, email, level: level || 'security' });
+    await persistence.saveAuthority(address, { name, email, level: level || 'security' });
     res.json({ message: 'Authority metadata saved', address });
 };
 
-exports.removeAuthority = (req, res) => {
+exports.removeAuthority = async (req, res) => {
     const { address } = req.params;
     console.log(`[SecureTransac] Removing authority metadata for ${address}`);
     if (!address) return res.status(400).json({ error: 'Address required' });
 
-    persistence.removeAuthority(address);
+    await persistence.removeAuthority(address);
     res.json({ message: 'Authority metadata removed', address });
 };
 
-exports.updateRiskHeatmap = (req, res) => {
+exports.updateRiskHeatmap = async (req, res) => {
     const { data } = req.body;
     console.log('[SecureTransac] Updating Risk Heatmap data');
     if (!data || !Array.isArray(data)) return res.status(400).json({ error: 'Heatmap data required' });
     
-    persistence.updateRiskHeatmap(data);
+    await persistence.updateRiskHeatmap(data);
     res.json({ message: 'Risk Heatmap updated' });
 };
 
-exports.updateEvaluationVelocity = (req, res) => {
+exports.updateEvaluationVelocity = async (req, res) => {
     const { data } = req.body;
     console.log('[SecureTransac] Updating Evaluation Velocity data');
     if (!data || !Array.isArray(data)) return res.status(400).json({ error: 'Velocity data required' });
     
-    persistence.updateEvaluationVelocity(data);
+    await persistence.updateEvaluationVelocity(data);
     res.json({ message: 'Evaluation Velocity updated' });
 };
 
-exports.getACL = (req, res) => {
-    console.log('[SecureTransac] Fetching ACL entries');
-    res.json(persistence.getACLEntries());
+exports.getACL = async (req, res) => {
+    console.log('[SecureTransac] Fetching ACL entries with live scores');
+    const entries = await persistence.getACLEntries();
+    
+    // Enrich with live scores
+    const enriched = await Promise.all(entries.map(async (entry) => {
+        try {
+            const score = await web3Service.getDecryptedScore(entry.address);
+            return { ...entry, trustScore: score };
+        } catch (e) {
+            return entry;
+        }
+    }));
+    
+    res.json(enriched);
 };
 
-exports.getScoreUpdates = (req, res) => {
+exports.getScoreUpdates = async (req, res) => {
     console.log('[SecureTransac] Fetching recent score updates');
-    res.json(persistence.getRecentScoreUpdates());
+    const updates = await persistence.getRecentScoreUpdates();
+    res.json(updates);
 };
 
 // Verification Request Handlers
@@ -299,63 +339,65 @@ exports.verifyUser = async (req, res) => {
 };
 
 // Cryptographic Auth Handlers
-exports.getNonce = (req, res) => {
+exports.getNonce = async (req, res) => {
     const { address } = req.params;
-    if (!address) return res.status(400).json({ error: 'Address required' });
-    const nonce = persistence.getNonce(address);
+    if (!address) return res.status(400).json({ error: "Address required" });
+    const nonce = await persistence.getNonce(address);
     res.json({ nonce });
 };
 
 exports.verifySignature = async (req, res) => {
     const { address, signature } = req.body;
-    if (!address || !signature) return res.status(400).json({ error: 'Address and Signature required' });
+    console.log(`[Auth] Verifying signature for ${address}`);
+    
+    if (!address || !signature) return res.status(400).json({ error: "Address and signature required" });
 
-    try {
-        const nonce = persistence.getNonce(address);
-        // web3.eth.accounts.recover works with the message and signature
-        const recoveredAddress = web3Service.web3.eth.accounts.recover(nonce, signature);
+    // 1. Get stored nonce
+    const nonce = await persistence.getNonce(address);
+    if (!nonce) return res.status(400).json({ error: "Nonce not generated" });
 
-        if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
-            // Success! Rotate nonce for next time
-            persistence.rotateNonce(address);
-            
-            // Get user info and RBAC data
-            const user = persistence.getUser(address);
-            
-            // Get or migrate RBAC roles
-            let rbacData = rbacService.getUserRoles(address);
-            
-            // If user has a legacy role but not in RBAC, migrate them
-            if (user.role && rbacData.roles.length <= 1) {
-                rbacData = rbacService.migrateLegacyUser(address, user.role);
-            }
-            
-            // Generate JWT with RBAC support
-            const token = generateToken(
-                address, 
-                rbacData.activeRole || user.role,
-                rbacData.roles,
-                rbacData.activeRole
-            );
-            
-            res.json({ 
-                success: true, 
-                message: 'Authentication successful',
-                user: {
-                    ...user,
-                    roles: rbacData.roles,
-                    activeRole: rbacData.activeRole
-                },
-                roles: rbacData.roles,
-                activeRole: rbacData.activeRole,
-                token
-            });
-        } else {
-            res.status(401).json({ success: false, error: 'Invalid signature' });
+    // 2. Recover address from signature
+    const recoveredAddress = web3Service.recoverAddress(nonce, signature);
+    
+    console.log(`[AuthDebug] Verify: Address=${address}, Nonce=${nonce}`);
+    console.log(`[AuthDebug] Recovered=${recoveredAddress}`);
+
+    if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
+        // 3. Success: Rotate nonce (prevents replay and prepares next)
+        await persistence.rotateNonce(address);
+        
+        // 4. Get User Role (or register if new)
+        let user = await persistence.getUser(address);
+        
+        // If user is new
+        if (!user.registrationDate) {
+             console.log(`[Auth] First time login for ${address}, registering as user`);
+             user = await persistence.register(address, 'user', {});
         }
-    } catch (error) {
-        console.error('[SecureTransac] Auth verification error:', error);
-        res.status(500).json({ error: 'Verification failed', message: error.message });
+        
+        // 5. RBAC Integration
+        let rbacData = rbacService.getUserRoles(address);
+        rbacData = rbacService.migrateLegacyUser(address, user.role);
+
+        // Use local helper generateToken (defined in this file)
+        const token = generateToken(
+            address, 
+            user.role, 
+            rbacData.roles, 
+            rbacData.activeRole 
+        );
+        
+        res.json({ 
+            token, 
+            user: { 
+                address, 
+                role: user.role,
+                roles: rbacData.roles,
+                activeRole: rbacData.activeRole
+            } 
+        });
+    } else {
+        res.status(401).json({ error: "Invalid signature" });
     }
 };
 
@@ -393,7 +435,7 @@ exports.getScoreAdmin = async (req, res) => {
     let { address } = req.params;
     
     // Check if this is a stealth address and resolve to true identity
-    const resolvedIdentity = persistence.resolveAddress(address);
+    const resolvedIdentity = await persistence.resolveAddress(address);
     if (resolvedIdentity) {
         console.log(`[Score] Redirecting Stealth Address ${address} -> Main Identity ${resolvedIdentity}`);
         address = resolvedIdentity;
@@ -510,11 +552,16 @@ exports.generateProof = async (req, res) => {
     }
 
     try {
-        const score = await web3Service.getScore(address);
-        // Ensure inputs are numbers/strings as expected
-        const proofData = await zkProofService.generateScoreProof(score, threshold, secret);
+        // Get decrypted score (0-1 range) and convert to integer (0-100)
+        const normalizedScore = await web3Service.getDecryptedScore(address);
+        const integerScore = Math.round(normalizedScore * 100);
+        
+        console.log(`[ZK] Generating proof for ${address}: score=${integerScore}, threshold=${threshold}`);
+        
+        const proofData = await zkProofService.generateScoreProof(integerScore, threshold, secret);
         res.json({ success: true, ...proofData });
     } catch (error) {
+        console.error('[ZK] Proof generation failed:', error);
         res.status(500).json({ error: error.message });
     }
 };

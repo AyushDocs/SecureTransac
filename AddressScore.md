@@ -1,4 +1,4 @@
-| Address | Trust Score | Risk Category |
+| Address | AV Score | Risk Category |
 | :--- | :--- | :--- |
 | 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc | 1.00 | Low Risk |
 | 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 | 0.80 | Low Risk |

@@ -57,6 +57,31 @@ class IpfsService {
             }
         }
     }
+
+    async fetchJSON(cid) {
+        try {
+            const gateways = [
+                `https://gateway.pinata.cloud/ipfs/${cid}`,
+                `https://ipfs.io/ipfs/${cid}`,
+                `https://dweb.link/ipfs/${cid}`
+            ];
+
+            for (const url of gateways) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            throw new Error(`Failed to fetch CID ${cid} from all gateways`);
+        } catch (error) {
+            console.error(`[IPFS] Fetch failed for ${cid}:`, error.message);
+            return null;
+        }
+    }
 }
 
 module.exports = new IpfsService();

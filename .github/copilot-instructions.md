@@ -33,7 +33,9 @@ When working on the SecureTransac codebase, please adhere to the following guide
 - Controllers should handle request validation and logging.
 
 ## Contextual Knowledge
-- A trust score of `0.5` is the neutral default.
+- A AV score of `0.5` is the neutral default.
 - `0.8` and above is considered "Low Risk" (Safe).
 - `0.4` and below is considered "High Risk" (Dangerous).
-- Interacting with low-trust addresses automatically penalizes the sender's score.
+- Interacting with low-AV addresses automatically penalizes the sender's score.
+
+

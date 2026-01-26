@@ -17,7 +17,7 @@ function Reports() {
   const currentRole = activeRole || role;
 
   const isAdminOrDeployer = ["admin", "deployer"].includes(currentRole);
-  const isCompany = ["company", "creator"].includes(currentRole);
+  const isCompany = ["company"].includes(currentRole);
   
   useEffect(() => {
     const loadData = async () => {

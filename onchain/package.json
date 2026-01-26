@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "truffle test",
+    "dev": "npm run dev:ganache",
     "dev:ganache": "ganache -p 7545 --chain.chainId 1337 --chain.networkId 1337 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\"",
     "dev:reset": "rm -Recurse -Force ./ganache_db ; truffle migrate --reset --network development",
     "dev:deploy": "truffle migrate --network development",
@@ -20,7 +21,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
     "@truffle/hdwallet-provider": "^2.1.15",
-    "dotenv": "^17.2.3"
+    "big-integer": "^1.6.52",
+    "dotenv": "^17.2.3",
+    "paillier-bigint": "^3.4.3"
   },
   "files": [
     "contracts/**/*.sol",

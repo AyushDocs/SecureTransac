@@ -27380,12 +27380,12 @@
         }
       },
       "links": {},
-      "address": "0xCace1b78160AE76398F486c8a18044da0d66d86D",
-      "transactionHash": "0xb9239510260a310eb03f2aefd6666efcc612945dbf1deefc8e5af5a4d68f067f"
+      "address": "0x0355B7B8cb128fA5692729Ab3AAa199C1753f726",
+      "transactionHash": "0x3d3752998952439a78e71e7e95291b051db3d8b2728b6acf90da60007ce3ec3e"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-25T20:31:50.621Z",
+  "updatedAt": "2026-01-26T12:04:20.917Z",
   "networkType": "ethereum",
   "devdoc": {
     "errors": {

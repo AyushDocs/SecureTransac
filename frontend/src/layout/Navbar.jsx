@@ -64,7 +64,7 @@ function Navbar() {
   
   // Check if user can access search
   const currentRole = activeRole || role;
-  const canSearch = ["company", "creator", "admin", "deployer"].includes(currentRole);
+  const canSearch = ["company", "admin", "deployer"].includes(currentRole);
 
   const handleSearch = (e) => {
     e.preventDefault();

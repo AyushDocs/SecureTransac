@@ -49,7 +49,7 @@ router.get('/me', protect, (req, res) => {
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [admin, creator, viewer, deployer]
+ *                 enum: [admin,viewer, deployer]
  *     responses:
  *       200:
  *         description: Role switched successfully

@@ -1154,7 +1154,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-25T20:31:40.428Z",
+  "updatedAt": "2026-01-26T12:43:57.018Z",
   "devdoc": {
     "details": "Base contract to provide trust-score based access control.",
     "kind": "dev",

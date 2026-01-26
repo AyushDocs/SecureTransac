@@ -26,7 +26,7 @@ function IdentityVault() {
   }
 
   // Check role permissions for others
-  const isCompany = ["company", "creator"].includes(currentRole);
+  const isCompany = ["company"].includes(currentRole);
   const canManageAuthorities = isCompany; // Admins removed from here
   const canViewDecryption = false; 
 

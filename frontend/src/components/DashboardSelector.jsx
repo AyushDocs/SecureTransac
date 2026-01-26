@@ -28,6 +28,7 @@ const ROLE_INFO = {
     color: 'from-blue-500 to-cyan-500',
     path: '/dashboard'
   },
+
   viewer: {
     title: 'Public Viewer',
     description: 'Read-only access for auditing and transparency',

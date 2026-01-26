@@ -8,7 +8,6 @@ export const ROLES = {
   USER: 'user',
   VIEWER: 'viewer',
   COMPANY: 'company',
-  CREATOR: 'creator',
   ADMIN: 'admin',
   DEPLOYER: 'deployer',
 };

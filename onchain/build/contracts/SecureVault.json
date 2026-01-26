@@ -55,8 +55,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -69,8 +68,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -83,8 +81,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -110,8 +107,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.21+commit.d9974bed\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"AddressBlacklisted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"score\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"required\",\"type\":\"uint256\"}],\"name\":\"InsufficientTrustScore\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"getSecret\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minRequiredScore\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contract TrustRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"secret\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_newSecret\",\"type\":\"string\"}],\"name\":\"setSecret\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Example contract demonstrating SecureTransac protection.\",\"kind\":\"dev\",\"methods\":{},\"title\":\"SecureVault\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/SecureVault.sol\":\"SecureVault\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"keccak256\":\"0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6\",\"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a\"]},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303\",\"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV\"]},\"@openzeppelin/contracts/utils/Context.sol\":{\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12\",\"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF\"]},\"project:/contracts/AccessControl.sol\":{\"keccak256\":\"0x30c4cd3a2919866093cdd3182a6fa72d88d532294b87ef13246081e628ead55c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0ff53ff54fd0fce183eb8d221030095d0cf538a68c066d359f6d5210a2246faf\",\"dweb:/ipfs/QmQiAf4q99aUH9irCgDUFqhWJqFW48K1kPd5cpmq3oDH2t\"]},\"project:/contracts/CreditSystem.sol\":{\"keccak256\":\"0xee1b0409159a738e1dc700e377759a0a3ec3cae0040ae110561589c5c681c47a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bfb826c5c17cef0a823b2ab99f8c15a8bc0aaa742715da8c362c8d6db87df044\",\"dweb:/ipfs/QmWC3CZtruke6i8cHcrPPWMEXurTj6L5WNDM75dZLmUYP2\"]},\"project:/contracts/Guardian.sol\":{\"keccak256\":\"0xa1e7ef60be395832158c3b76f57dc2cd8ec64a85530828991f2011c75c77c6dc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9e7208aa4e0b50b2ed6dfbb6cadd6181734672b51f7ad08f3e2b58389fbc2111\",\"dweb:/ipfs/QmSZm52dzbokaqpJig2dKmKozFo7KYbu6zqgixE3d9dMvZ\"]},\"project:/contracts/ReportingSystem.sol\":{\"keccak256\":\"0x6f0b502db35b43562949da23ff76a0a2dcc77319e2a595bb05b43b5afd6af98a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://796b857ade2adcdad3761a2a7f09a4b7f25cd3d2d9a1c8ec46ec773b12f5bfe3\",\"dweb:/ipfs/QmRA6MB3dgG72iFPmcgFkTDwjBwhVrSL3c3ygyefsMdu2j\"]},\"project:/contracts/ScoringSystem.sol\":{\"keccak256\":\"0x9f9b4073de9b08b6a5778eac0d1ed7454cdd9c1affe05d35919161f16d4cdad7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2b6d73ad0281da18e6a13daf85a599b116f729d912ed1b85cc227a3532e71451\",\"dweb:/ipfs/QmSpiDhy1bZjMfzTmueTnLCZ4tfcTRNGqQ4MpvUtc5nxBw\"]},\"project:/contracts/SecureVault.sol\":{\"keccak256\":\"0x0e3b6929e0abc674ee0bade4bb3ee1af4d9def59a214744e9ae9c661f21dffb0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e9c90873a84064c051e7f8d86c1ff712edbb6e14bd4109a8d1a14f3097f9f48\",\"dweb:/ipfs/Qmbq8xhsdciiG3gKNPhfQD1Bru8xdtogbA9vHcCJH8fLBz\"]},\"project:/contracts/TransactionLogger.sol\":{\"keccak256\":\"0xc1271adaf52293d3094ffaa72c00dcb439d74e4829a3162c82f613eafa638469\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://45376adba3aaca32c9929851d326c1c7faf205e7ce4c85c79d3bc61b0607f6ba\",\"dweb:/ipfs/Qmc6s5jCU6jvaQBtcTsAwt7Z9dnDerYj4nJMw679FA27Uu\"]},\"project:/contracts/TrustRegistry.sol\":{\"keccak256\":\"0x59cc13b0828147bbf9fb382d3ceb0dfdaa093884367167451e5be2703fc2c3f3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ff60404487f849e6beb357b9201385a020796dcaaba5a9424588584eb2d14d14\",\"dweb:/ipfs/QmTsfiyNpNp1wsLfXYPdp3QhajJ5tyqqjY4L85MmSUa6RE\"]}},\"version\":1}",
@@ -12705,8 +12701,8 @@
     "1337": {
       "events": {},
       "links": {},
-      "address": "0xf953b3A269d80e3eB0F2947630Da976B896A8C5b",
-      "transactionHash": "0xd39f52b4f7cdca31ffdabcfc72a272c85f74cd9eb91afc29b81cd9e6b483a0c0"
+      "address": "0x4C4a2f8c81640e47606d3fd77B353E87Ba015584",
+      "transactionHash": "0x24480d3b521827d7d262720e1ff3b1e6a25615155c0a1a562f37263817531620"
     },
     "1767695907696": {
       "events": {},
@@ -12740,8 +12736,7 @@
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-25T20:31:46.386Z",
-  "networkType": "ethereum",
+  "updatedAt": "2026-01-26T12:43:57.142Z",
   "devdoc": {
     "details": "Example contract demonstrating SecureTransac protection.",
     "kind": "dev",

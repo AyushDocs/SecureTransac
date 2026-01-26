@@ -7,7 +7,7 @@ import "secure-transac-contracts/contracts/Guardian.sol";
  * @title SecureBank
  * @dev This contract has the same logical error as VulnerableBank,
  * but it is protected by SecureTransac's Guardian layer.
- * Even if a vulnerability exists, a malicious actor (low trust score)
+ * Even if a vulnerability exists, a malicious actor (low AV score)
  * will be blocked from calling the sensitive functions.
  */
 contract SecureBank is Guardian {
@@ -33,3 +33,5 @@ contract SecureBank is Guardian {
 
     receive() external payable {}
 }
+
+

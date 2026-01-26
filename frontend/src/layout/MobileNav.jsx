@@ -3,15 +3,15 @@ import { useAuth } from "../context/AuthContext";
 
 // Role-based mobile nav permissions
 const MOBILE_NAV_PERMISSIONS = {
-  "/": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/search": ["company", "creator", "admin", "deployer"], // Not for regular users
-  "/identity": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/reports": ["user", "viewer", "company", "creator", "admin", "deployer"],
-  "/dao": ["user", "viewer", "company", "creator", "admin", "deployer"],
+  "/": ["user", "viewer", "company", "admin", "deployer"],
+  "/search": ["company", "admin", "deployer"], // Not for regular users
+  "/identity": ["user", "viewer", "company", "admin", "deployer"],
+  "/reports": ["user", "viewer", "company", "admin", "deployer"],
+  "/dao": ["user", "viewer", "company", "admin", "deployer"],
   "/bridge": ["admin", "deployer"], // Admin only
-  "/ecosystem": ["company", "creator", "admin", "deployer"],
+  "/ecosystem": ["company", "admin", "deployer"],
   "/analytics": ["admin", "deployer"],
-  "/kyb": ["company", "creator", "admin", "deployer"],
+  "/kyb": ["company", "admin", "deployer"],
 };
 
 function MobileNav() {
@@ -21,7 +21,7 @@ function MobileNav() {
   // Define nav items with role-specific alternatives
   const getNavItems = () => {
     const isAdmin = ["admin", "deployer"].includes(currentRole);
-    const isCompany = ["company", "creator"].includes(currentRole);
+    const isCompany = ["company"].includes(currentRole);
     const isUser = ["user", "viewer"].includes(currentRole);
 
     // Base items for all users

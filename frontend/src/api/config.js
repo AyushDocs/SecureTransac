@@ -3,9 +3,11 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localho
 
 export const CONTRACT_ADDRESSES = {
   TrustRegistry: import.meta.env.VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
-  VerificationRegistry: import.meta.env.VITE_VERIFICATION_REGISTRY_ADDRESS || "0x851356ae760d987E095750cCeb3bC6014560891C",
-  SecureTransacSBT: "0x998abeb3E57409262aE5b751f60747921B33613E", // Updated to current deployment
+  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  VerificationRegistry: import.meta.env.VITE_VERIFICATION_REGISTRY_ADDRESS || "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  TrustDAO: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+  SecureTransacSBT: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+  TransactionLogger: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 };
 
 export const TRUST_REGISTRY_ABI = [

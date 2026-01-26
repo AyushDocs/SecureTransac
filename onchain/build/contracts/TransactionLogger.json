@@ -5287,9 +5287,92 @@
     "name": "solc",
     "version": "0.8.21+commit.d9974bed.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "1337": {
+      "events": {
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        "0x0510dedd55b5bcf4dd3a296ab8a8b01af87a389f889fd7b6b7fdcfcc214bfbd3": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "reporter",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "status",
+              "type": "bool"
+            },
+            {
+              "indexed": false,
+              "internalType": "enum AccessControl.AuthorityTier",
+              "name": "tier",
+              "type": "uint8"
+            }
+          ],
+          "name": "ReporterStatusChanged",
+          "type": "event"
+        },
+        "0x568e1dfd35bc9ba4e25ae3bcaa032419bbb93848a4ffec1bf054d8c4f973575c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "name": "TransactionLogged",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0xf4B146FbA71F41E0592668ffbF264F1D186b2Ca8",
+      "transactionHash": "0xcd119350ec09be33327b3176894c2d396997d98e15f04009955a4fc8bb5339e2"
+    }
+  },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-25T20:31:40.584Z",
+  "updatedAt": "2026-01-26T12:43:57.153Z",
   "devdoc": {
     "errors": {
       "OwnableInvalidOwner(address)": [

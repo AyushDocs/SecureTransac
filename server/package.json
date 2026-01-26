@@ -44,6 +44,8 @@
     "paillier-bigint": "^3.4.3",
     "snarkjs": "^0.7.6",
     "socket.io": "^4.8.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "web3": "^4.16.0"

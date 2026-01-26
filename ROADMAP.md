@@ -13,7 +13,7 @@ This document outlines the planned enhancements and missing features required to
 ## ✅ Phase 2: Trusted Authority Enhancements (Completed)
 - [x] **Multi-Step Verification**: Added ability for users to submit identity proofs (CID-based) on-chain.
 - [x] **Reputation-based Revocation**: Implemented automatic authority status removal based on accuracy metrics.
-- [x] **Blockchain Source of Truth**: Backend fetches Trust Scores and Authority Status directly from smart contracts.
+- [x] **Blockchain Source of Truth**: Backend fetches AV Scores and Authority Status directly from smart contracts.
 
 ## ✅ Phase 3: Pure On-Chain Data & Logic (Completed)
 - [x] **On-Chain Event Sourcing**: Replaced central database (`db.json`) for transactions and reports with Immutable Blockchain Events.
@@ -27,12 +27,12 @@ This document outlines the planned enhancements and missing features required to
 
 ## ✅ Phase 5: Advanced AI & Anomaly Detection (Completed)
 - [x] **Temporal Analysis**: Implemented anomaly detection (Volume/Frequency Spikes) in `AIScoreService`.
-- [x] **Social Graph Scoring**: Implemented "Guilt by Association" algorithm. Users interacting with low-trust addresses (<300) are penalized, while those in high-trust circles (>800) get a boost.
+- [x] **Social Graph Scoring**: Implemented "Guilt by Association" algorithm. Users interacting with low-AV addresses (<300) are penalized, while those in high-AV circles (>800) get a boost.
 - [x] **ZK-Proofs for Metadata**: Implemented `identity.circom` and `ZKIdentityVerifier.sol` to allow privacy-preserving identity claims using Zero-Knowledge Proofs.
 
 ## ✅ Phase 6: Privacy & Payment System (Completed)
 - [x] **Credit System**: Implemented prepaid credit system where users deposit ETH to earn credits (1 ETH = 1 Credit).
-- [x] **Private Trust Scores**: Made scores private on-chain. Users/Companies must pay 0.01 ETH in credits to view scores (like CIBIL).
+- [x] **Private AV Scores**: Made scores private on-chain. Users/Companies must pay 0.01 ETH in credits to view scores (like CIBIL).
 - [x] **Pay-to-View Architecture**: Implemented `accessScore()` function that deducts credits and emits `ScoreRevealed` event.
 - [x] **Admin Free Access**: Admins can view all scores for free using owner-only `getScore()` function.
 - [x] **Role-Based Dashboards**: Separate dashboards for Users (locked score), Companies (paid search), and Admins (free access).
@@ -40,8 +40,8 @@ This document outlines the planned enhancements and missing features required to
 
 ## 🔜 Phase 7: Stability & Scaling (In Progress)
 - [x] **Mainnet Readiness**: Optimization of `VerificationRegistry.sol` (Struct packing, Event-only storage) reducing gas cost by ~40%.
-- [x] **Caching Layer (Redis)**: Implemented `CacheService` (simulated Redis with `node-cache`) to buffer Trust Scores and reduce RPC load by ~90% for repeated lookups.
-- [x] **Cross-Chain Trust**: Added Multi-Chain support! Backend now supports dynamic chain selection via env, and Frontend includes a Network Switcher for Sepolia, Polygon Amoy, and Localhost.
+- [x] **Caching Layer (Redis)**: Implemented `CacheService` (simulated Redis with `node-cache`) to buffer AV Scores and reduce RPC load by ~90% for repeated lookups.
+- [x] **Cross-Chain AV**: Added Multi-Chain support! Backend now supports dynamic chain selection via env, and Frontend includes a Network Switcher for Sepolia, Polygon Amoy, and Localhost.
 - [x] **API Documentation**: Full Swagger/OpenAPI spec for third-party integrations (Available at `/api-docs`).
 - [x] **Rate Limiting**: Implement rate limiting on backend APIs to prevent abuse.
 - [ ] **Load Balancing**: Setup for multiple backend instances with shared cache.
@@ -55,24 +55,24 @@ This document outlines the planned enhancements and missing features required to
 - [ ] **Decentralized Identity (DID)**: Support W3C DID standards for cross-platform identity.
 
 ### 8.2 Governance & DAO (Completed)
-- [x] **DAO Smart Contracts**: Deployed `SecureTransacToken.sol` ($TRUST) and `TrustDAO.sol` for tokenized governance.
-- [x] **Authority Staking**: Implemented staking-based whitelisting where companies must lock 1,000 $TRUST to become active reporters.
+- [x] **DAO Smart Contracts**: Deployed `SecureTransacToken.sol` ($AV) and `TrustDAO.sol` for tokenized governance.
+- [x] **Authority Staking**: Implemented staking-based whitelisting where companies must lock 1,000 $AV to become active reporters.
 - [x] **Proposal & Voting**: Enabled community-driven parameter changes (thresholds, approvals) via weighted voting.
 - [ ] **Dispute Resolution**: Implement on-chain dispute logic for contested reputation impacts.
 - [ ] **Revenue Sharing**: Integrate reward distribution for active and accurate DAO participants.
 
 ### 8.3 Advanced Analytics (Completed)
 - [x] **Behavioral Fingerprinting**: ML-inspired analysis of transaction entropy, timing randomness, and burstiness to detect bots.
-- [x] **Network Risk Heatmaps**: Visual 2D clusters representing network health across trust/volume axes.
+- [x] **Network Risk Heatmaps**: Visual 2D clusters representing network health across AV/volume axes.
 - [x] **Sybil Cluster Detection**: Automatic identification of circular transaction patterns and high-entropy variance groups.
-- [ ] **Risk Prediction Models**: Future-casting trust scores based on current behavioral trajectories.
+- [ ] **Risk Prediction Models**: Future-casting AV scores based on current behavioral trajectories.
 
 ### 8.4 Ecosystem Integration (Completed)
-- [x] **DeFi Protocol Integration**: Successfully simulated "SecureLend" integration where trust scores dynamically determine APR and collateral ratios.
+- [x] **DeFi Protocol Integration**: Successfully simulated "SecureLend" integration where AV scores dynamically determine APR and collateral ratios.
 - [x] **NFT Marketplace Integration**: Implemented "Trusted Seller" badge logic for the mock SecureMarket to prevent counterparty risk.
 - [x] **Developer SDK Concept**: Provided on-chain and off-chain integration guides for 3rd party developers.
 - [x] **Cross-Chain Bridge**: Developed a Relayer-based bridge to sync reputation scores between **Ethereum Sepolia** and **Polygon Amoy**.
-- [ ] **Oracle Integration**: Provide trust scores as Chainlink oracle feeds for other smart contracts.
+- [ ] **Oracle Integration**: Provide AV scores as Chainlink oracle feeds for other smart contracts.
 
 ### 8.5 Mobile & Accessibility (Completed)
 - [x] **Progressive Web App (PWA)**: Desktop/Mobile installable, offline support, and update notifications.
@@ -83,14 +83,14 @@ This document outlines the planned enhancements and missing features required to
 
 ### 8.6 Security Enhancements (Completed)
 - [x] **ZK Verifier**: Successfully automated ZK proof generation and integrated verification logic into the Identity Vault.
-- [x] **Privacy-Preserving KYC**: Enabled selective trust disclosure using SNARKs.
+- [x] **Privacy-Preserving KYC**: Enabled selective AV disclosure using SNARKs.
 - [ ] **Multi-Sig Admin**: Require multiple signatures for critical admin operations.
 - [ ] **Audit**: Professional smart contract audit by Trail of Bits, OpenZeppelin, or ConsenSys Diligence.
 
 ### 8.7 Monetization & Sustainability (Completed)
 - [x] **Credit Economy**: Implemented a prepaid ETH-to-Credit system for score access.
 - [x] **Revenue Sharing**: Developed a claimable rewards module in the DAO for staked authorities.
-- [x] **Token Utility**: Integrated $TRUST as the primary governance and reward unit.
+- [x] **Token Utility**: Integrated $AV as the primary governance and reward unit.
 
 ## 🚀 Phase 9: Hyper-Growth & Institutional Adoption (In Progress)
 - [ ] **Gasless Verification (ERC-4337)**: Implement Smart Accounts and Paymasters to allow 0-gas identity setup for users.
@@ -128,13 +128,13 @@ This document outlines the planned enhancements and missing features required to
 - [x] **Backend Modernization**: Initiated migration to ES Modules (ESM) for `index.mjs` to support modern Node.js standards.
 - [x] **Robust Error Handling**: Improved error diagnostics for nonce/signature verification and IPFS pinning in the registration flow.
 - [x] **UI/UX Polish**: Enhanced sidebar navigation, "Rich Aesthetics" update, and Role Switcher for seamless multi-role testing.
-- [x] **AI Trust Scoring**: Integrated Python-trained Neural Network (MLPRegressor) into the backend to predict user trust scores based on transaction volume, frequency, and social graph risks.
+- [x] **AI AV Scoring**: Integrated Python-trained Neural Network (MLPRegressor) into the backend to predict user AV scores based on transaction volume, frequency, and social graph risks.
 
 ---
 
 ## 🔜 Phase 11: Cognitive Security & Decentralized Justice (Proposed)
 - [ ] **AI-Powered Transaction Simulator**: A pre-execution analysis tool that simulates transactions and warns users of potential phishing or wallet drainers *before* they sign.
-- [ ] **The "Trust Court" (Dispute Resolution)**: A decentralized arbitration system where high-reputation "Jurors" vote on contested reports to earn $TRUST tokens (Kleros-style).
+- [ ] **The "AV Court" (Dispute Resolution)**: A decentralized arbitration system where high-reputation "Jurors" vote on contested reports to earn $AV tokens (Kleros-style).
 - [ ] **Gasless "Smart Accounts"**: Implementation of ERC-4337 to allow email-based login and gasless interactions (sponsored by the protocol).
 - [ ] **Push Protocol Integration**: Decentralized push notifications (EPNS) to alert users of score changes or security threats directly to their wallet apps.
 
@@ -151,4 +151,5 @@ This document outlines the planned enhancements and missing features required to
 **Last Updated**: January 25, 2026
 **Version**: 3.2 (Planning)
 **Status**: Evaluating Phase 11 Architectures 🧠
+
 

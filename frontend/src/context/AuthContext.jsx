@@ -38,7 +38,6 @@ const WALLET_PROVIDERS = {
 const ROLE_DASHBOARD_MAP = {
   'admin': '/dashboard',
   'deployer': '/dashboard',
-  'creator': '/dashboard',
   'company': '/dashboard',
   'viewer': '/dashboard',
   'user': '/dashboard'
@@ -305,7 +304,7 @@ export function AuthProvider({ children }) {
       console.log("Verifying signature on backend...");
       const authResult = await verifySignature(walletAddress, signature);
 
-      if (authResult.success) {
+      if (authResult.token) {
         setAddress(walletAddress);
         setToken(authResult.token);
         
