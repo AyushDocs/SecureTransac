@@ -1,4 +1,4 @@
-const { Server } = require("socket.io");
+import { Server } from "socket.io";
 
 class SocketService {
     constructor() {
@@ -39,4 +39,4 @@ class SocketService {
     }
 }
 
-module.exports = new SocketService();
+export default new SocketService();

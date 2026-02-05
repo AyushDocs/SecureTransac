@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import fs from 'fs';
+import multer from 'multer';
+import path from 'path';
+import ipfsController from '../controllers/ipfsController.js';
+
 const router = express.Router();
-const multer = require('multer');
-const ipfsController = require('../controllers/ipfsController');
-const path = require('path');
-const fs = require('fs');
 
 // Ensure uploads directory exists
 const uploadDir = 'uploads/';
@@ -70,4 +71,4 @@ router.post('/upload', upload.single('file'), ipfsController.uploadFile);
  */
 router.post('/pin-json', ipfsController.pinJSON);
 
-module.exports = router;
+export default router;

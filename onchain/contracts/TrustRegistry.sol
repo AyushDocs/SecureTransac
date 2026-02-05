@@ -17,7 +17,7 @@ contract TrustRegistry is ScoringSystem, TransactionLogger, ReportingSystem {
 
     event TierUpgraded(address indexed user, AuthorityTier tier, uint256 stakedAmount);
 
-    constructor() AccessControl() {
+    constructor() SecureAccessControl() {
         // Constructor logic if any necessary beyond inherited ones
         // AccessControl constructor (via ScoringSystem -> AccessControl) sets msg.sender as reporter
     }

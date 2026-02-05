@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchACL } from "../api/client";
 import ScoreSearchWidget from "../components/ScoreSearchWidget";
+import VerificationRequestList from "../components/VerificationRequestList";
 import { useAuth } from "../context/AuthContext";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
@@ -9,7 +10,6 @@ function CompanyDashboard() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reportText, setReportText] = useState("");
 
   async function loadData() {
     if (!user?.address) return;
@@ -35,6 +35,10 @@ function CompanyDashboard() {
     <PageWrapper title="Company Admin Portal">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          
+          {/* Incoming Verification Requests */}
+          <VerificationRequestList />
+
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-800 flex justify-between items-center">
               <div>
@@ -84,7 +88,7 @@ function CompanyDashboard() {
                             onClick={() => alert("Upgrade to Institutional Tier for Full Data Access & Raw Score Decryption keys.")}
                             className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border border-gray-700 active:scale-95"
                           >
-                            Get Raw Data 🔓
+                            Upgrade Tier 🔓
                           </button>
                         </td>
                       </tr>

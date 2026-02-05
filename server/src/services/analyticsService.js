@@ -1,5 +1,5 @@
-const persistence = require('./persistenceService');
-const web3Service = require('./web3Service');
+import persistence from './persistenceService.js';
+import web3Service from './web3Service.js';
 
 /**
  * Advanced Analytics for SecureTransac
@@ -122,4 +122,4 @@ class AnalyticsService {
     }
 }
 
-module.exports = new AnalyticsService();
+export default new AnalyticsService();

@@ -1,10 +1,15 @@
 const VulnerableBank = artifacts.require("VulnerableBank");
-const SecureBank = artifacts.require("SecureBank");
+const UnprotectedStorage = artifacts.require("UnprotectedStorage");
 
-module.exports = async function (deployer) {
-  // Configured address from previous deployment
-  const REGISTRY_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+module.exports = async function (deployer, network, accounts) {
+  // 0x7099...79c8 is typically account[1] in hardhat/ganache default mnemonic
+  const deployerAddress = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
   
-  await deployer.deploy(VulnerableBank);
-  await deployer.deploy(SecureBank, REGISTRY_ADDRESS);
+  // Verify if account is available in the provider's unlocked accounts
+  const fromAccount = accounts.find(a => a.toLowerCase() === deployerAddress.toLowerCase()) || accounts[1];
+  
+  console.log(`Deploying Vulnerable Contracts from: ${fromAccount}`);
+
+  await deployer.deploy(VulnerableBank, { from: fromAccount });
+  await deployer.deploy(UnprotectedStorage, { from: fromAccount });
 };

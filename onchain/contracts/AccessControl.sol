@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AccessControl is Ownable {
+contract SecureAccessControl is Ownable {
     enum AuthorityTier { NONE, STANDARD, INSTITUTIONAL, DIAMOND }
     
     mapping(address => bool) public isAuthorizedReporter;

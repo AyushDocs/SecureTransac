@@ -1,6 +1,6 @@
 const TrustRegistry = artifacts.require("TrustRegistry");
 const ZKIdentityVerifier = artifacts.require("ZKIdentityVerifier");
-const ZKScoreVerifier = artifacts.require("Groth16Verifier");
+const ZKScoreVerifier = artifacts.require("ZKScoreVerifier");
 
 module.exports = async function (deployer) {
   const registry = await TrustRegistry.deployed();

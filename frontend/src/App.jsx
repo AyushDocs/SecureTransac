@@ -1,5 +1,6 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import DashboardSelector from "./components/DashboardSelector";
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import MobileNav from "./layout/MobileNav";
 import Navbar from "./layout/Navbar";
@@ -10,10 +11,12 @@ import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import Appeals from "./pages/Appeals";
 import BridgePortal from "./pages/BridgePortal";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import ContractDetails from "./pages/ContractDetails";
 import Dashboard from "./pages/Dashboard";
 import DeployerDashboard from "./pages/DeployerDashboard";
 import IdentityVault from "./pages/IdentityVault";
 import InstitutionalPortal from "./pages/InstitutionalPortal";
+import Login from "./pages/Login";
 import PartnerEcosystem from "./pages/PartnerEcosystem";
 import PrivacyPortal from "./pages/PrivacyPortal";
 import Register from "./pages/Register";
@@ -21,11 +24,9 @@ import Registry from "./pages/Registry";
 import Reports from "./pages/Reports";
 import ReputationActivity from "./pages/ReputationActivity";
 import RiskWarRoom from "./pages/RiskWarRoom";
-import RoleSelection from "./pages/RoleSelection";
 import Search from "./pages/Search";
-import SystemControl from "./pages/SystemControl";
-
 import SubmitReport from "./pages/SubmitReport";
+import SystemControl from "./pages/SystemControl";
 import TrustDAO from "./pages/TrustDAO";
 import UserDashboard from "./pages/UserDashboard";
 import VerificationRequests from "./pages/VerificationRequests";
@@ -103,7 +104,7 @@ const RoleRoute = ({ children, allowedRoles }) => {
 
 // Define route permissions
 const routePermissions = {
-  "/identity": ["user", "viewer", "company", "admin", "deployer"], // All users
+  "/identity": ["user", "viewer", "admin", "deployer"], // All users
   "/certified": ["user", "viewer", "company", "admin", "deployer"], // All users
   "/kyb": ["company", "admin", "deployer"], // Corporate only
   "/analytics": ["admin", "deployer"],
@@ -112,86 +113,125 @@ const routePermissions = {
   // Add other routes and their required roles here
 };
 
+import PublicFooter from "./layout/PublicFooter";
+import PublicNavbar from "./layout/PublicNavbar";
+import About from "./pages/About";
+import Connect from "./pages/Connect";
+import Documentation from "./pages/Documentation";
+import Home from "./pages/Home";
+
 function AppContent() {
   const { role, showDashboardSelector, setShowDashboardSelector, isMultiRole } = useAuth();
 
+
+// ...
+
   return (
     <HashRouter>
-      {/* Dashboard Selector Modal */}
+      <ScrollToTop />
+      {/* Dashboard Selector Modal - Valid for both if needed, but mostly for auth users */}
       {showDashboardSelector && isMultiRole && (
         <DashboardSelector 
           onClose={() => setShowDashboardSelector(false)}
         />
       )}
       
-      {/* MANDATORY LAYOUT START */}
-      <div className="flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden">
-        {role && <Sidebar />}
-        <div className="flex-1 flex flex-col h-full min-w-0">
-          {role && <Navbar />}
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-950 pb-24 lg:pb-6 scroll-smooth no-scrollbar">
-            <Routes>
-              <Route path="/" element={role ? <Navigate to="/dashboard" /> : <RoleSelection />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<DashboardSwitch />} />
-              <Route path="/select-dashboard" element={
-                <DashboardSelector onClose={() => window.history.back()} />
-              } />
-              <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-              <Route path="/address/:address" element={<ProtectedRoute><AddressProfile /></ProtectedRoute>} />
-              <Route path="/registry" element={<ProtectedRoute><Registry /></ProtectedRoute>} />
-              <Route path="/identity" element={
-                <RoleRoute allowedRoles={routePermissions["/identity"]}>
-                  <IdentityVault />
-                </RoleRoute>
-              } />
-              <Route path="/certified" element={
-                <RoleRoute allowedRoles={routePermissions["/certified"]}>
-                  <ReputationActivity />
-                </RoleRoute>
-              } />
-              <Route path="/kyb" element={
-                <RoleRoute allowedRoles={routePermissions["/kyb"]}>
-                  <InstitutionalPortal />
-                </RoleRoute>
-              } />
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              <Route path="/submit-report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
-              <Route path="/appeals" element={<ProtectedRoute><Appeals /></ProtectedRoute>} />
-              <Route path="/privacy" element={<ProtectedRoute><PrivacyPortal /></ProtectedRoute>} />
-              <Route path="/analytics" element={
-                <RoleRoute allowedRoles={routePermissions["/analytics"]}>
-                  <AdvancedAnalytics />
-                </RoleRoute>
-              } />
-              <Route path="/ecosystem" element={<ProtectedRoute><PartnerEcosystem /></ProtectedRoute>} />
-              <Route path="/bridge" element={
-                <RoleRoute allowedRoles={['admin', 'deployer']}>
-                  <BridgePortal />
-                </RoleRoute>
-              } />
-              <Route path="/war-room" element={
-                <RoleRoute allowedRoles={['admin', 'deployer']}>
-                  <RiskWarRoom />
-                </RoleRoute>
-              } />
-              <Route path="/system" element={
-                <RoleRoute allowedRoles={['admin', 'deployer']}>
-                   <SystemControl />
-                </RoleRoute>
-              } />
-              <Route path="/dao" element={<ProtectedRoute><TrustDAO /></ProtectedRoute>} />
-              <Route path="/verification-requests" element={
-                <RoleRoute allowedRoles={['company', 'admin', 'deployer']}>
-                  <VerificationRequests />
-                </RoleRoute>
-              } />
-            </Routes>
-          </main>
-          {role && <MobileNav />}
+      {role ? (
+        <div className="flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden">
+          <Sidebar />
+          <div className="flex-1 flex flex-col h-full min-w-0">
+            <Navbar />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-950 pb-24 lg:pb-6 scroll-smooth no-scrollbar">
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+                {/* Redirect login to dashboard if already logged in */}
+                <Route path="/login" element={<Navigate to="/dashboard" />} />
+                
+                <Route path="/register" element={<Register />} />
+                <Route path="/dashboard" element={<DashboardSwitch />} />
+                <Route path="/select-dashboard" element={
+                  <DashboardSelector onClose={() => window.history.back()} />
+                } />
+                <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+                <Route path="/address/:address" element={<ProtectedRoute><AddressProfile /></ProtectedRoute>} />
+                <Route path="/registry" element={<ProtectedRoute><Registry /></ProtectedRoute>} />
+                <Route path="/identity" element={
+                  <RoleRoute allowedRoles={routePermissions["/identity"]}>
+                    <IdentityVault />
+                  </RoleRoute>
+                } />
+                <Route path="/certified" element={
+                  <RoleRoute allowedRoles={routePermissions["/certified"]}>
+                    <ReputationActivity />
+                  </RoleRoute>
+                } />
+                <Route path="/kyb" element={
+                  <RoleRoute allowedRoles={routePermissions["/kyb"]}>
+                    <InstitutionalPortal />
+                  </RoleRoute>
+                } />
+                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/submit-report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
+                <Route path="/appeals" element={<ProtectedRoute><Appeals /></ProtectedRoute>} />
+                <Route path="/privacy" element={<ProtectedRoute><PrivacyPortal /></ProtectedRoute>} />
+                <Route path="/analytics" element={
+                  <RoleRoute allowedRoles={routePermissions["/analytics"]}>
+                    <AdvancedAnalytics />
+                  </RoleRoute>
+                } />
+                <Route path="/ecosystem" element={<ProtectedRoute><PartnerEcosystem /></ProtectedRoute>} />
+                <Route path="/bridge" element={
+                  <RoleRoute allowedRoles={['admin', 'deployer']}>
+                    <BridgePortal />
+                  </RoleRoute>
+                } />
+                <Route path="/war-room" element={
+                  <RoleRoute allowedRoles={['admin', 'deployer']}>
+                    <RiskWarRoom />
+                  </RoleRoute>
+                } />
+                <Route path="/system" element={
+                  <RoleRoute allowedRoles={['admin', 'deployer']}>
+                     <SystemControl />
+                  </RoleRoute>
+                } />
+                <Route path="/dao" element={<ProtectedRoute><TrustDAO /></ProtectedRoute>} />
+                <Route path="/verification-requests" element={
+                  <RoleRoute allowedRoles={['company', 'admin', 'deployer']}>
+                    <VerificationRequests />
+                  </RoleRoute>
+                } />
+                <Route path="/admin/contract/:name/:address" element={
+                    <RoleRoute allowedRoles={['admin', 'deployer']}>
+                        <ContractDetails />
+                    </RoleRoute>
+                } />
+                {/* Fallback for auth users */}
+                <Route path="*" element={<Navigate to="/dashboard" />} />
+              </Routes>
+            </main>
+            <MobileNav />
+          </div>
         </div>
-      </div>
-      {/* MANDATORY LAYOUT END */}
+      ) : (
+        /* PUBLIC LAYOUT */
+        <div className="min-h-screen bg-gray-950 font-sans text-gray-400 flex flex-col">
+          <PublicNavbar />
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/docs" element={<Documentation />} />
+              <Route path="/connect" element={<Connect />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              {/* Fallback for public users */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+          <PublicFooter />
+        </div>
+      )}
     </HashRouter>
   );
 }

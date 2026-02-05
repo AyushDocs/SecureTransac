@@ -76,4 +76,4 @@ class PrivacyService {
     }
 }
 
-module.exports = new PrivacyService();
+export default new PrivacyService();

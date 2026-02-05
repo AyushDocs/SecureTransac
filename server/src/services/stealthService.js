@@ -1,6 +1,7 @@
-const EC = require('elliptic').ec;
+import elliptic from 'elliptic';
+import { Web3 } from 'web3';
+const { ec: EC } = elliptic;
 const ec = new EC('secp256k1');
-const { Web3 } = require('web3');
 const web3 = new Web3();
 
 class StealthService {
@@ -65,4 +66,4 @@ class StealthService {
     }
 }
 
-module.exports = new StealthService();
+export default new StealthService();

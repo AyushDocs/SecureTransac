@@ -42,7 +42,9 @@ const PartnerEcosystem = () => {
                     <h2 className="text-2xl font-black text-white mb-2">Build on Trust</h2>
                     <p className="text-gray-300 max-w-2xl">
                         SecureTransac provides a developer-friendly Security Oracle. Any protocol can consume trust scores 
-                        directly from our smart contracts to enable gated features, reduced fees, or improved DeFi parameters.
+                        directly from our smart contracts.
+                        <br/><br/>
+                        <span className="text-cyan-400 font-bold">Future Ventures:</span> Below are two major verticals we are actively designing. We invite partners to build these using our standard, but if the market gap remains, <span className="text-white font-bold">SecureTransac will launch these as first-party protocols.</span>
                     </p>
                     <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
                         <div className="bg-black/40 px-4 py-2 rounded-lg border border-white/10 shrink-0">
@@ -69,12 +71,17 @@ const PartnerEcosystem = () => {
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-xl">🏦</div>
                                 <div>
-                                    <h3 className="text-white font-bold">SecureLend (DeFi Utility)</h3>
-                                    <p className="text-xs text-gray-500">Under-collateralized lending based on trust history.</p>
+                                    <h3 className="text-white font-bold">Future Venture: SecureLend</h3>
+                                    <p className="text-xs text-gray-500">Proposed under-collateralized lending protocol.</p>
                                 </div>
                             </div>
                         </div>
                         <div className="p-8 space-y-6 flex-1">
+                            <div className="bg-blue-900/20 border border-blue-500/20 p-4 rounded-xl">
+                                <p className="text-xs text-blue-200">
+                                    <span className="font-bold">Opportunity:</span> Current DeFi over-collateralizes users. SecureLend uses our Trust Score to safely enable lower collateral ratios.
+                                </p>
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-gray-950 border border-gray-800 rounded-xl">
                                     <div className="text-[10px] text-gray-500 font-bold mb-1 uppercase">APR (Interest Rate)</div>
@@ -96,20 +103,11 @@ const PartnerEcosystem = () => {
                             </div>
 
                             <div className="space-y-3">
-                                <div>
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Upload Collateral/Identity Proof</label>
-                                    <input 
-                                        type="file" 
-                                        onChange={(e) => setLoanFile(e.target.files[0])}
-                                        className="w-full mt-1 text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
-                                    />
-                                </div>
                                 <button 
-                                    onClick={handleApplyLoan}
-                                    disabled={applying}
-                                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                                    disabled={true}
+                                    className="w-full bg-gray-800 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed border border-gray-700"
                                 >
-                                    {applying ? "Evaluating Trust Score..." : "Apply for Partner Loan"}
+                                    Protocol In Development
                                 </button>
                             </div>
                         </div>
@@ -121,13 +119,18 @@ const PartnerEcosystem = () => {
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-xl">🎨</div>
                                 <div>
-                                    <h3 className="text-white font-bold">SecureMarket (NFT Portal)</h3>
-                                    <p className="text-xs text-gray-500">Preventing counterparty risk in OTC trades.</p>
+                                    <h3 className="text-white font-bold">Future Venture: SecureMarket</h3>
+                                    <p className="text-xs text-gray-500">Proposed OTC & NFT Trading Layer.</p>
                                 </div>
                             </div>
                         </div>
                         <div className="p-8 space-y-6 flex-1 text-center">
-                            <p className="text-sm text-gray-400">Your profile preview on SecureMarket:</p>
+                            <div className="bg-purple-900/20 border border-purple-500/20 p-4 rounded-xl mb-6">
+                                <p className="text-xs text-purple-200">
+                                    <span className="font-bold">Vision:</span> A marketplace where "Trusted Seller" isn't just a label, but an on-chain guarantee backed by SecureTransac history.
+                                </p>
+                            </div>
+                            <p className="text-sm text-gray-400">Profile Preview:</p>
                             
                             <div className="max-w-xs mx-auto bg-gray-950 border border-gray-800 p-6 rounded-2xl shadow-2xl relative">
                                 <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 border-4 border-gray-900 shadow-xl overflow-hidden">
@@ -153,10 +156,10 @@ const PartnerEcosystem = () => {
                             </p>
 
                             <button 
-                                onClick={() => alert("Profile Synced! Your Trust Score is now visible on SecureMarket.")}
-                                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20 mt-auto"
+                                disabled={true}
+                                className="w-full bg-gray-800 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed border border-gray-700 mt-auto"
                             >
-                                Sync with SecureMarket
+                                Join SecureMarket Waitlist
                             </button>
                         </div>
                     </div>

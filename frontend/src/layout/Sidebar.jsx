@@ -15,8 +15,8 @@ const NAV_PERMISSIONS = {
   "/dashboard": ["user", "viewer", "company", "admin", "deployer"],
   "/search": ["company", "admin", "deployer"], // Not for regular users
   "/registry": ["company", "admin", "deployer"], // Not for regular users
-  "/identity": ["user", "viewer", "company"], // Personal identity management
-  "/certified": ["user", "viewer", "company"], // Get certified
+  "/identity": ["user", "viewer"], // Personal identity management
+  "/certified": ["user", "viewer"], // Get certified
   "/kyb": ["company"], // Corporate only
   "/reports": ["user", "viewer", "company", "admin", "deployer"], // All can report
   "/submit-report": ["user", "viewer", "company"],

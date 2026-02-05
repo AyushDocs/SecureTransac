@@ -44,25 +44,44 @@ const VerificationRequests = () => {
   const handleViewProof = async (cid) => {
     setViewingProof({ cid, loading: true });
     try {
-      setTimeout(() => {
-        setViewingProof({ 
-          cid, 
-          loading: false, 
-          data: "ENCRYPTED_IDENTITY_DOCUMENT: SHA256[8b1...]\nUser has submitted government ID and address proof for manual review." 
-        });
-      }, 800);
+      // 1. Fetch metadata to get real file CID and type
+      const response = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
+      let fileUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
+      let contentType = 'unknown';
+
+      if (response.ok) {
+          const text = await response.text();
+          try {
+              const data = JSON.parse(text);
+              if (data.proofText) {
+                  // Metadata wrapper found
+                  fileUrl = `https://gateway.pinata.cloud/ipfs/${data.proofText}`;
+                  // Try to guess type or let browser handle it
+              }
+          } catch (e) {
+              // Not JSON, assume raw file
+          }
+      }
+
+      setViewingProof({ 
+        cid, 
+        loading: false, 
+        url: fileUrl
+      });
+
     } catch (error) {
+      console.error(error);
       setViewingProof(null);
-      alert("Failed to fetch proof from IPFS");
+      alert("Failed to resolve proof document");
     }
   };
+
 
   if (loading) return <PageWrapper title="Verification Requests"><div className="text-gray-400">Loading...</div></PageWrapper>;
 
   return (
     <PageWrapper title="Verification Requests">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-800">
               <h2 className="text-xl font-bold text-white">Pending Requests</h2>
@@ -142,38 +161,65 @@ const VerificationRequests = () => {
               </table>
             </div>
           </div>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-           {viewingProof ? (
-             <div className="bg-gray-900 border border-blue-500/30 p-6 rounded-xl animate-in slide-in-from-bottom-4 sticky top-6">
-               <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-lg font-bold text-white">Document Viewer</h2>
-                 <button onClick={() => setViewingProof(null)} className="text-gray-500 hover:text-white">✕</button>
-               </div>
-               <div className="p-4 bg-gray-950 border border-gray-800 rounded-lg min-h-[200px] flex flex-col">
-                 <p className="text-[10px] text-blue-400 font-bold uppercase mb-2">CID: {viewingProof.cid}</p>
-                 {viewingProof.loading ? (
-                   <div className="flex-1 flex items-center justify-center text-gray-500 italic text-sm">Decrypting secure file...</div>
-                 ) : (
-                   <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono overflow-auto max-h-[400px]">
-                     {viewingProof.data}
-                   </pre>
-                 )}
-               </div>
-               <div className="mt-4 p-3 bg-blue-900/10 border border-blue-900/30 rounded text-[10px] text-blue-300">
-                 This document is end-to-end encrypted. Only authorized officers can view it.
-               </div>
-             </div>
-           ) : (
-             <div className="bg-gray-900/50 border border-gray-800/50 p-6 rounded-xl text-center">
-                 <div className="text-4xl mb-4">📂</div>
-                 <h3 className="text-gray-300 font-bold mb-2">Document Preview</h3>
-                 <p className="text-gray-500 text-sm">Select a "View Document" button to inspect user proofs here.</p>
-             </div>
-           )}
-        </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingProof && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-gray-900 border border-gray-700 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl relative animate-in zoom-in-95 duration-200">
+               
+               {/* Modal Header */}
+               <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950 rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                      <h2 className="text-lg font-bold text-white">Document Viewer</h2>
+                      <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-mono border border-blue-500/20">
+                          {viewingProof.cid.slice(0, 16)}...
+                      </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      {viewingProof.url && (
+                          <a 
+                              href={viewingProof.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
+                          >
+                              Open Original ↗
+                          </a>
+                      )}
+                      <button 
+                          onClick={() => setViewingProof(null)} 
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-red-500/20 text-gray-400 hover:text-red-500 transition-all"
+                      >
+                          ✕
+                      </button>
+                  </div>
+               </div>
+               
+               {/* Modal Content */}
+               <div className="flex-1 bg-gray-950/50 p-2 overflow-hidden relative flex flex-col">
+                   {viewingProof.loading ? (
+                       <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-500 animate-pulse">
+                           <div className="w-12 h-12 rounded-full border-4 border-gray-800 border-t-cyan-500 animate-spin"></div>
+                           <p className="text-sm font-mono uppercase tracking-widest">Decrypting & Retrieving...</p>
+                       </div>
+                   ) : (
+                       <iframe 
+                           src={viewingProof.url} 
+                           className="w-full h-full rounded border border-gray-800 bg-white"
+                           title="Proof Document"
+                       />
+                   )}
+               </div>
+               
+               <div className="p-3 bg-gray-900 border-t border-gray-800 text-center">
+                   <p className="text-[10px] text-gray-500">
+                       🔒 End-to-End Encrypted Viewer • Only authorized entities can decrypt this content.
+                   </p>
+               </div>
+           </div>
+        </div>
+      )}
     </PageWrapper>
   );
 };

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import TrustDonut from '../dashboard/TrustDonut';
 import { useWeb3 } from '../hooks/useWeb3';
 
 const MyScoreWidget = ({ userAddress }) => {
@@ -32,15 +31,9 @@ const MyScoreWidget = ({ userAddress }) => {
         return (
             <>
                 <div className={`text-5xl font-mono font-bold ${riskColor} mb-2`}>
-                    {score}
+                    {Number(score).toFixed(2)}
                 </div>
                 <p className="text-gray-400 text-sm">Base score: 0 - 100</p>
-                <div className="mt-6">
-                    <TrustDonut data={[
-                        { label: "My Score", value: normalizedScore, color: "hsl(217, 91%, 60%)" },
-                        { label: "Remaining", value: 1 - normalizedScore, color: "hsl(215, 25%, 27%)" }
-                    ]} />
-                </div>
                 <p className="text-xs text-gray-500 mt-4 italic">
                     Score unlocked. Refresh to lock again.
                 </p>

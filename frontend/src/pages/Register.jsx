@@ -7,23 +7,29 @@ import { encryptSymmetric, getSymmetricKey } from "../utils/encryption";
 function Register() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { address, connectWallet, user, refreshProfile, login } = useAuth();
+  const { address, connectWallet, user, refreshProfile, login, roles } = useAuth(); // Added roles
   
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: searchParams.get("role") || "user",
-    companyName: "",
+    companyName: "", // Default empty
     description: ""
   });
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
+    const targetRole = searchParams.get("role") || "user";
+    
     // If user is already registered, redirect to dashboard
+    // We remove strict role check because 'company' implies registered user
+    /* 
     if (user?.registrationDate) {
+      console.log(`User already registered as ${user.role}, redirecting...`);
       navigate("/dashboard");
     }
+    */
   }, [user, navigate]);
 
   const handleSubmit = async (e) => {
@@ -38,8 +44,11 @@ function Register() {
       // Step 1: Encrypt Metadata
       setStatus("Encrypting your data...");
       const encryptionKey = await getSymmetricKey(window.ethereum, address);
+      
+      const finalName = formData.role === "company" ? formData.companyName : formData.name;
+      
       const metadata = {
-        name: formData.name,
+        name: finalName,
         email: formData.email,
         companyName: formData.companyName,
         description: formData.description,
@@ -59,7 +68,7 @@ function Register() {
       // Step 4: Register in Backend
       setStatus("Finalizing registration...");
       await registerUser(address, formData.role, {
-        name: formData.name,
+        name: finalName,
         email: formData.email,
         companyName: formData.companyName,
         description: formData.description,
@@ -106,17 +115,19 @@ function Register() {
             </div>
 
             <div className="space-y-4">
+              {formData.role !== "company" && (
               <div>
                 <label className="block text-sm font-bold text-gray-400 mb-2">Full Name</label>
                 <input
                   type="text"
-                  required
+                  required={formData.role !== "company"}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="John Doe"
                 />
               </div>
+              )}
 
               <div>
                 <label className="block text-sm font-bold text-gray-400 mb-2">Email Address</label>

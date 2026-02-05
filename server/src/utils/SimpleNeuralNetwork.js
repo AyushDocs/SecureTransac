@@ -86,4 +86,4 @@ class SimpleNeuralNetwork {
     }
 }
 
-module.exports = { SimpleNeuralNetwork };
+export default SimpleNeuralNetwork;

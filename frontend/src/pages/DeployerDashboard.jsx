@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
-import { deleteAuthorityMetadata, fetchAuthorities, saveAuthorityMetadata, setAuthorityStatus, setReporterStatus } from "../api/client";
-import { CONTRACT_ADDRESSES } from "../api/config";
+import { useNavigate } from "react-router-dom";
+import { deleteAuthorityMetadata, fetchAuthorities, fetchNetworkStats, fetchSystemContracts, setAuthorityStatus, setReporterStatus } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
 
 const ContractRow = ({ name, addr }) => {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
-  const handleCopy = () => {
+  const handleCopy = (e) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(addr);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-950 rounded-lg border border-gray-800/50 hover:border-blue-500/30 transition-colors">
+    <div 
+        onClick={() => navigate(`/admin/contract/${name}/${addr}`)}
+        className="flex items-center justify-between p-3 bg-gray-950 rounded-lg border border-gray-800/50 hover:border-blue-500/30 hover:bg-gray-900 cursor-pointer transition-all"
+    >
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded bg-gray-900 flex items-center justify-center text-lg">📜</div>
         <div>
@@ -30,6 +35,7 @@ const ContractRow = ({ name, addr }) => {
             href={`https://etherscan.io/address/${addr}`} 
             target="_blank" 
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="text-[10px] uppercase font-bold text-cyan-500 cursor-pointer hover:underline"
           >
             View on Explorer
@@ -52,46 +58,51 @@ const ContractRow = ({ name, addr }) => {
 function DeployerDashboard() {
   const { activeRole, role } = useAuth();
   const [authorities, setAuthorities] = useState([]);
+  const [contracts, setContracts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [newAuth, setNewAuth] = useState({ address: "", name: "", email: "" });
-  const [systemHealth, setSystemHealth] = useState({ status: "OPTIONAL_UPGRADE", latency: "24ms", gas: "12 Gwei" });
-  
-  const isAdmin = (activeRole || role) === 'admin' || (activeRole || role) === 'deployer'; 
 
+  const [systemHealth, setSystemHealth] = useState({ status: "OPTIONAL_UPGRADE", latency: "24ms", gas: "12 Gwei" });
+  const [isPaused, setIsPaused] = useState(false);
+  
   useEffect(() => {
-    async function loadAuths() {
+    async function loadData() {
+      const startTime = Date.now();
       try {
-        const data = await fetchAuthorities();
-        logger.info("DeployerDashboard: Loaded authorities", data);
-        setAuthorities(data);
+        const [authData, contractData, statsData, sysStatus] = await Promise.all([
+            fetchAuthorities(),
+            fetchSystemContracts(),
+            fetchNetworkStats(),
+            fetchSystemStatus()
+        ]);
+        
+        const latency = Date.now() - startTime;
+        
+        logger.info("DeployerDashboard: Loaded data", { authData, contractData, statsData });
+        setAuthorities(authData);
+        setContracts(contractData);
+        
+        if (sysStatus) setIsPaused(sysStatus.isPaused);
+        
+        if (statsData) {
+            setSystemHealth({
+                status: sysStatus?.isPaused ? "PAUSED" : (statsData.status || "OPERATIONAL"),
+                latency: `${latency}ms`,
+                gas: statsData.gasPrice || "Unknown"
+            });
+        }
       } catch (error) {
-        logger.error("DeployerDashboard: Failed to load authorities", error);
+        logger.error("DeployerDashboard: Failed to load data", error);
       } finally {
         setLoading(false);
       }
     }
-    loadAuths();
+    loadData();
   }, []);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    try {
-      console.log("Authorizing reporter on-chain...", newAuth.address);
-      if (!newAuth.address) throw new Error("Address is required");
-      
-      await setReporterStatus(newAuth.address, true);
-      await setAuthorityStatus(newAuth.address, true);
-      await saveAuthorityMetadata(newAuth.address, newAuth.name, newAuth.email);
-      
-      alert("Reporter authorized successfully!");
-      setNewAuth({ address: "", name: "", email: "" });
-      const data = await fetchAuthorities();
-      setAuthorities(data);
-    } catch (error) {
-      console.error(error);
-      alert(`Failed to authorize: ${error.message}`);
-    }
-  };
+
+
+
+
 
   const handleRevoke = async (address) => {
     console.log("Revoke requested for:", address);
@@ -148,13 +159,18 @@ function DeployerDashboard() {
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
              <div className="p-6 border-b border-gray-800 flex justify-between items-center">
                <h3 className="font-bold text-white">Deployed Contracts</h3>
-               <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-400">Mainnet (Fork)</span>
+               <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-400">System Active</span>
              </div>
              <div className="p-4 space-y-3">
-                {Object.entries(CONTRACT_ADDRESSES).map(([name, addr]) => (
-                   <ContractRow key={name} name={name} addr={addr} />
-                ))}
-
+                {Object.keys(contracts).length > 0 ? (
+                    Object.entries(contracts).map(([name, addr]) => (
+                       <ContractRow key={name} name={name} addr={addr} />
+                    ))
+                ) : (
+                    <div className="text-center text-gray-500 py-8 text-sm italic border border-dashed border-gray-800 rounded-lg">
+                        No active contracts found on this network.
+                    </div>
+                )}
              </div>
           </div>
 
@@ -194,62 +210,7 @@ function DeployerDashboard() {
           </div>
         </div>
 
-        {/* Right Col: Admin Actions */}
-        <div className="space-y-6">
-           <div className="bg-gray-900 border border-blue-600/20 p-6 rounded-xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-10">
-                <svg className="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
-             </div>
-             <h3 className="text-lg font-bold text-white mb-4 relative z-10">Authorize New Operator</h3>
-             <form onSubmit={handleRegister} className="space-y-4 relative z-10">
-               <input 
-                 type="text" 
-                 placeholder="Operator Name" 
-                 value={newAuth.name}
-                 onChange={e => setNewAuth({...newAuth, name: e.target.value})}
-                 className="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm text-white"
-                 required
-               />
-               <input 
-                 type="text" 
-                 placeholder="Wallet Address (0x...)" 
-                 value={newAuth.address}
-                 onChange={e => setNewAuth({...newAuth, address: e.target.value})}
-                 className="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm text-white font-mono"
-                 required
-               />
-               <input 
-                 type="email" 
-                 placeholder="Contact Email" 
-                 value={newAuth.email}
-                 onChange={e => setNewAuth({...newAuth, email: e.target.value})}
-                 className="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm text-white"
-                 required
-               />
-               <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded transition-colors text-sm">
-                 Grant Permissions
-               </button>
-             </form>
-           </div>
-           
-           <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl">
-              <h3 className="font-bold text-white mb-4">Quick Actions</h3>
-              <div className="space-y-2">
-                 <button className="w-full text-left px-4 py-3 bg-gray-950 hover:bg-gray-800 rounded border border-gray-800 text-sm text-gray-300 transition-colors flex justify-between group">
-                    <span>⏸ Pause Protocol</span>
-                    <span className="text-gray-600 group-hover:text-white">→</span>
-                 </button>
-                 <button className="w-full text-left px-4 py-3 bg-gray-950 hover:bg-gray-800 rounded border border-gray-800 text-sm text-gray-300 transition-colors flex justify-between group">
-                    <span>📦 Upgrade Proxy</span>
-                    <span className="text-gray-600 group-hover:text-white">→</span>
-                 </button>
-                 <button className="w-full text-left px-4 py-3 bg-gray-950 hover:bg-gray-800 rounded border border-gray-800 text-sm text-gray-300 transition-colors flex justify-between group">
-                    <span>⛽ Adjust Gas Limits</span>
-                    <span className="text-gray-600 group-hover:text-white">→</span>
-                 </button>
-              </div>
-           </div>
-        </div>
+
       </div>
     </PageWrapper>
   );

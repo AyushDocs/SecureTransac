@@ -16,6 +16,11 @@ const ScoreSearchWidget = () => {
 
     const handleZKVerify = async () => {
         if (!account || !token) return;
+        if (!searchAddress) {
+            setError("Please enter an address to verify.");
+            return;
+        }
+
         setZkLoading(true);
         setError('');
         setVerificationSuccess('');
@@ -26,7 +31,7 @@ const ScoreSearchWidget = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ 
-                    address: account, 
+                    address: searchAddress, 
                     threshold: 80, // Default whitelist requirement
                     secret: "delegated" // Backend handles retrieval 
                 })
@@ -37,7 +42,7 @@ const ScoreSearchWidget = () => {
             // 2. Submit Proof to Contract
             await submitRangeProof(data.pi_a, data.pi_b, data.pi_c, 80);
             // alert("ZK Proof Submitted & Verified on-chain!"); // Removed for better UI
-            setVerificationSuccess("ZK Proof Verified! You are now whitelisted (Score >= 80).");
+            setVerificationSuccess("ZK Proof Verified! User is whitelisted (Score >= 80).");
         } catch (err) {
             console.error("ZK Failure:", err);
             setError("ZK Verification Failed: " + err.message);
@@ -166,9 +171,6 @@ const ScoreSearchWidget = () => {
                         <div className="flex justify-between items-center mb-2 text-xs">
                              <span className="text-gray-300">You have: <span className="text-white font-mono">{Number(ethBalance).toFixed(4)}</span> ETH</span>
                         </div>
-                        <div className="text-[10px] text-gray-500 mb-2 font-mono break-all">
-                            Chain: {chainId ? parseInt(chainId, 16) : '?'} | Contract: {contract?._address || 'Not Connected'}
-                        </div>
                         {!isReady && (
                             <div className="text-red-400 text-xs mb-2 text-center">
                                 ⚠️ Contract not detected. Wrong network?
@@ -209,20 +211,6 @@ const ScoreSearchWidget = () => {
                 )}
                 </form>
                 
-                {account && (
-                    <div className="mt-4 pt-4 border-t border-gray-800">
-                         <button
-                            onClick={handleZKVerify}
-                            disabled={zkLoading}
-                            className="w-full bg-purple-900/50 hover:bg-purple-900 border border-purple-500/30 text-purple-300 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all"
-                         >
-                            {zkLoading ? "Proving..." : "🛡️ Verify My Score (Privacy Preserving)"}
-                         </button>
-                         <p className="text-xs text-center text-gray-500 mt-2">
-                             Full ZK Proof of {'>='} 80 Score without revealing value.
-                         </p>
-                    </div>
-                )}
                 </>
             )}
 
@@ -240,8 +228,6 @@ const ScoreSearchWidget = () => {
 
             {score && (
                 <div className="mt-6 p-4 bg-gray-950 border border-gray-800 rounded-lg">
-                    <div className="text-xs text-gray-500 mb-2">Address</div>
-                    <div className="text-xs font-mono text-gray-300 mb-4 break-all">{score.address}</div>
                     
                     <div className="text-xs text-gray-500 mb-2">Trust Score</div>
                     <div className={`text-4xl font-bold ${
@@ -249,9 +235,8 @@ const ScoreSearchWidget = () => {
                         score.value >= 400 ? "text-yellow-500" : 
                         "text-red-500"
                     }`}>
-                        {score.value}
+                        {score.value/1000}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">out of 1000</div>
                 </div>
             )}
         </div>

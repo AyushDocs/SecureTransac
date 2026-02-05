@@ -1,4 +1,4 @@
-const NodeCache = require("node-cache");
+import NodeCache from "node-cache";
 
 class CacheService {
     constructor() {
@@ -33,4 +33,4 @@ class CacheService {
     }
 }
 
-module.exports = new CacheService();
+export default new CacheService();

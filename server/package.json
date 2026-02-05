@@ -3,6 +3,7 @@
   "description": "Backend for SecureTransac",
   "author": "AyushDocs",
   "license": "MIT",
+  "type": "module",
   "keywords": [
     "secure-transac",
     "backend",
@@ -18,7 +19,7 @@
     "url": "https://github.com/AyushDocs/SecureTransac"
   },
   "version": "1.0.0",
-  "main": "index.mjs",
+  "main": "index.js",
   "directories": {
     "test": "test"
   },
@@ -41,6 +42,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "node-cache": "^5.1.2",
+    "openai": "^6.17.0",
     "paillier-bigint": "^3.4.3",
     "snarkjs": "^0.7.6",
     "socket.io": "^4.8.3",

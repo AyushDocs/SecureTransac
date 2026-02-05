@@ -213,6 +213,23 @@ export function AuthProvider({ children }) {
     setRole(selectedRole);
     setActiveRole(selectedRole);
     setAddress(selectedAddress);
+    
+    // Persist session
+    localStorage.setItem("userRole", selectedRole);
+    localStorage.setItem("activeRole", selectedRole);
+    localStorage.setItem("userAddress", selectedAddress);
+
+    // Update roles array
+    setRoles(prev => {
+        if (!prev.includes(selectedRole)) {
+            const newRoles = [...prev, selectedRole];
+            localStorage.setItem("userRoles", JSON.stringify(newRoles));
+            return newRoles;
+        }
+        return prev;
+    });
+
+    setShowDashboardSelector(false); // Valid explicit login, suppress selector
   }, []);
 
   // Switch active role/dashboard without re-authenticating
@@ -283,7 +300,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const connectWallet = useCallback(async () => {
+  const connectWallet = useCallback(async (suppressSelector = false, onlyAuthenticate = false) => {
     if (typeof window === "undefined") return null;
 
     console.log("Checking for Ethereum provider...", { 
@@ -340,21 +357,31 @@ export function AuthProvider({ children }) {
         const userActiveRole = authResult.activeRole || authResult.user?.activeRole || userRoles[0];
         
         setRoles(userRoles);
-        setActiveRole(userActiveRole);
-        setRole(userActiveRole);
-        
         localStorage.setItem("userRoles", JSON.stringify(userRoles));
-        localStorage.setItem("activeRole", userActiveRole);
-        localStorage.setItem("userRole", userActiveRole);
 
-        console.log("[AuthContext] Authenticated with roles:", userRoles);
-
-        // Show dashboard selector if user has multiple roles
-        if (userRoles.length > 1) {
-          setShowDashboardSelector(true);
+        if (!onlyAuthenticate) {
+            setActiveRole(userActiveRole);
+            setRole(userActiveRole);
+            localStorage.setItem("activeRole", userActiveRole);
+            localStorage.setItem("userRole", userActiveRole);
+            console.log("[AuthContext] Authenticated with roles:", userRoles);
+        } else {
+            console.log("[AuthContext] Authenticated (Silent) with roles:", userRoles);
         }
 
-        return walletAddress;
+        // Show dashboard selector if user has multiple roles AND suppression is not requested
+        if (userRoles.length > 1 && !suppressSelector && !onlyAuthenticate) {
+          setShowDashboardSelector(true);
+        } else {
+           setShowDashboardSelector(false); // Ensure it's off if suppressed
+        }
+
+        return { 
+          address: walletAddress, 
+          roles: userRoles, 
+          activeRole: userActiveRole,
+          user: authResult.user 
+        };
       } else {
         throw new Error("Authentication failed: Invalid signature");
       }
@@ -391,14 +418,20 @@ export function AuthProvider({ children }) {
     try {
       const data = await searchAddress(address);
       setProfile(data);
-      if (data.role && roles.length === 0) {
+      if (data.role) {
         setRole(data.role);
         localStorage.setItem("userRole", data.role);
+        
+        // Ensure roles array includes this
+        setRoles(prev => {
+            if (!prev.includes(data.role)) return [...prev, data.role];
+            return prev;
+        });
       }
     } catch (error) {
       console.error("Failed to refresh profile", error);
     }
-  }, [address, roles.length]);
+  }, [address]);
 
   // Fetch current user info with roles from /me endpoint
   const fetchUserInfo = useCallback(async () => {

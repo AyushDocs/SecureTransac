@@ -1,7 +1,7 @@
-const ipfsService = require('../services/ipfsService');
-const fs = require('fs');
+import fs from 'fs';
+import ipfsService from '../services/ipfsService.js';
 
-exports.uploadFile = async (req, res) => {
+export const uploadFile = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
         
@@ -27,7 +27,7 @@ exports.uploadFile = async (req, res) => {
     }
 };
 
-exports.pinJSON = async (req, res) => {
+export const pinJSON = async (req, res) => {
     try {
         const body = req.body;
         const result = await ipfsService.pinJSON(body, {
@@ -39,4 +39,9 @@ exports.pinJSON = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+
+export default {
+    uploadFile,
+    pinJSON
 };

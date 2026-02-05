@@ -1,16 +1,43 @@
-const persistence = require('./persistenceService');
-const web3Service = require('./web3Service');
-const { SimpleNeuralNetwork } = require('../utils/SimpleNeuralNetwork');
-const modelWeights = require('../utils/model_weights.json');
+import fs from 'fs';
+import OpenAI from 'openai';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import SimpleNeuralNetwork from '../utils/SimpleNeuralNetwork.js';
+import persistence from './persistenceService.js';
+import web3Service from './web3Service.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const modelWeightsPath = path.join(__dirname, '../utils/model_weights.json');
+let modelWeights;
+try {
+    modelWeights = JSON.parse(fs.readFileSync(modelWeightsPath, 'utf8'));
+} catch (e) {
+    console.warn("[AI] Could not load model_weights.json via fs, assuming empty or handling in constructor");
+    modelWeights = null;
+}
 
 class AIScoreService {
     constructor() {
         try {
-            this.model = SimpleNeuralNetwork.fromJSON(modelWeights);
-            console.log("[AI] Neural Network Model Loaded Successfully");
+            if (modelWeights) {
+                this.model = SimpleNeuralNetwork.fromJSON(modelWeights);
+                console.log("[AI] Neural Network Model Loaded Successfully");
+            } else {
+                this.model = null;
+                console.warn("[AI] No model weights found, running in heuristic mode only.");
+            }
         } catch (error) {
             console.error("[AI] Failed to load model weights:", error.message);
             this.model = null; 
+        }
+
+        if (process.env.OPENAI_API_KEY) {
+            this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            console.log("[AI] OpenAI Integration Enabled");
+        } else {
+            console.warn("[AI] OPENAI_API_KEY missing. Using heuristic mode for text analysis.");
         }
     }
 
@@ -208,21 +235,47 @@ class AIScoreService {
             impactWeight = 0.3;
             console.log(`[AI] Authority Report (Weight: 0.3)`);
         } else if (isCompany) {
-            impactWeight = 0.25; // 4x-5x normal impact (Strong)
+            impactWeight = 0.25; // Strong
             console.log(`[AI] Trusted Company Report (Weight: 0.25)`);
         } else if (Number(reporterScore) > 80) {
             impactWeight = 0.2; // High Rep User
         }
         
-        let flagCount = 0;
-        const redFlags = ['scam', 'fraud', 'steal', 'theft', 'fake', 'stolen'];
-        redFlags.forEach(word => {
-            if (text.toLowerCase().includes(word)) flagCount++;
-        });
+        let riskScore = 0;
+        let analysisSource = "heuristic";
 
-        if (flagCount > 0 || auth || isCompany) {
-            const finalFlagCount = flagCount || 1;
-            let newScore = (Number(targetScore) / 100) - (impactWeight * finalFlagCount);
+        if (this.openai) {
+            try {
+                const completion = await this.openai.chat.completions.create({
+                    messages: [
+                        { role: "system", content: "You are a fraud detection AI. Analyze the transaction report. Return JSON with 'riskScore' (0.0 to 1.0, where 1.0 is definite fraud) and 'category' (scam, dispute, spam, safe)." },
+                        { role: "user", content: text }
+                    ],
+                    model: "gpt-4o-mini",
+                    response_format: { type: "json_object" }
+                });
+                const result = JSON.parse(completion.choices[0].message.content);
+                riskScore = result.riskScore || 0;
+                analysisSource = "openai";
+                console.log(`[AI] OpenAI Analysis: Score ${riskScore} (${result.category})`);
+            } catch (e) {
+                console.error("[AI] OpenAI API Failed, falling back to heuristics:", e.message);
+                riskScore = this.calculateHeuristicRisk(text);
+            }
+        } else {
+            riskScore = this.calculateHeuristicRisk(text);
+        }
+
+        // HEURISTIC / AI Threshold
+        // If analysis says risk > 0.3 OR it's a trusted reporter, we apply penalty
+        if (riskScore > 0.3 || auth || isCompany) {
+            // Impact Calculation:
+            // Base Impact * RiskFactor * (Scaling)
+            // If Risk is 1.0 -> Full Impact * 2 (e.g. 0.25 * 2 = 0.5 drop)
+            // If Risk is 0.5 -> Impact (0.25 drop)
+            const riskFactor = Math.max(0.5, riskScore * 2); 
+            
+            let newScore = (Number(targetScore) / 100) - (impactWeight * riskFactor);
             newScore = Math.max(0, Math.min(1, newScore));
             
             await web3Service.submitReport(target, text);
@@ -234,6 +287,16 @@ class AIScoreService {
             
             await this.processEvaluation(target);
         }
+    }
+
+    calculateHeuristicRisk(text) {
+        let flagCount = 0;
+        const redFlags = ['scam', 'fraud', 'steal', 'theft', 'fake', 'stolen', 'hack', 'phishing'];
+        redFlags.forEach(word => {
+            if (text.toLowerCase().includes(word)) flagCount++;
+        });
+        // Normalize to 0-1 score roughly
+        return Math.min(1, flagCount * 0.4); 
     }
 
     async processEvaluation(address) {
@@ -275,4 +338,4 @@ class AIScoreService {
     }
 }
 
-module.exports = new AIScoreService();
+export default new AIScoreService();

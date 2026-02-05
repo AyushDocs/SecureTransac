@@ -6,18 +6,22 @@ import TrustDonut from "../dashboard/TrustDonut";
 import VelocityChart from "../dashboard/VelocityChart";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
+import { useAuth } from "../context/AuthContext";
+import RequestVerificationModal from "../components/RequestVerificationModal";
 
 // Main dashboard page with overview metrics
 function Dashboard() {
-  const [metricsData, setMetricsData] = useState(null);
+  const { user, role } = useAuth();
+  const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   useEffect(() => {
     async function loadMetrics() {
       try {
         logger.info("Dashboard: Loading metrics...");
         const data = await fetchDashboardMetrics();
-        setMetricsData(data);
+        setMetrics(data);
       } catch (error) {
         logger.error("Dashboard: Failed to load metrics", error);
       } finally {
@@ -27,7 +31,9 @@ function Dashboard() {
     loadMetrics();
   }, []);
 
-  const metrics = [
+  const metricsData = metrics; // Keep metricsData for existing references, but use 'metrics' for new state
+
+  const metricCards = [
     {
       title: "Blocked Transactions",
       value: metricsData?.blockedTransactions || 0,
@@ -106,12 +112,36 @@ function Dashboard() {
 
   return (
     <PageWrapper title="Dashboard">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, index) => (
-          <MetricCard key={index} {...metric} />
-        ))}
-      </div>
+      <div className="space-y-6">
+        
+        {/* Verification Call to Action */}
+        {user?.trustScore < 0.8 && role !== 'admin' && (
+           <div className="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/30 rounded-xl p-6 flex justify-between items-center relative overflow-hidden group shadow-lg shadow-blue-900/10">
+              <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors pointer-events-none"></div>
+              <div className="relative z-10">
+                 <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    <span>🛡️</span> Get Verified & Boost Your Score
+                 </h3>
+                 <p className="text-gray-400 text-sm max-w-xl">
+                    Request verification from a Trusted Company to instantly upgrade your Trust Score to <span className="text-green-400 font-bold">900+ (Low Risk)</span>.
+                 </p>
+              </div>
+              <button 
+                onClick={() => setShowVerificationModal(true)}
+                className="relative z-10 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-900/30 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
+              >
+                 Request Verification
+              </button>
+           </div>
+        )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {metricCards.map((metric, index) => (
+            <MetricCard key={index} {...metric} />
+          ))}
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <TrustDonut data={trustData} />
         <RiskHeatmap data={heatmapData} />
@@ -120,6 +150,11 @@ function Dashboard() {
       <div className="mt-6">
         <VelocityChart data={velocityData} />
       </div>
+
+      <RequestVerificationModal 
+        isOpen={showVerificationModal} 
+        onClose={() => setShowVerificationModal(false)} 
+      />
     </PageWrapper>
   );
 }

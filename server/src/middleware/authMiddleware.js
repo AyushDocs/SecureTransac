@@ -1,12 +1,12 @@
-const jwt = require('jsonwebtoken');
-const rbacService = require('../services/rbacService');
+import jwt from 'jsonwebtoken';
+import rbacService from '../services/rbacService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secure-transac-super-secret-key-123';
 
 /**
  * Protect routes - verify JWT token
  */
-exports.protect = (req, res, next) => {
+export const protect = (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -42,7 +42,7 @@ exports.protect = (req, res, next) => {
  * Restrict to specific roles (legacy - single role check)
  * Backward compatible with existing code
  */
-exports.restrictTo = (...roles) => {
+export const restrictTo = (...roles) => {
     return (req, res, next) => {
         // Check if user has ANY of the required roles
         const userRoles = req.user.roles || [req.user.role];
@@ -61,7 +61,7 @@ exports.restrictTo = (...roles) => {
  * Require specific active role (for dashboard-specific routes)
  * User must have switched to this dashboard context
  */
-exports.requireActiveRole = (...roles) => {
+export const requireActiveRole = (...roles) => {
     return (req, res, next) => {
         const activeRole = req.user.activeRole;
         
@@ -79,7 +79,7 @@ exports.requireActiveRole = (...roles) => {
  * Require user to HAVE a role (doesn't need to be active)
  * More permissive than restrictTo
  */
-exports.requireRole = (...requiredRoles) => {
+export const requireRole = (...requiredRoles) => {
     return (req, res, next) => {
         const hasPermission = rbacService.hasPermission(req.user.address, requiredRoles[0]);
         
@@ -95,7 +95,7 @@ exports.requireRole = (...requiredRoles) => {
 /**
  * Admin only middleware
  */
-exports.adminOnly = (req, res, next) => {
+export const adminOnly = (req, res, next) => {
     const userRoles = req.user.roles || [req.user.role];
     const isAdmin = userRoles.includes('admin') || userRoles.includes('deployer');
     
@@ -108,7 +108,7 @@ exports.adminOnly = (req, res, next) => {
 /**
  * Creator (company) or higher middleware
  */
-exports.creatorOrHigher = (req, res, next) => {
+export const creatorOrHigher = (req, res, next) => {
     const userRoles = req.user.roles || [req.user.role];
     const allowed = ['admin', 'deployer', 'company'];
     const hasAccess = userRoles.some(r => allowed.includes(r));
@@ -118,3 +118,4 @@ exports.creatorOrHigher = (req, res, next) => {
     }
     next();
 };
+

@@ -35,7 +35,7 @@ function UserDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-black text-white tracking-tighter">Hello, {user?.name || "Explorer"}</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter">Hello, {userData?.name || userData?.metadata?.name || user?.name || "Explorer"}</h1>
             <p className="text-gray-500 font-medium">Your decentralized reputation and security hub.</p>
           </div>
           <div className="flex gap-3">

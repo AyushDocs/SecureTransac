@@ -35,13 +35,28 @@ export async function mintSBT() {
   const accounts = await web3.eth.getAccounts();
   return await sbtContract.methods.mint().send({ from: accounts[0] });
 }
-const getAuthHeaders = () => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem("userToken");
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {})
   };
 };
+
+export async function updateTrustScore(targetAddress, score) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/manual-override`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ targetAddress, score })
+        });
+        if (!response.ok) throw new Error("Failed to update score");
+        return await response.json();
+    } catch (error) {
+        console.error("Score update error:", error);
+        throw error;
+    }
+}
 
 const scoreCache = new Map();
 const CACHE_TTL = 30000; // 30 seconds
@@ -55,24 +70,34 @@ export async function fetchTrustScore(address) {
     return cached.data;
   }
 
-  logger.info(`Fetching trust score for: ${address}`);
-  if (!contract) {
-    logger.warn("Contract not initialized, returning mock score");
-    return { address, score: 0.5, riskLevel: "medium" };
-  }
-
+  logger.info(`Fetching decrypted trust score for: ${address}`);
+  
   try {
-    const rawScore = await contract.methods.getScore(address).call();
-    const score = Number(rawScore) / 100;
+    // Fetch decrypted score from backend (returns 0-1000 scale)
+    const response = await fetch(`${API_BASE_URL}/admin/score/${address}`, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+       // If backend fails (e.g. 404), return default
+       logger.warn(`Failed to fetch score from backend: ${response.status}`);
+       return { address, score: 0.5, riskLevel: "medium", source: "default" };
+    }
+
+    const data = await response.json();
+    // Normalize 0-1000 to 0-1 for frontend components
+    const score = (data.score !== undefined) ? (data.score / 1000) : 0.5;
     const riskLevel = score >= 0.8 ? "low" : score >= 0.4 ? "medium" : "high";
-    logger.info(`Score fetched: ${score} (${riskLevel})`);
-    const result = { address, score, riskLevel, source: "chain" };
+    
+    logger.info(`Score fetched from API: ${score} (${riskLevel})`);
+    
+    const result = { address, score, riskLevel, source: "api" };
     scoreCache.set(address.toLowerCase(), { timestamp: Date.now(), data: result });
     return result;
+
   } catch (error) {
-    logger.error("Error fetching trust score from contract:", error);
+    logger.error("Error fetching trust score from API:", error);
     const result = { address, score: 0.5, riskLevel: "medium", source: "error" };
-    // Don't cache errors for as long
     scoreCache.set(address.toLowerCase(), { timestamp: Date.now() - 25000, data: result });
     return result;
   }
@@ -98,7 +123,7 @@ export async function searchAddress(address) {
   logger.info(`Searching for address: ${address}`);
   try {
     // Note: Assuming searchAddress endpoint is under admin for now based on previous config
-    const response = await fetch(`${API_BASE_URL}/admin/score/${address}`);
+    const response = await fetch(`${API_BASE_URL}/admin/users/${address}`);
     if (!response.ok) throw new Error("User not found");
     const data = await response.json();
     logger.info("Address search result:", data);
@@ -211,6 +236,70 @@ export async function fetchAuthorities() {
     logger.error("Error fetching authorities:", error);
     throw error;
   }
+}
+
+export async function fetchSystemContracts() {
+  logger.info("Fetching system contract addresses from server");
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/contracts`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch contracts");
+    return await response.json();
+  } catch (error) {
+    logger.error("Error fetching system contracts:", error);
+    throw error;
+  }
+}
+
+export async function fetchNetworkStats() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/network-stats`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch network stats:", error);
+    return null;
+  }
+}
+
+export async function fetchSystemStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/system/status`, { headers: getAuthHeaders() });
+        return response.ok ? await response.json() : null;
+    } catch { return null; }
+}
+
+export async function toggleSystemPause(paused) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/system/pause`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ paused })
+        });
+        return await response.json();
+    } catch { return null; }
+}
+
+export async function updateGasConfig(multiplier, limit) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/system/gas`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ multiplier, limit })
+        });
+        return await response.json();
+    } catch { return null; }
+}
+
+export async function upgradeSystem() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/system/upgrade`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        return await response.json();
+    } catch { return null; }
 }
 
 export async function saveAuthorityMetadata(address, name, email, tier = 1) {
@@ -332,12 +421,22 @@ export async function fetchVerifications(params = {}) {
 export async function requestVerification(userAddress, companyAddress, metadata = {}) {
   logger.info(`Requesting verification: ${userAddress} -> ${companyAddress}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/request-verification`, {
+    const response = await fetch(`${API_BASE_URL}/admin/request-verification`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ userAddress, companyAddress, metadata }),
     });
-    if (!response.ok) throw new Error("Failed to request verification");
+    if (!response.ok) {
+        let errorMessage = "Failed to request verification";
+        try {
+            const errorData = await response.json();
+            if (errorData.error) errorMessage = errorData.error;
+        } catch (e) {
+            // Use status text if JSON parsing fails
+            errorMessage = `Request failed: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
     return await response.json();
   } catch (error) {
     logger.error("Error requesting verification:", error);
@@ -348,7 +447,7 @@ export async function requestVerification(userAddress, companyAddress, metadata 
 export async function verifyUser(requestId, reviewerAddress, status, targetScore = 900) {
   logger.info(`Processing verification: ${requestId} (${status})`);
   try {
-    const response = await fetch(`${API_BASE_URL}/verify-user`, {
+    const response = await fetch(`${API_BASE_URL}/admin/verify-user`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ requestId, reviewerAddress, status, targetScore }),

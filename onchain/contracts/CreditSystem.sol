@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./AccessControl.sol";
 
-contract CreditSystem is AccessControl { // Inherit AccessControl to share base with others
+contract CreditSystem is SecureAccessControl { // Inherit AccessControl to share base with others
     mapping(address => uint256) public credits;
     uint256 public constant VIEW_COST = 0.01 ether; // Cost to view a private score (in wei/credits)
     

@@ -1,12 +1,32 @@
-const { Web3 } = require('web3');
-const paillier = require('paillier-bigint');
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import * as paillier from 'paillier-bigint';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Web3 } from 'web3';
+import socketService from './socketService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const KEYS_FILE_PATH = path.join(__dirname, '../../paillier_keys.json');
-const TrustRegistry = require('../../../onchain/build/contracts/TrustRegistry.json');
-const IdentityVault = require('../../../onchain/build/contracts/IdentityVault.json');
-const VerificationRegistry = require('../../../onchain/build/contracts/VerificationRegistry.json');
-const cacheService = require('./cacheService');
+
+// Helper to load JSON
+const loadJSON = (relativePath) => {
+    try {
+        const fullPath = path.join(__dirname, relativePath);
+        if (fs.existsSync(fullPath)) {
+            return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        }
+    } catch(e) { console.warn("Failed to load JSON:", relativePath); }
+    return { abi: [], networks: {} };
+};
+
+const TrustRegistry = loadJSON('../../../onchain/build/contracts/TrustRegistry.json');
+const IdentityVault = loadJSON('../../../onchain/build/contracts/IdentityVault.json');
+const VerificationRegistry = loadJSON('../../../onchain/build/contracts/VerificationRegistry.json');
+const TransactionLogger = loadJSON('../../../onchain/build/contracts/TransactionLogger.json');
+const VulnerableBank = loadJSON('../../../demo-vulnerable/build/contracts/VulnerableBank.json');
+const UnprotectedStorage = loadJSON('../../../demo-vulnerable/build/contracts/UnprotectedStorage.json');
 
 // Force restart for new contracts
 
@@ -21,21 +41,44 @@ class Web3Service {
             this.vaultAddress = process.env.VAULT_ADDRESS;
             this.verificationAddress = process.env.VERIFICATION_ADDRESS;
             
-            const networks = Object.keys(TrustRegistry.networks);
-            const targetNetworkId = process.env.NETWORK_ID || (networks.length > 0 ? networks[networks.length - 1] : "1337");
+            
+            const networks = Object.keys(TrustRegistry.networks || {});
+            const targetNetworkId = process.env.NETWORK_ID || "5777";
+
+             // Identify network for Vulnerable contracts (often differs if migrated separately, but local likely same)
+            const demoNetworks = Object.keys(VulnerableBank.networks || {});
+            const demoNetworkId = demoNetworks.length > 0 ? demoNetworks[demoNetworks.length - 1] : targetNetworkId;
+
 
             // Automatic discovery if not in .env
-            if (!this.registryAddress) this.registryAddress = TrustRegistry.networks[targetNetworkId]?.address;
-            if (!this.vaultAddress) this.vaultAddress = IdentityVault.networks[targetNetworkId]?.address;
-            if (!this.verificationAddress) this.verificationAddress = VerificationRegistry.networks[targetNetworkId]?.address;
+            if (!this.registryAddress) this.registryAddress = TrustRegistry.networks?.[targetNetworkId]?.address;
+            if (!this.vaultAddress) this.vaultAddress = IdentityVault.networks?.[targetNetworkId]?.address;
+            if (!this.verificationAddress) this.verificationAddress = VerificationRegistry.networks?.[targetNetworkId]?.address;
 
-            // Global Hardcode Fallbacks (Last resort)
-            if (!this.registryAddress) this.registryAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-            if (!this.vaultAddress) this.vaultAddress = "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8";
-            if (!this.verificationAddress) this.verificationAddress = "0x851356ae760d987E095750cCeb3bC6014560891C";
+            // Demo contract addresses - Robust Discovery
+            // Try targetNetworkId -> Try 1337 -> Try 5777 -> Use most recent
+            const getAddress = (artifact) => {
+                if (!artifact.networks) return null;
+                if (artifact.networks[targetNetworkId]) return artifact.networks[targetNetworkId].address;
+                if (artifact.networks["1337"]) return artifact.networks["1337"].address;
+                if (artifact.networks["5777"]) return artifact.networks["5777"].address;
+                
+                const keys = Object.keys(artifact.networks);
+                if (keys.length > 0) return artifact.networks[keys[keys.length - 1]].address;
+                return null;
+            };
+
+            this.vulnerableBankAddress = getAddress(VulnerableBank);
+            this.unprotectedStorageAddress = getAddress(UnprotectedStorage);
+
+            // Global Hardcode Fallbacks (Removed for clean deployment view)
+            // if (!this.registryAddress) this.registryAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+            // if (!this.vaultAddress) this.vaultAddress = "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8";
+            // if (!this.verificationAddress) this.verificationAddress = "0x851356ae760d987E095750cCeb3bC6014560891C";
 
             console.log(`[Web3] System Initialization on Network ${targetNetworkId}`);
             console.log(`[Web3] Addresses: Registry=${this.registryAddress}, Vault=${this.vaultAddress}, Verification=${this.verificationAddress}`);
+            console.log(`[Web3] Demo Addresses: VulnBank=${this.vulnerableBankAddress}, Unprotected=${this.unprotectedStorageAddress}`);
 
             const privateKey = process.env.ADMIN_PRIVATE_KEY;
             if (privateKey) {
@@ -57,12 +100,61 @@ class Web3Service {
                 this.verificationContract = new this.web3.eth.Contract(VerificationRegistry.abi, this.verificationAddress);
             }
 
+            // System Control State
+            this.isPaused = false;
+            this.gasConfig = { multiplier: 1.5, limitOverride: null };
+
             // Validating keys persistence
             this._loadKeys();
 
         } catch (e) {
             console.error("[Web3] CRITICAL ERROR IN CONSTRUCTOR:", e);
         }
+    }
+
+    // --- System Control Methods ---
+    
+    toggleSystemPause(status) {
+        this.isPaused = status;
+        console.log(`[Web3] System Pause Status: ${this.isPaused}`);
+        return this.isPaused;
+    }
+
+    setGasConfig(multiplier, limit) {
+        this.gasConfig.multiplier = Number(multiplier) || 1.5;
+        this.gasConfig.limitOverride = limit ? Number(limit) : null;
+        console.log(`[Web3] Gas Config Updated: x${this.gasConfig.multiplier}, Limit: ${this.gasConfig.limitOverride || 'Auto'}`);
+        return this.gasConfig;
+    }
+
+    async getNetworkStats() {
+        try {
+            const blockNumber = await this.web3.eth.getBlockNumber();
+            const gasPrice = await this.web3.eth.getGasPrice();
+            const peerCount = await this.web3.eth.net.getPeerCount();
+            return {
+                blockNumber: Number(blockNumber),
+                gasPrice: Number(gasPrice),
+                peerCount: Number(peerCount),
+                networkId: Number(await this.web3.eth.net.getId())
+            };
+        } catch (error) {
+            console.error("[Web3] Failed to get network stats:", error);
+            // Return safe fallback
+            return {
+                blockNumber: 0,
+                gasPrice: 0,
+                peerCount: 0,
+                networkId: 0
+            };
+        }
+    }
+
+    getSystemStatus() {
+        return {
+            isPaused: this.isPaused,
+            gasConfig: this.gasConfig
+        };
     }
 
     _loadKeys() {
@@ -105,13 +197,26 @@ class Web3Service {
     }
 
     async _sendAdminTx(contractAddress, methodCall) {
+        if (this.isPaused) {
+            console.warn("[Web3] Transaction blocked: System is PAUSED.");
+            throw new Error("Protocol is currently PAUSED by admin.");
+        }
+
         if (!this.adminAccount) throw new Error("Admin account not configured");
-        const gas = await methodCall.estimateGas({ from: this.adminAccount.address });
+        
+        let gasLimit;
+        if (this.gasConfig.limitOverride) {
+            gasLimit = this.gasConfig.limitOverride;
+        } else {
+             const estimated = await methodCall.estimateGas({ from: this.adminAccount.address });
+             gasLimit = Math.floor(Number(estimated) * this.gasConfig.multiplier);
+        }
+
         const signedTx = await this.web3.eth.accounts.signTransaction({
             from: this.adminAccount.address,
             to: contractAddress,
             data: methodCall.encodeABI(),
-            gas: Math.floor(Number(gas) * 1.5),
+            gas: gasLimit,
             gasPrice: await this.web3.eth.getGasPrice(),
         }, process.env.ADMIN_PRIVATE_KEY);
         return await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction);
@@ -275,7 +380,8 @@ class Web3Service {
             // Since we are in backend service, we can likely call the public mapping getter 'credits(address)'
             // But wait, TrustRegistry inherits ScoringSystem which implements AccessControl is CreditSystem
             // So TrustRegistry has 'credits(address)' function auto-generated for public mapping.
-            return await this.contract.methods.credits(address).call();
+            const credits = await this.contract.methods.credits(address).call();
+            return Number(credits);
         } catch (error) {
             console.error("[Web3] getCredits failed:", error.message);
             return 0;
@@ -294,7 +400,8 @@ class Web3Service {
     async getReporterTier(address) {
         if (!this.contract) return 0;
         try {
-            return await this.contract.methods.reporterTier(address).call();
+            const tier = await this.contract.methods.reporterTier(address).call();
+            return Number(tier);
         } catch (error) {
             return 0;
         }
@@ -422,7 +529,6 @@ class Web3Service {
 
     startEventListeners() {
         console.log('[Web3] Starting On-Chain Event Listeners...');
-        const socketService = require('./socketService');
 
         if (this.contract) {
              console.log('[Web3] Available Events:', Object.keys(this.contract.events));
@@ -519,10 +625,9 @@ class Web3Service {
      */
     async getAllTransactions() {
         try {
-            const TransactionLogger = require('../../../onchain/build/contracts/TransactionLogger.json');
-            const networks = Object.keys(TransactionLogger.networks);
+            const networks = Object.keys(TransactionLogger.networks || {});
             const networkId = networks[networks.length - 1];
-            const loggerAddress = TransactionLogger.networks[networkId]?.address;
+            const loggerAddress = TransactionLogger.networks?.[networkId]?.address;
             
             if (!loggerAddress) {
                 console.warn('[Web3] TransactionLogger not deployed');
@@ -586,6 +691,50 @@ class Web3Service {
             return [];
         }
     }
+    /**
+     * Get active system addresses
+     */
+    getSystemAddresses() {
+        const contracts = {
+            TrustRegistry: this.registryAddress,
+            IdentityVault: this.vaultAddress,
+            VerificationRegistry: this.verificationAddress,
+            TransactionLogger: TransactionLogger.networks?.[process.env.NETWORK_ID || '5777']?.address,
+            VulnerableBank: this.vulnerableBankAddress,
+            UnprotectedStorage: this.unprotectedStorageAddress
+        };
+        
+        // Return only defined addresses
+        return Object.fromEntries(Object.entries(contracts).filter(([_, v]) => v));
+    }
+
+    async getNetworkStats() {
+        try {
+            const [gasPrice, blockNumber, startBlock] = await Promise.all([
+                this.web3.eth.getGasPrice(),
+                this.web3.eth.getBlockNumber(),
+                this.web3.eth.getBlockNumber() // Placeholder for peer count or other metic
+            ]);
+            
+            // Convert gas to Gwei (1 Gwei = 10^9 Wei)
+            const gasGwei = Math.round(Number(gasPrice) / 1e9);
+
+            return {
+                gasPrice: `${gasGwei} Gwei`,
+                blockNumber: Number(blockNumber),
+                status: 'OPERATIONAL',
+                networkId: await this.web3.eth.net.getId()
+            };
+        } catch (error) {
+            console.error("[Web3] Failed to fetch stats:", error);
+            return {
+                 gasPrice: "Unknown",
+                 blockNumber: 0,
+                 status: 'NET_ERROR',
+                 networkId: 0
+            };
+        }
+    }
 }
 
-module.exports = new Web3Service();
+export default new Web3Service();

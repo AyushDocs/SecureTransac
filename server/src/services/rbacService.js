@@ -275,10 +275,17 @@ function migrateLegacyUser(walletAddress, legacyRole) {
     return userData;
 }
 
+
 // Initialize test data on module load
 initializeTestData();
 
-module.exports = {
+export {
+    DASHBOARD_PERMISSIONS, ROLES,
+    ROLE_HIERARCHY, addRole, assignRoles, fromLegacyRole, getUserRoles, hasActiveRole, hasPermission, initializeTestData, migrateLegacyUser, removeRole,
+    setActiveRole, toLegacyRole
+};
+
+export default {
     ROLES,
     ROLE_HIERARCHY,
     DASHBOARD_PERMISSIONS,

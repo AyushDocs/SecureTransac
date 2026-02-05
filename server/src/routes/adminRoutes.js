@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import adminController from '../controllers/adminController.js';
+import { adminOnly, protect, restrictTo } from '../middleware/authMiddleware.js';
+import rbacService from '../services/rbacService.js';
+
 const router = express.Router();
-const adminController = require('../controllers/adminController');
-const { protect, restrictTo, adminOnly } = require('../middleware/authMiddleware');
-const rbacService = require('../services/rbacService');
 
 // ============================================
 // RBAC Routes - Multi-Dashboard Access
@@ -153,7 +154,16 @@ router.get('/user-roles/:address', (req, res) => {
  *       200:
  *         description: Global analytics data
  */
+// Public/System Config Routes
+router.get('/contracts', adminController.getSystemContracts);
+router.get('/network-stats', adminController.getNetworkStats);
 router.get('/analytics', adminController.getAnalytics);
+
+// System Controls
+router.get('/system/status', protect, restrictTo('admin', 'deployer'), adminController.getSystemStatus);
+router.post('/system/pause', protect, restrictTo('admin', 'deployer'), adminController.toggleSystemPause);
+router.post('/system/gas', protect, restrictTo('admin', 'deployer'), adminController.updateGasConfig);
+router.post('/system/upgrade', protect, restrictTo('admin', 'deployer'), adminController.upgradeSystem);
 
 /**
  * @swagger
@@ -247,4 +257,4 @@ router.get('/appeals', protect, adminController.getAppeals);
 router.post('/appeals', protect, adminController.submitAppeal);
 router.post('/appeals/process', protect, restrictTo('admin', 'deployer'), adminController.processAppeal);
 
-module.exports = router;
+export default router;

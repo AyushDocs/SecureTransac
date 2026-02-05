@@ -1,6 +1,10 @@
-const snarkjs = require("snarkjs");
-const path = require("path");
-const fs = require("fs");
+import fs from "fs";
+import path from "path";
+import * as snarkjs from "snarkjs";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const WASM_PATH = path.resolve(__dirname, "../../../zk/build/trust_score_verifier_js/trust_score_verifier.wasm");
 const ZKEY_PATH = path.resolve(__dirname, "../../../zk/build/trust_score_verifier_final.zkey");
@@ -55,4 +59,4 @@ class ZKProofService {
     }
 }
 
-module.exports = new ZKProofService();
+export default new ZKProofService();

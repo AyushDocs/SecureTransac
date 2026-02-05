@@ -1,13 +1,13 @@
-const aiService = require('../services/aiService');
-const persistence = require('../services/persistenceService');
-const web3Service = require('../services/web3Service');
-const ipfsService = require('../services/ipfsService');
-const privacyService = require('../services/privacyService');
-const analyticsService = require('../services/analyticsService');
-const bridgeService = require('../services/bridgeService');
-const rbacService = require('../services/rbacService');
-const socketService = require('../services/socketService');
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+import aiService from '../services/aiService.js';
+import analyticsService from '../services/analyticsService.js';
+import bridgeService from '../services/bridgeService.js';
+import ipfsService from '../services/ipfsService.js';
+import persistence from '../services/persistenceService.js';
+import privacyService from '../services/privacyService.js';
+import rbacService from '../services/rbacService.js';
+import socketService from '../services/socketService.js';
+import web3Service from '../services/web3Service.js';
 
 // Initialize privacy keys on startup
 privacyService.initialize().catch(err => console.error('[Privacy] Init failed:', err));
@@ -26,7 +26,7 @@ const generateToken = (address, role, roles = [], activeRole = null) => {
     });
 };
 
-exports.getAnalytics = async (req, res) => {
+export const getAnalytics = async (req, res) => {
     console.log('[SecureTransac] Fetching global analytics from blockchain');
     
     try {
@@ -140,7 +140,7 @@ exports.getAnalytics = async (req, res) => {
     }
 };
 
-exports.evaluateAddress = async (req, res) => {
+export const evaluateAddress = async (req, res) => {
     const { address } = req.body;
     console.log(`[SecureTransac] Evaluating address: ${address}`);
     if (!address) return res.status(400).json({ error: 'Address required' });
@@ -149,7 +149,7 @@ exports.evaluateAddress = async (req, res) => {
     res.json(result);
 };
 
-exports.getUserDetails = async (req, res) => {
+export const getUserDetails = async (req, res) => {
     const { address } = req.params;
     console.log(`[SecureTransac] Fetching user details for: ${address}`);
     
@@ -198,7 +198,7 @@ exports.getUserDetails = async (req, res) => {
     }
 };
 
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
     const { address, role, metadata } = req.body;
     console.log(`[SecureTransac] Registering user: ${address} as ${role}`);
     if (!address || !role) return res.status(400).json({ error: 'Address and Role required' });
@@ -207,7 +207,7 @@ exports.registerUser = async (req, res) => {
     res.json({ message: 'User registered successfully', user });
 };
 
-exports.processTransaction = async (req, res) => {
+export const processTransaction = async (req, res) => {
     const { from, to, amount } = req.body;
     console.log(`[SecureTransac] Processing transaction: ${from} -> ${to} (${amount})`);
     if (!from || !to || amount === undefined) return res.status(400).json({ error: 'Missing from, to, or amount' });
@@ -216,7 +216,7 @@ exports.processTransaction = async (req, res) => {
     res.json({ message: 'Transaction processed and scores updated', txId });
 };
 
-exports.processTransactionComment = async (req, res) => {
+export const processTransactionComment = async (req, res) => {
     const { from, target, txId, text, rating } = req.body;
     console.log(`[SecureTransac] Processing comment: ${from} on ${target} for ${txId}`);
     if (!from || !target || !txId || !text || rating === undefined) {
@@ -227,7 +227,7 @@ exports.processTransactionComment = async (req, res) => {
     res.json({ message: 'Comment processed and target score adjusted' });
 };
 
-exports.processReport = async (req, res) => {
+export const processReport = async (req, res) => {
     const { reporter, target, text } = req.body;
     console.log(`[SecureTransac] Processing report: ${reporter} reports ${target}`);
     if (!reporter || !target || !text) return res.status(400).json({ error: 'Missing reporter, target, or text' });
@@ -236,7 +236,7 @@ exports.processReport = async (req, res) => {
     res.json({ message: 'Report analyzed and target score adjusted' });
 };
 
-exports.addEvent = async (req, res) => {
+export const addEvent = async (req, res) => {
     const { address, type, details } = req.body;
     console.log(`[SecureTransac] Recording event: ${type} for ${address}`);
     if (!address || !type) return res.status(400).json({ error: 'Missing fields' });
@@ -249,7 +249,7 @@ exports.addEvent = async (req, res) => {
     res.json({ message: 'Event recorded', address });
 };
 
-exports.manualOverride = async (req, res) => {
+export const manualOverride = async (req, res) => {
     const { address, action, reason } = req.body;
     console.log(`[SecureTransac] Manual Override requested for ${address}: ${action}`);
     if (!address || !action || !reason) return res.status(400).json({ error: 'Missing address, action, or reason' });
@@ -263,7 +263,7 @@ exports.manualOverride = async (req, res) => {
     }
 };
 
-exports.getAuditLogs = (req, res) => {
+export const getAuditLogs = (req, res) => {
     console.log('[SecureTransac] Fetching audit logs');
     // For now, return a mock set of logs or aggregate from persistence
     const logs = [
@@ -276,7 +276,7 @@ exports.getAuditLogs = (req, res) => {
 
 // Authority Metadata Handlers
 // Authority Metadata Handlers
-exports.getAuthorities = async (req, res) => {
+export const getAuthorities = async (req, res) => {
     console.log('[SecureTransac] Fetching authorities and syncing with blockchain');
     const authorities = await persistence.getAuthorities();
     // Assuming authorities is an array of objects
@@ -302,7 +302,7 @@ exports.getAuthorities = async (req, res) => {
     res.json(Object.values(updatedAuthorities));
 };
 
-exports.saveAuthority = async (req, res) => {
+export const saveAuthority = async (req, res) => {
     const { address, name, email, level } = req.body;
     console.log(`[SecureTransac] Saving authority metadata for ${address}`);
     if (!address || !name || !email) return res.status(400).json({ error: 'Missing address, name, or email' });
@@ -311,7 +311,7 @@ exports.saveAuthority = async (req, res) => {
     res.json({ message: 'Authority metadata saved', address });
 };
 
-exports.removeAuthority = async (req, res) => {
+export const removeAuthority = async (req, res) => {
     const { address } = req.params;
     console.log(`[SecureTransac] Removing authority metadata for ${address}`);
     if (!address) return res.status(400).json({ error: 'Address required' });
@@ -320,7 +320,7 @@ exports.removeAuthority = async (req, res) => {
     res.json({ message: 'Authority metadata removed', address });
 };
 
-exports.updateRiskHeatmap = async (req, res) => {
+export const updateRiskHeatmap = async (req, res) => {
     const { data } = req.body;
     console.log('[SecureTransac] Updating Risk Heatmap data');
     if (!data || !Array.isArray(data)) return res.status(400).json({ error: 'Heatmap data required' });
@@ -329,7 +329,7 @@ exports.updateRiskHeatmap = async (req, res) => {
     res.json({ message: 'Risk Heatmap updated' });
 };
 
-exports.updateEvaluationVelocity = async (req, res) => {
+export const updateEvaluationVelocity = async (req, res) => {
     const { data } = req.body;
     console.log('[SecureTransac] Updating Evaluation Velocity data');
     if (!data || !Array.isArray(data)) return res.status(400).json({ error: 'Velocity data required' });
@@ -338,7 +338,7 @@ exports.updateEvaluationVelocity = async (req, res) => {
     res.json({ message: 'Evaluation Velocity updated' });
 };
 
-exports.getACL = async (req, res) => {
+export const getACL = async (req, res) => {
     console.log('[SecureTransac] Fetching ACL entries with live scores');
     const entries = await persistence.getACLEntries();
     
@@ -355,14 +355,14 @@ exports.getACL = async (req, res) => {
     res.json(enriched);
 };
 
-exports.getScoreUpdates = async (req, res) => {
+export const getScoreUpdates = async (req, res) => {
     console.log('[SecureTransac] Fetching recent score updates');
     const updates = await persistence.getRecentScoreUpdates();
     res.json(updates);
 };
 
 // Verification Request Handlers
-exports.getVerificationRequests = async (req, res) => {
+export const getVerificationRequests = async (req, res) => {
     const { companyAddress, userAddress } = req.query;
     try {
         if (userAddress) {
@@ -377,7 +377,7 @@ exports.getVerificationRequests = async (req, res) => {
     }
 };
 
-exports.requestVerification = async (req, res) => {
+export const requestVerification = async (req, res) => {
     const { userAddress, companyAddress, metadata } = req.body;
     console.log(`[SecureTransac] New on-chain verification request for: ${userAddress}`);
     if (!userAddress || !companyAddress) return res.status(400).json({ error: 'User and Company addresses required' });
@@ -391,7 +391,7 @@ exports.requestVerification = async (req, res) => {
     }
 };
 
-exports.getFingerprint = async (req, res) => {
+export const getFingerprint = async (req, res) => {
     const { address } = req.params;
     try {
         const fingerprint = await analyticsService.calculateFingerprint(address);
@@ -401,7 +401,7 @@ exports.getFingerprint = async (req, res) => {
     }
 };
 
-exports.getGlobalHeatmap = async (req, res) => {
+export const getGlobalHeatmap = async (req, res) => {
     try {
         const heatmap = await analyticsService.getRiskHeatmapData();
         res.json({ heatmap });
@@ -410,7 +410,7 @@ exports.getGlobalHeatmap = async (req, res) => {
     }
 };
 
-exports.getSybilClusters = async (req, res) => {
+export const getSybilClusters = async (req, res) => {
     try {
         const clusters = await analyticsService.detectSybilClusters();
         res.json({ clusters });
@@ -419,7 +419,7 @@ exports.getSybilClusters = async (req, res) => {
     }
 };
 
-exports.verifyUser = async (req, res) => {
+export const verifyUser = async (req, res) => {
     const { requestId, status, targetScore } = req.body;
     console.log(`[SecureTransac] Processing on-chain verification: ${requestId} (${status})`);
     
@@ -447,14 +447,14 @@ exports.verifyUser = async (req, res) => {
 };
 
 // Cryptographic Auth Handlers
-exports.getNonce = async (req, res) => {
+export const getNonce = async (req, res) => {
     const { address } = req.params;
     if (!address) return res.status(400).json({ error: "Address required" });
     const nonce = await persistence.getNonce(address);
     res.json({ nonce });
 };
 
-exports.verifySignature = async (req, res) => {
+export const verifySignature = async (req, res) => {
     const { address, signature } = req.body;
     console.log(`[Auth] Verifying signature for ${address}`);
     
@@ -509,7 +509,7 @@ exports.verifySignature = async (req, res) => {
     }
 };
 
-exports.pinMetadata = async (req, res) => {
+export const pinMetadata = async (req, res) => {
     const { metadata } = req.body;
     if (!metadata) return res.status(400).json({ error: 'Metadata required' });
 
@@ -522,7 +522,7 @@ exports.pinMetadata = async (req, res) => {
     }
 };
 
-exports.updateAuthorityMetadata = (req, res) => {
+export const updateAuthorityMetadata = (req, res) => {
     const { address } = req.params;
     const { metadata } = req.body;
     
@@ -539,7 +539,7 @@ exports.updateAuthorityMetadata = (req, res) => {
     res.json({ success: true, authority: updated });
 };
 
-exports.getScoreAdmin = async (req, res) => {
+export const getScoreAdmin = async (req, res) => {
     let { address } = req.params;
     
     // Check if this is a stealth address and resolve to true identity
@@ -562,13 +562,13 @@ exports.getScoreAdmin = async (req, res) => {
 };
 
 // Privacy & Homomorphic Encryption (Enhanced Privacy)
-exports.getPrivacyPublicKey = (req, res) => {
+export const getPrivacyPublicKey = (req, res) => {
     const key = privacyService.getPublicKey();
     if (!key) return res.status(503).json({ error: 'Privacy service warming up' });
     res.json(key);
 };
 
-exports.aggregateEncryptedImpacts = (req, res) => {
+export const aggregateEncryptedImpacts = (req, res) => {
     const { ciphertexts } = req.body;
     if (!Array.isArray(ciphertexts)) return res.status(400).json({ error: 'Ciphertexts array required' });
     
@@ -580,7 +580,7 @@ exports.aggregateEncryptedImpacts = (req, res) => {
     }
 };
 
-exports.decryptImpact = (req, res) => {
+export const decryptImpact = (req, res) => {
     const { ciphertext } = req.body;
     try {
         const result = privacyService.decrypt(ciphertext);
@@ -590,42 +590,15 @@ exports.decryptImpact = (req, res) => {
     }
 };
 
-// Advanced Analytics
-exports.getFingerprint = async (req, res) => {
-    const { address } = req.params;
-    try {
-        const fingerprint = await analyticsService.calculateFingerprint(address);
-        res.json(fingerprint);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
 
-exports.getGlobalHeatmap = async (req, res) => {
-    try {
-        const heatmap = await analyticsService.getRiskHeatmapData();
-        res.json({ heatmap });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
 
-exports.getSybilClusters = async (req, res) => {
-    try {
-        const clusters = await analyticsService.detectSybilClusters();
-        res.json({ clusters });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-exports.syncCrossChainScore = async (req, res) => {
+export const syncCrossChainScore = async (req, res) => {
     const { userAddress, sourceChainId, sourceContract, targetChainId, targetContract } = req.body;
     
     if (!userAddress || !sourceChainId || !targetChainId) {
         return res.status(400).json({ error: 'Missing sync parameters' });
     }
-
+    
     try {
         // Step 1: Fetch from source
         const score = await bridgeService.getScoreFromChain(sourceChainId, sourceContract, userAddress);
@@ -644,10 +617,54 @@ exports.syncCrossChainScore = async (req, res) => {
     }
 };
 
+export const getSystemContracts = (req, res) => {
+    console.log('[SecureTransac] Fetching system contract addresses');
+    try {
+        const contracts = web3Service.getSystemAddresses();
+        res.json(contracts);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch contract addresses' });
+    }
+};
 
-const zkProofService = require('../services/zkProofService');
+export const getNetworkStats = async (req, res) => {
+    try {
+        const stats = await web3Service.getNetworkStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('[Admin] Failed to fetch network stats:', error);
+        res.status(500).json({ error: 'Failed to fetch network stats' });
+    }
+};
 
-exports.generateProof = async (req, res) => {
+export const getSystemStatus = (req, res) => {
+    res.json(web3Service.getSystemStatus());
+};
+
+export const toggleSystemPause = (req, res) => {
+    const { paused } = req.body;
+    const status = web3Service.toggleSystemPause(!!paused);
+    res.json({ message: `System ${status ? 'PAUSED' : 'RESUMED'}`, isPaused: status });
+};
+
+export const updateGasConfig = (req, res) => {
+    const { multiplier, limit } = req.body;
+    const config = web3Service.setGasConfig(multiplier, limit);
+    res.json({ message: 'Gas config updated', config });
+};
+
+export const upgradeSystem = (req, res) => {
+    // Stub: In real system, this would trigger proxy upgrade or migration script
+    setTimeout(() => {
+        console.log("[System] Upgrade check completed. No updates found.");
+    }, 2000);
+    res.json({ success: true, message: 'System logic is up to date (Version 1.2.0)' });
+};
+
+
+import zkProofService from '../services/zkProofService.js';
+
+export const generateProof = async (req, res) => {
     const { address, threshold, secret } = req.body;
     
     // Authorization check
@@ -674,7 +691,7 @@ exports.generateProof = async (req, res) => {
     }
 };
 
-exports.submitZKProof = async (req, res) => {
+export const submitZKProof = async (req, res) => {
     const { address, threshold, secret } = req.body;
     
     // Authorization check
@@ -723,8 +740,8 @@ exports.submitZKProof = async (req, res) => {
     }
 };
 
-const stealthService = require('../services/stealthService');
-exports.generateStealthAddress = (req, res) => {
+import stealthService from '../services/stealthService.js';
+export const generateStealthAddress = (req, res) => {
     try {
         const result = stealthService.generateStealthMeta(null);
         // Link the generated stealth address to the requesting user
@@ -737,7 +754,7 @@ exports.generateStealthAddress = (req, res) => {
     }
 };
 
-exports.getUserReport = (req, res) => {
+export const getUserReport = (req, res) => {
     const userId = req.params.address || req.user.address; 
     
     // Security check
@@ -765,13 +782,13 @@ exports.getUserReport = (req, res) => {
     res.json({ statement });
 };
 
-const blindService = require('../services/blindSignatureService');
+import blindService from '../services/blindSignatureService.js';
 
-exports.getBlindKeys = (req, res) => {
+export const getBlindKeys = (req, res) => {
     res.json(blindService.getPublicKeys());
 };
 
-exports.signBlind = (req, res) => {
+export const signBlind = (req, res) => {
     const { blinded } = req.body;
     if (!blinded) return res.status(400).json({ error: 'Blinded message required' });
     try {
@@ -782,7 +799,7 @@ exports.signBlind = (req, res) => {
     }
 };
 
-exports.submitAnonymousReport = async (req, res) => {
+export const submitAnonymousReport = async (req, res) => {
     const { targetAddress, intent, hash, signature, reporterAddress } = req.body;
     
     if (!targetAddress || !intent || !hash || !signature) {
@@ -815,7 +832,7 @@ exports.submitAnonymousReport = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-exports.submitAppeal = async (req, res) => {
+export const submitAppeal = async (req, res) => {
     const { reason, currentScore, metadata } = req.body;
     const userAddress = req.user.address;
 
@@ -839,7 +856,7 @@ exports.submitAppeal = async (req, res) => {
     }
 };
 
-exports.getAppeals = async (req, res) => {
+export const getAppeals = async (req, res) => {
     try {
         const isAdmin = req.user.role === 'admin' || req.user.role === 'deployer';
         const appeals = persistence.getAppeals(isAdmin ? null : req.user.address);
@@ -849,7 +866,7 @@ exports.getAppeals = async (req, res) => {
     }
 };
 
-exports.processAppeal = async (req, res) => {
+export const processAppeal = async (req, res) => {
     const { appealId, status, comment, adjustmentScore } = req.body;
     const reviewerAddress = req.user.address;
 
@@ -880,7 +897,7 @@ exports.processAppeal = async (req, res) => {
     }
 };
 
-exports.verifyProof = async (req, res) => {
+export const verifyProof = async (req, res) => {
     const { proof, publicSignals } = req.body;
     
     if (!proof || !publicSignals) {
@@ -893,4 +910,57 @@ exports.verifyProof = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+
+
+export default {
+    addEvent,
+    aggregateEncryptedImpacts,
+    decryptImpact,
+    evaluateAddress,
+    generateProof,
+    generateStealthAddress,
+    getACL,
+    getAnalytics,
+    getAppeals,
+    getAuditLogs,
+    getAuthorities,
+    getBlindKeys,
+    getFingerprint,
+    getGlobalHeatmap,
+    getNonce,
+    getNetworkStats,
+    getPrivacyPublicKey,
+    getScoreAdmin,
+    getScoreUpdates,
+    getSystemContracts,
+    getSystemStatus,
+    getSybilClusters,
+    getUserDetails,
+    getUserReport,
+    getVerificationRequests,
+    manualOverride,
+    pinMetadata,
+    processAppeal,
+    processReport,
+    processTransaction,
+    processTransactionComment,
+    registerUser,
+    removeAuthority,
+    requestVerification,
+    saveAuthority,
+    signBlind,
+    submitAnonymousReport,
+    submitAppeal,
+    submitZKProof,
+    syncCrossChainScore,
+    toggleSystemPause,
+    updateAuthorityMetadata,
+    updateEvaluationVelocity,
+    updateGasConfig,
+    updateRiskHeatmap,
+    upgradeSystem,
+    verifyProof,
+    verifySignature,
+    verifyUser
 };

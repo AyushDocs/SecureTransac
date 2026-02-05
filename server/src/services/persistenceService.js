@@ -1,6 +1,10 @@
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
-const path = require('path');
+import path from 'path';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class PersistenceService {
     constructor() {
@@ -114,6 +118,14 @@ class PersistenceService {
             JSON.stringify(merged)
         ]);
 
+        // Auto-add to authorities if company
+        if ((role === 'company' || existing.role === 'company') && metadata.name) {
+             const authExists = await db.get('SELECT address FROM authorities WHERE address = ?', addr);
+             if (!authExists) {
+                 await this.saveAuthority(addr, { name: metadata.name, email: metadata.email || 'N/A' });
+             }
+        }
+
         return this.getUser(addr);
     }
 
@@ -132,6 +144,15 @@ class PersistenceService {
             merged.registrationDate,
             JSON.stringify(merged)
         ]);
+        
+        // Synch authority if role upgrade
+        if (merged.role === 'company') {
+             const authExists = await db.get('SELECT address FROM authorities WHERE address = ?', addr);
+             if (!authExists) {
+                 await this.saveAuthority(addr, { name: merged.name || 'Company', email: merged.email || 'N/A' });
+             }
+        }
+
         return merged;
     }
 
@@ -210,8 +231,49 @@ class PersistenceService {
 
     async getAuthorities() {
         const db = await this.getDb();
-        const rows = await db.all('SELECT data FROM authorities');
-        return rows.map(r => JSON.parse(r.data));
+        const authRows = await db.all('SELECT data FROM authorities');
+        const companyRows = await db.all("SELECT data FROM users WHERE role = 'company'");
+        
+        const authoritiesMap = new Map();
+        
+        // 1. Add explicitly stored authorities
+        authRows.forEach(r => {
+            try {
+                const data = JSON.parse(r.data);
+                if (data && data.address) {
+                    // Ensure ID is set
+                    if (!data.id) data.id = data.address;
+                    authoritiesMap.set(data.address.toLowerCase(), data);
+                }
+            } catch (e) { console.warn("Skipping invalid authority row:", e); }
+        });
+        
+        // 2. Merge registered companies (automatic "institutional" tier)
+        companyRows.forEach(r => {
+            try {
+                const data = JSON.parse(r.data);
+                if (data && data.address) {
+                    const addr = data.address.toLowerCase();
+                    
+                    if (!authoritiesMap.has(addr)) {
+                        authoritiesMap.set(addr, {
+                            id: addr,
+                            address: addr,
+                            name: data.name || 'Registered Company',
+                            email: data.email || 'N/A',
+                            status: 'active',
+                            level: 'institutional', // Default tier for registered companies
+                            totalReports: 0,
+                            rejectedReports: 0
+                        });
+                    }
+                }
+            } catch (e) { 
+                console.warn("Skipping invalid company row:", e); 
+            }
+        });
+
+        return Array.from(authoritiesMap.values());
     }
 
     async saveAuthority(address, metadata) {
@@ -419,4 +481,4 @@ class PersistenceService {
     }
 }
 
-module.exports = new PersistenceService();
+export default new PersistenceService();

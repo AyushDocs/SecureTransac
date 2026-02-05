@@ -1,5 +1,19 @@
-const { Web3 } = require('web3');
-const TrustRegistry = require('../../../onchain/build/contracts/TrustRegistry.json');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Web3 } from 'web3';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const trustRegistryPath = path.join(__dirname, '../../../onchain/build/contracts/TrustRegistry.json');
+let TrustRegistry;
+try {
+    TrustRegistry = JSON.parse(fs.readFileSync(trustRegistryPath, 'utf8'));
+} catch (e) {
+    console.error("[Bridge] Failed to load TrustRegistry.json:", e.message);
+    TrustRegistry = { abi: [] }; // Fallback
+}
 
 /**
  * BridgeService handles cross-chain reputation syncing.
@@ -71,4 +85,4 @@ class BridgeService {
     }
 }
 
-module.exports = new BridgeService();
+export default new BridgeService();

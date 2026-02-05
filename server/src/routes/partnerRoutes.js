@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import ipfsService from '../services/ipfsService.js';
+import web3Service from '../services/web3Service.js';
+
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const ipfsService = require('../services/ipfsService');
-const web3Service = require('../services/web3Service');
 
 // Multer setup for temporary file storage
 const storage = multer.diskStorage({
@@ -110,4 +111,4 @@ router.post('/apply-loan', upload.single('document'), async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

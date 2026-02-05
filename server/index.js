@@ -11,8 +11,10 @@ import swaggerConfig from './src/config/swagger.js';
 import rateLimiter from './src/middleware/rateLimiter.js';
 // Force restart for new scores - synchronized with updated ACL controller
 import adminRoutes from './src/routes/adminRoutes.js';
+import connectRoutes from './src/routes/connectRoutes.js';
 import ipfsRoutes from './src/routes/ipfsRoutes.js';
 import partnerRoutes from './src/routes/partnerRoutes.js';
+import { initDb } from './src/services/db.js';
 import socketService from './src/services/socketService.js';
 import web3Service from './src/services/web3Service.js';
 
@@ -24,6 +26,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Database
+initDb().catch(err => console.error('[SecureTransac] DB Init Failed:', err));
 
 app.use(cors());
 app.use(express.json());
@@ -40,6 +45,7 @@ app.use('/api', apiLimiter);
 
 // Routes
 app.use('/api/admin', adminRoutes);
+app.use('/api/connect', connectRoutes);
 app.use('/api/ipfs', ipfsRoutes);
 app.use('/api/partner', partnerRoutes);
 

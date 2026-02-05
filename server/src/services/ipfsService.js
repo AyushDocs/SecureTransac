@@ -1,5 +1,5 @@
-const pinataSDK = require('@pinata/sdk');
-const fs = require('fs');
+import pinataSDK from '@pinata/sdk';
+import fs from 'fs';
 
 class IpfsService {
     constructor() {
@@ -84,4 +84,4 @@ class IpfsService {
     }
 }
 
-module.exports = new IpfsService();
+export default new IpfsService();
