@@ -156,7 +156,19 @@ class PersistenceService {
         return merged;
     }
 
-    // --- Analytics ---
+    async getAllUsers() {
+        const db = await this.getDb();
+        const rows = await db.all('SELECT address, role, registrationDate, data FROM users');
+        return rows.map(row => {
+            const data = row.data ? JSON.parse(row.data) : {};
+            return {
+                ...data,
+                address: row.address,
+                role: row.role,
+                registrationDate: row.registrationDate
+            };
+        });
+    }
 
     async getAnalytics() {
         const db = await this.getDb();

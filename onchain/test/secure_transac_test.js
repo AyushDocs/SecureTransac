@@ -1,52 +1,48 @@
 const TrustRegistry = artifacts.require("TrustRegistry");
-const SecureVault = artifacts.require("SecureVault");
 const { expectRevert } = require("@openzeppelin/test-helpers");
 
+const fakeCiphertext = (value) => {
+  const hex = value.toString(16).padStart(128, "0");
+  return "0x" + hex;
+};
+
 contract("SecureTransac Integration", (accounts) => {
-  const [admin, reporter, userWithHighTrust, userWithLowTrust, blacklistedUser] = accounts;
+  const [admin, reporter, userWithHighTrust, userWithLowTrust] = accounts;
 
   let registry;
-  let vault;
 
   before(async () => {
     registry = await TrustRegistry.new({ from: admin });
-    vault = await SecureVault.new(registry.address, { from: admin });
-    
-    // Set up reporter
-    await registry.setReporterStatus(reporter, true, { from: admin });
+    await registry.setReporterStatus(reporter, true, 1, { from: admin });
   });
 
-  it("should initialize with default scores (0.5/500)", async () => {
+  it("should return empty bytes for a user with no score", async () => {
     const score = await registry.getScore(userWithHighTrust);
-    assert.equal(score.toNumber(), 500, "Default score should be 500");
+    assert.ok(score === "0x" || score === null || score === "", "Default score should be empty bytes");
   });
 
-  it("should prevent access if trust score is below threshold", async () => {
-    // Threshold for SecureVault is 700. Default is 500.
+  it("should allow authorized reporters to store encrypted scores", async () => {
+    const encrypted = fakeCiphertext(850);
+    await registry.updateScore(userWithHighTrust, encrypted, { from: reporter });
+    const stored = await registry.getScore(userWithHighTrust);
+    assert.equal(stored, encrypted, "Encrypted score should round-trip");
+  });
+
+  it("should not allow unauthorized users to update scores", async () => {
     await expectRevert(
-      vault.getSecret({ from: userWithHighTrust }),
-      "Insufficient trust score"
-    );
-  });
-
-  it("should allow access if trust score is above threshold", async () => {
-    await registry.updateScore(userWithHighTrust, 850, { from: reporter });
-    const secret = await vault.getSecret({ from: userWithHighTrust });
-    assert.equal(secret, "This is a protected secret!", "Should be able to read secret");
-  });
-
-  it("should block blacklisted users regardless of score", async () => {
-    await registry.updateScore(blacklistedUser, 100, { from: reporter });
-    await expectRevert(
-      vault.getSecret({ from: blacklistedUser }),
-      "Address blacklisted"
-    );
-  });
-
-  it("should only allow authorized reporters to update scores", async () => {
-    await expectRevert(
-      registry.updateScore(userWithLowTrust, 900, { from: userWithLowTrust }),
+      registry.updateScore(userWithLowTrust, fakeCiphertext(900), { from: userWithLowTrust }),
       "Not an authorized reporter"
+    );
+  });
+
+  it("should mark unknown users as not-whitelisted and blacklisted-by-default", async () => {
+    assert.equal(await registry.isWhitelisted(userWithLowTrust), false);
+    assert.equal(await registry.isBlacklisted(userWithLowTrust), true);
+  });
+
+  it("should only allow owner to change reporter status", async () => {
+    await expectRevert.unspecified(
+      registry.setReporterStatus(userWithLowTrust, true, 1, { from: userWithLowTrust })
     );
   });
 });

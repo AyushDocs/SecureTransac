@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { applyForLoan } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 import { useAuth } from '../context/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
 
@@ -208,7 +209,7 @@ contract MyPartnerContract {
                                 </p>
                             </div>
                             <a 
-                                href="http://localhost:5000/api-docs" 
+                                href={`${API_BASE_URL.replace('/api', '')}/api-docs`} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-cyan-400 text-sm font-bold flex items-center gap-2 hover:underline"

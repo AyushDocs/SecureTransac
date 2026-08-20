@@ -54,14 +54,14 @@ const CreditManager = () => {
                 <div className="text-right">
                     <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Balance</div>
                     <div className="text-xl font-mono font-black text-cyan-400">
-                        {fetching ? "..." : `${balance} ETH`}
+                        {fetching ? "..." : `${balance} AV`}
                     </div>
                 </div>
             </div>
 
             <div className="space-y-4">
                 <div className="relative">
-                    <label className="text-[10px] text-gray-500 font-bold uppercase mb-2 block ml-1">Top-up Amount (ETH)</label>
+                    <label className="text-[10px] text-gray-500 font-bold uppercase mb-2 block ml-1">Top-up Amount (AV)</label>
                     <div className="flex gap-2">
                         <input 
                             type="number" 
@@ -88,15 +88,15 @@ const CreditManager = () => {
                             onClick={() => setAmount(val)}
                             className={`py-1 rounded border text-[10px] font-bold ${amount === val ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-600'}`}
                         >
-                            {val} ETH
+                            {val} AV
                         </button>
                     ))}
                 </div>
 
                 <div className="p-3 bg-blue-900/10 border border-blue-500/20 rounded-lg">
                     <p className="text-[10px] text-blue-300 leading-relaxed italic">
-                        Note: 1 Credit = 1 Wei. Viewing a score costs 0.01 ETH. 
-                        Funds are held in the TrustRegistry smart contract.
+                        Note: 1 Credit = 1 wei of $AV. Viewing a score costs 0.01 AV. 
+                        $AV is held in the TrustRegistry smart contract.
                     </p>
                 </div>
             </div>

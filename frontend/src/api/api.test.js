@@ -19,7 +19,10 @@ describe("Frontend API Client", () => {
       });
 
       const result = await fetchDashboardMetrics();
-      expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/analytics`);
+      expect(fetch).toHaveBeenCalledWith(
+        `${API_BASE_URL}/admin/analytics`,
+        expect.any(Object)
+      );
       expect(result).toEqual(mockData);
     });
 
@@ -39,7 +42,7 @@ describe("Frontend API Client", () => {
       });
 
       const result = await searchAddress(address);
-      expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/users/${address}`);
+      expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/admin/users/${address}`);
       expect(result).toEqual(mockData);
     });
   });
@@ -53,10 +56,13 @@ describe("Frontend API Client", () => {
       });
 
       const result = await processReport(report.reporter, report.target, report.text);
-      expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/report`, expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify(report),
-      }));
+      expect(fetch).toHaveBeenCalledWith(
+        `${API_BASE_URL}/admin/report`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(report),
+        })
+      );
       expect(result.success).toBe(true);
     });
   });

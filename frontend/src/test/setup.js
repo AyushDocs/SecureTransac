@@ -3,7 +3,24 @@
  * Configures test environment and provides common mocks
  */
 import { cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
+
+// Mock Web3Context so components using useWeb3 render without wagmi/web3modal.
+// The real provider spins up WagmiProvider + Web3Modal, which jsdom can't mount.
+vi.mock('../context/Web3Context', () => ({
+  useWeb3: () => ({
+    address: '0x1234567890abcdef1234567890abcdef12345678',
+    isConnected: false,
+    chainId: null,
+    token: null,
+    walletName: null,
+    openWalletModal: vi.fn(),
+    disconnect: vi.fn(),
+    authenticate: vi.fn(),
+  }),
+  Web3Provider: ({ children }) => children,
+}));
 
 // Cleanup after each test
 afterEach(() => {

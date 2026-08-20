@@ -1,15 +1,13 @@
-const chai = require('chai');
-const expect = chai.expect;
-const supertest = require('supertest');
-const express = require('express');
-const bodyParser = require('body-parser');
+import { expect } from 'chai';
+import supertest from 'supertest';
+import express from 'express';
 
 // Mock persistence and middleware for testing routes
-const persistence = require('../src/services/persistenceService');
-const adminController = require('../src/controllers/adminController');
+import persistence from '../src/services/persistenceService.js';
+import { updateAuthorityMetadata } from '../src/controllers/adminController.js';
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 // Mock req.user for protect middleware
 app.use((req, res, next) => {
@@ -17,7 +15,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.patch('/api/admin/authorities/:address', adminController.updateAuthorityMetadata);
+app.patch('/api/admin/authorities/:address', updateAuthorityMetadata);
 
 describe('Admin Controller - Authority Metadata', () => {
     beforeEach(() => {

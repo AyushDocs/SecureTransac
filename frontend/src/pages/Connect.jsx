@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from '../api/config';
 
 function Connect() {
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ function Connect() {
     setStatus("submitting");
 
     try {
-      const response = await fetch("http://localhost:5000/api/connect", {
+      const response = await fetch(`${API_BASE_URL}/connect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

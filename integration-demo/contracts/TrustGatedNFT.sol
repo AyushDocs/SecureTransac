@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-interface ISecureTransacSBT {
+interface ISoulBoundToken {
     function balanceOf(address owner) external view returns (uint256);
 }
 
@@ -13,11 +13,11 @@ interface ISecureTransacSBT {
  * This prevents bots and Sybil attacks without requiring a central whitelist.
  */
 contract TrustGatedNFT is ERC721 {
-    ISecureTransacSBT public sbt;
+    ISoulBoundToken public sbt;
     uint256 public nextTokenId;
 
     constructor(address _sbtAddress) ERC721("Reputation Rewards NFT", "RRNFT") {
-        sbt = ISecureTransacSBT(_sbtAddress);
+        sbt = ISoulBoundToken(_sbtAddress);
     }
 
     /**

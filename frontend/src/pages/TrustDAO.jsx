@@ -26,7 +26,7 @@ const TrustDAO = () => {
             const w3 = new Web3(window.ethereum);
             const netId = await w3.eth.net.getId();
             
-            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const TokenArtifact = await import("../contracts/AVToken.json"); 
             const DaoArtifact = await import("../contracts/TrustDAO.json");
 
             const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];
@@ -82,7 +82,7 @@ const TrustDAO = () => {
         try {
             const w3 = new Web3(window.ethereum);
             const netId = await w3.eth.net.getId();
-            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const TokenArtifact = await import("../contracts/AVToken.json"); 
             const DaoArtifact = await import("../contracts/TrustDAO.json");
             const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];
             const daoData = DaoArtifact.default.networks[netId] || DaoArtifact.default.networks[5777];
@@ -91,10 +91,43 @@ const TrustDAO = () => {
             const dao = new w3.eth.Contract(DaoArtifact.default.abi, daoData.address);
             const amount = w3.utils.toWei("1000", "ether");
 
-            alert("Approving 1,000 $AV for staking...");
-            await token.methods.approve(daoData.address, amount).send({ from: user.address });
-            alert("Staking...");
-            await dao.methods.stake().send({ from: user.address });
+            // Build EIP-712 permit message
+            const chainId = await w3.eth.getChainId();
+            const nonce = await token.methods.nonces(user.address).call();
+            const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour
+
+            const domain = {
+                name: "SecureTransac Trust Token",
+                version: "1",
+                chainId: chainId,
+                verifyingContract: tokenData.address
+            };
+            const types = {
+                Permit: [
+                    { name: "owner", type: "address" },
+                    { name: "spender", type: "address" },
+                    { name: "value", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" }
+                ]
+            };
+            const message = {
+                owner: user.address,
+                spender: daoData.address,
+                value: amount,
+                nonce: nonce,
+                deadline: deadline
+            };
+
+            // Request EIP-712 signature from wallet (single MetaMask popup)
+            const sig = await window.ethereum.request({
+                method: "eth_signTypedData_v4",
+                params: [user.address, JSON.stringify({ domain, types, message })]
+            });
+            const { v, r, s } = w3.eth.abi.decodeParameter(['uint8', 'bytes32', 'bytes32'], sig);
+
+            // Single transaction: permit + stake atomically
+            await dao.methods.stakeWithPermit(amount, deadline, v, r, s).send({ from: user.address });
             setRefresh(r => r + 1);
         } catch (err) {
             alert("Stake failed: " + err.message);

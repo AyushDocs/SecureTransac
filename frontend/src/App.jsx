@@ -31,21 +31,12 @@ import TrustDAO from "./pages/TrustDAO";
 import UserDashboard from "./pages/UserDashboard";
 import VerificationRequests from "./pages/VerificationRequests";
 // Component to redirect to the correct dashboard based on active role
+// (The DashboardSelector modal is rendered once by AppContent — not here.)
 const DashboardSwitch = () => {
-  const { role, activeRole, roles, isMultiRole, showDashboardSelector, setShowDashboardSelector } = useAuth();
+  const { role, activeRole } = useAuth();
   
   const currentRole = activeRole || role;
-  console.log(currentRole);
   if (!currentRole) return <Navigate to="/" />;
-  
-  // If user has multiple roles and just logged in, show selector
-  if (isMultiRole && showDashboardSelector) {
-    return (
-      <DashboardSelector 
-        onClose={() => setShowDashboardSelector(false)}
-      />
-    );
-  }
   
   // Render dashboard based on active role
   const normalizedRole = (currentRole || "").toLowerCase();
@@ -107,9 +98,9 @@ const routePermissions = {
   "/identity": ["user", "viewer", "admin", "deployer"], // All users
   "/certified": ["user", "viewer", "company", "admin", "deployer"], // All users
   "/kyb": ["company", "admin", "deployer"], // Corporate only
-  "/analytics": ["admin", "deployer"],
-  "/bridge": ["admin", "deployer"],
-  "/war-room": ["admin", "deployer"],
+  "/analytics": ["admin"],
+  "/bridge": ["admin"],
+  "/war-room": ["admin"],
   // Add other routes and their required roles here
 };
 
@@ -121,7 +112,7 @@ import Documentation from "./pages/Documentation";
 import Home from "./pages/Home";
 
 function AppContent() {
-  const { role, showDashboardSelector, setShowDashboardSelector, isMultiRole } = useAuth();
+  const { role, showDashboardSelector, setShowDashboardSelector, isMultiRole, networkWarning, isCorrectNetwork } = useAuth();
 
 
 // ...
@@ -129,6 +120,16 @@ function AppContent() {
   return (
     <HashRouter>
       <ScrollToTop />
+      {/* Network Warning Banner */}
+      {networkWarning && (
+        <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm font-medium ${
+          isCorrectNetwork
+            ? 'bg-yellow-900/80 text-yellow-200'
+            : 'bg-red-900/80 text-red-200'
+        }`}>
+          {networkWarning}
+        </div>
+      )}
       {/* Dashboard Selector Modal - Valid for both if needed, but mostly for auth users */}
       {showDashboardSelector && isMultiRole && (
         <DashboardSelector 
@@ -137,7 +138,7 @@ function AppContent() {
       )}
       
       {role ? (
-        <div className="flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden">
+        <div className={`flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden ${networkWarning ? 'pt-10' : ''}`}>
           <Sidebar />
           <div className="flex-1 flex flex-col h-full min-w-0">
             <Navbar />

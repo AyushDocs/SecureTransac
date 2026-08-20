@@ -106,7 +106,7 @@ const InstitutionalPortal = () => {
             const netId = await w3.eth.net.getId();
             
             // 2. Load Contracts
-            const TokenArtifact = await import("../contracts/SecureTransacToken.json"); 
+            const TokenArtifact = await import("../contracts/AVToken.json"); 
             const DaoArtifact = await import("../contracts/TrustDAO.json");
 
             const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];

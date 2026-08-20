@@ -2,33 +2,28 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {Role} from './Role.sol';
 
 contract SecureAccessControl is Ownable {
-    enum AuthorityTier { NONE, STANDARD, INSTITUTIONAL, DIAMOND }
-    
-    mapping(address => bool) public isAuthorizedReporter;
-    mapping(address => AuthorityTier) public reporterTier;
 
-    event ReporterStatusChanged(address indexed reporter, bool status, AuthorityTier tier);
+    mapping(address => bool) public reporters;
+    mapping(address => Role) public addressRoleMap;
+
+    event ReporterStatusChanged(address indexed reporter, bool status, Role tier);
 
     constructor() Ownable(msg.sender) {
-        // Owner is the default Diamond reporter
-        isAuthorizedReporter[msg.sender] = true;
-        reporterTier[msg.sender] = AuthorityTier.DIAMOND;
+        reporters[msg.sender] = true;
+        addressRoleMap[msg.sender] = Role.DIAMOND;
     }
 
     modifier onlyReporter() {
-        require(isAuthorizedReporter[msg.sender], "Not an authorized reporter");
+        require(reporters[msg.sender], "Not an authorized reporter");
         _;
     }
 
-    function setReporterStatus(
-        address reporter,
-        bool status,
-        AuthorityTier tier
-    ) external onlyOwner {
-        isAuthorizedReporter[reporter] = status;
-        reporterTier[reporter] = status ? tier : AuthorityTier.NONE;
-        emit ReporterStatusChanged(reporter, status, tier);
+    function setReporterStatus(address reporter,bool status,Role role) external onlyOwner {
+        reporters[reporter] = status;
+        addressRoleMap[reporter] = status ? role : Role.NONE;
+        emit ReporterStatusChanged(reporter, status, role);
     }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../api/config';
 import { useWeb3 } from '../hooks/useWeb3';
 
 const ScoreSearchWidget = () => {
@@ -27,7 +28,7 @@ const ScoreSearchWidget = () => {
         try {
             // 1. Request Proof from Backend (Delegated)
             // Backend re-encrypts with known 'r' and returns proof
-            const res = await fetch('http://localhost:5000/api/admin/proof', {
+            const res = await fetch(`${API_BASE_URL}/admin/proof`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ 
@@ -71,7 +72,7 @@ const ScoreSearchWidget = () => {
     const handleDeposit = async () => {
         setLoading(true);
         try {
-            await depositCredits("0.1"); // Deposit 0.1 ETH
+            await depositCredits("0.1"); // Deposit 0.1 AV
             const newCredits = await getCredits();
             setUserCredits(Number(newCredits));
             // Refresh ETH balance
@@ -102,7 +103,7 @@ const ScoreSearchWidget = () => {
             await viewPrivateScore(searchAddress);
             
             // 2. Fetch decrypted score from Backend (Since contract returns encrypted bytes)
-            const res = await fetch(`http://localhost:5000/api/admin/score/${searchAddress}`);
+            const res = await fetch(`${API_BASE_URL}/admin/score/${searchAddress}`);
             if (!res.ok) throw new Error("Failed to fetch decrypted score from backend");
             
             const data = await res.json();

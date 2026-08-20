@@ -11,7 +11,7 @@ if (window.ethereum) {
   web3 = new Web3(window.ethereum);
   contract = new web3.eth.Contract(TRUST_REGISTRY_ABI, CONTRACT_ADDRESSES.TrustRegistry);
   vaultContract = new web3.eth.Contract(IDENTITY_VAULT_ABI, CONTRACT_ADDRESSES.IdentityVault);
-  sbtContract = new web3.eth.Contract(ERC721S_ABI, CONTRACT_ADDRESSES.SecureTransacSBT);
+  sbtContract = new web3.eth.Contract(ERC721S_ABI, CONTRACT_ADDRESSES.SoulBoundToken);
   logger.info("Web3 initialized with window.ethereum");
 } else {
   logger.warn("No Web3 provider detected. On-chain features will be disabled.");
@@ -189,7 +189,7 @@ export async function processReport(reporter, target, text) {
 export async function submitManualOverride(address, action, reason, targetScore = null) {
   logger.info(`Submitting manual override: ${action} for ${address} (Target: ${targetScore})`);
   try {
-    const response = await fetch(`${API_BASE_URL}/manual-override`, {
+    const response = await fetch(`${API_BASE_URL}/admin/manual-override`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ address, action, reason, targetScore }),
@@ -547,7 +547,7 @@ export async function getIdentityData(userAddress) {
 export async function fetchCurrentUser() {
   logger.info("Fetching current user info from /me");
   try {
-    const response = await fetch(`${API_BASE_URL}/me`, {
+    const response = await fetch(`${API_BASE_URL}/admin/me`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch user info");
@@ -752,7 +752,7 @@ export async function submitAnonymousReport(data) {
 export async function submitAppeal(reason, currentScore, metadata = {}) {
   logger.info("Submitting trust score appeal...");
   try {
-    const response = await fetch(`${API_BASE_URL}/appeals`, {
+    const response = await fetch(`${API_BASE_URL}/admin/appeals`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ reason, currentScore, metadata }),
@@ -768,7 +768,7 @@ export async function submitAppeal(reason, currentScore, metadata = {}) {
 export async function fetchAppeals() {
   logger.info("Fetching appeals...");
   try {
-    const response = await fetch(`${API_BASE_URL}/appeals`, {
+    const response = await fetch(`${API_BASE_URL}/admin/appeals`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error("Failed to fetch appeals");
@@ -782,7 +782,7 @@ export async function fetchAppeals() {
 export async function processAppeal(appealId, status, comment, adjustmentScore) {
   logger.info(`Processing appeal ${appealId} -> ${status}`);
   try {
-    const response = await fetch(`${API_BASE_URL}/appeals/process`, {
+    const response = await fetch(`${API_BASE_URL}/admin/appeals/process`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ appealId, status, comment, adjustmentScore }),
@@ -795,41 +795,6 @@ export async function processAppeal(appealId, status, comment, adjustmentScore) 
   }
 }
 
-export async function setContractThreshold(contractAddress, minScore) {
-  logger.info(`Setting threshold for ${contractAddress} to ${minScore}`);
-  if (!contract) throw new Error("TrustRegistry contract not initialized");
-
-  try {
-    const accounts = await web3.eth.getAccounts();
-    const result = await contract.methods.setContractThreshold(contractAddress, minScore).send({
-      from: accounts[0],
-    });
-    logger.info("Contract threshold updated successfully", result);
-    return result;
-  } catch (error) {
-    logger.error("Error setting contract threshold:", error);
-    throw error;
-  }
-}
-
-export async function getContractMaintainer(contractAddress) {
-  if (!contract) return null;
-  try {
-    return await contract.methods.contractMaintainer(contractAddress).call();
-  } catch (error) {
-    return null;
-  }
-}
-
-export async function getContractsByMaintainer(address) {
-  if (!contract) return [];
-  try {
-    return await contract.methods.getContractsByMaintainer(address).call();
-  } catch (error) {
-    logger.error("Error fetching maintainer contracts:", error);
-    return [];
-  }
-}
 export async function applyForLoan(address, file) {
   logger.info(`Applying for loan: ${address}`);
   try {

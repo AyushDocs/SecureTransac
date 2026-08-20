@@ -8,7 +8,7 @@ SecureTransac is a decentralized security and reputation layer designed for the 
 
 ### 1. Unified AV Registry & AI Scoring
 - **On-Chain Source of Truth**: User scores and transaction histories are stored permanently on the Ethereum ledger.
-- **AI Score Service**: A sophisticated backend engine that analyzes on-chain activity (volume, frequency, social graph) to generate dynamic reputation scores (0-1000).
+- **AI Score Service**: A backend engine that runs a neural network trained on real labeled Ethereum data (public fraud dataset, 9.8k addresses) to predict fraud probability from on-chain activity — volume, frequency, network degree, temporal cadence, and value flows — producing dynamic reputation scores (0-1). See [ai/README.md](ai/README.md).
 - **Social Graph Analysis**: Implements "Guilt by Association" algorithms to boost users in high-AV circles and penalize interaction with known bad actors.
 
 ### 2. Identity Vault (Privacy-Preserving KYC)

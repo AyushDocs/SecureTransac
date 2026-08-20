@@ -24,12 +24,13 @@
     "test": "test"
   },
   "scripts": {
-    "start": "node index.mjs",
-    "dev": "nodemon --ignore data index.mjs",
-    "test": "mocha test/**/*.test.js --exit"
+    "start": "node index.js",
+    "dev": "nodemon --ignore data --ignore uploads --ignore public --ignore paillier_keys.json --watch index.js --watch src --watch ../onchain/build/contracts index.js",
+    "seed": "node src/scripts/master_seed.js",
+    "simulate": "node src/scripts/simulate_activity.js",
+    "test": "mocha test/**/*.test.js --exit --timeout 20000"
   },
   "dependencies": {
-    "@pinata/sdk": "^2.1.0",
     "big-integer": "^1.6.52",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
@@ -42,7 +43,6 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "node-cache": "^5.1.2",
-    "openai": "^6.17.0",
     "paillier-bigint": "^3.4.3",
     "snarkjs": "^0.7.6",
     "socket.io": "^4.8.3",

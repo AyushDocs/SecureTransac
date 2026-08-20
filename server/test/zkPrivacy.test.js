@@ -1,7 +1,5 @@
-const chai = require('chai');
-const expect = chai.expect;
-const web3Service = require('../src/services/web3Service');
-const paillier = require('paillier-bigint');
+import { expect } from 'chai';
+import { generateRandomKeys } from 'paillier-bigint';
 
 // Mock dependencies if needed, or interpret integration test
 // Since web3Service uses actual Paillier library, we can test encryption/decryption flow logic 
@@ -15,7 +13,7 @@ describe('ZK Privacy Service Tests', () => {
         // We will manually invoke key generation for the test context or use the service if exposed.
         
         // Simulating the logic inside web3Service
-        const keys = await paillier.generateRandomKeys(512); // Use 512 for speed in test
+        const keys = await generateRandomKeys(512); // Use 512 for speed in test
         const pub = keys.publicKey;
         const priv = keys.privateKey;
 
@@ -34,7 +32,7 @@ describe('ZK Privacy Service Tests', () => {
     });
 
     it('should generate valid Paillier ciphertext compatible with on-chain storage format (hex)', async () => {
-        const keys = await paillier.generateRandomKeys(512);
+        const keys = await generateRandomKeys(512);
         const m = BigInt(75 * 100);
         const c = keys.publicKey.encrypt(m);
 

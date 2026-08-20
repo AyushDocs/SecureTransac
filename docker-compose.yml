@@ -1,17 +1,22 @@
-version: '3.8'
-
 services:
-  onchain:
+  ganache:
     image: trufflesuite/ganache:latest
     ports:
       - "7545:7545"
     volumes:
-      - ./onchain/ganache_db:/app/ganache_db
+      - ganache_db:/app/ganache_db
     command: >
-      -p 7545 
-      --db /app/ganache_db 
+      -p 7545
+      --db /app/ganache_db
       --mnemonic "test test test test test test test test test test test junk"
+      --chain.chainId 1337
+      --chain.networkId 1337
       --host 0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7545"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   server:
     build: ./server
@@ -19,22 +24,40 @@ services:
       - "5000:5000"
     environment:
       - PORT=5000
-      - PROVIDER_URL=http://onchain:7545
-      - REGISTRY_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+      - NODE_ENV=production
+      - PROVIDER_URL=http://ganache:7545
+      - PROVIDER_WS=${PROVIDER_WS:-ws://ganache:7545}
+      - REGISTRY_ADDRESS=${REGISTRY_ADDRESS:-0x5FbDB2315678afecb367f032d93F642f64180aa3}
+      - VAULT_ADDRESS=${VAULT_ADDRESS:-0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0}
+      - VERIFICATION_ADDRESS=${VERIFICATION_ADDRESS:-0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9}
+      - NETWORK_ID=${NETWORK_ID:-1337}
+      - ADMIN_PRIVATE_KEY=${ADMIN_PRIVATE_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
+      - ADMIN_ADDRESS=${ADMIN_ADDRESS:-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}
+      - JWT_SECRET=${JWT_SECRET:-changeme}
+      - PINATA_JWT=${PINATA_JWT:-}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     depends_on:
-      - onchain
+      ganache:
+        condition: service_healthy
     volumes:
-      - ./server/data:/app/data
+      - server_data:/app/data
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_BASE_URL=http://localhost:5000/api/admin
-      - VITE_PROVIDER_URL=http://localhost:7545
-      - VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
-      - VITE_IDENTITY_VAULT_ADDRESS=0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+      - "3000:80"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
 
+volumes:
+  ganache_db:
+  server_data:

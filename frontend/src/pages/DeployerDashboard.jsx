@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteAuthorityMetadata, fetchAuthorities, fetchNetworkStats, fetchSystemContracts, setAuthorityStatus, setReporterStatus } from "../api/client";
+import { deleteAuthorityMetadata, fetchAuthorities, fetchNetworkStats, fetchSystemContracts, fetchSystemStatus, setAuthorityStatus, setReporterStatus } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";

@@ -90,7 +90,7 @@ function AddressProfile() {
       const w3 = new Web3(window.ethereum);
       const netId = await w3.eth.net.getId();
       
-      const TokenArtifact = await import("../contracts/SecureTransacToken.json");
+      const TokenArtifact = await import("../contracts/AVToken.json");
       const RegistryArtifact = await import("../contracts/TrustRegistry.json");
 
       const tokenData = TokenArtifact.default.networks[netId] || TokenArtifact.default.networks[5777];

@@ -242,6 +242,7 @@ router.post('/privacy/decrypt', protect, restrictTo('admin'), adminController.de
 router.get('/analytics/fingerprint/:address', adminController.getFingerprint);
 router.get('/analytics/heatmap', adminController.getGlobalHeatmap);
 router.get('/analytics/sybil', protect, restrictTo('admin'), adminController.getSybilClusters);
+router.get('/analytics/warroom', adminController.getWarRoom);
 
 // Cross-Chain Bridge
 router.post('/bridge/sync', protect, restrictTo('admin'), adminController.syncCrossChainScore);

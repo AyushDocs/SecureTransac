@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useState } from 'react';
+import { API_BASE_URL } from '../api/config';
 
 const FileUpload = ({ onUploadSuccess, userAddress }) => {
     const [file, setFile] = useState(null);
@@ -25,7 +26,7 @@ const FileUpload = ({ onUploadSuccess, userAddress }) => {
             formData.append('file', file);
             formData.append('userAddress', userAddress || 'anonymous');
 
-            const response = await axios.post('http://localhost:5000/api/ipfs/upload', formData, {
+            const response = await axios.post(`${API_BASE_URL}/ipfs/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

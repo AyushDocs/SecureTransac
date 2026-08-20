@@ -5,10 +5,17 @@
   "main": "index.js",
   "scripts": {
     "test": "truffle test",
+    "compile": "truffle compile --all",
     "dev": "npm run dev:ganache",
     "dev:ganache": "ganache -p 7545 --chain.chainId 1337 --chain.networkId 1337 --db ./ganache_db --mnemonic \"test test test test test test test test test test test junk\"",
-    "dev:reset": "rm -Recurse -Force ./ganache_db ; truffle migrate --reset --network development",
-    "dev:deploy": "truffle migrate --network development",
+    "dev:reset": "rm -rf ./ganache_db && truffle migrate --reset --network development && npm run sync",
+    "dev:deploy": "truffle migrate --network development && npm run sync",
+    "sync": "node scripts/sync_contracts.js",
+    "deploy:sepolia": "truffle migrate --network sepolia && npm run sync 11155111",
+    "deploy:sepolia:reset": "truffle migrate --reset --network sepolia && npm run sync 11155111",
+    "deploy:amoy": "truffle migrate --network polygon_amoy && npm run sync 80002",
+    "deploy:amoy:reset": "truffle migrate --reset --network polygon_amoy && npm run sync 80002",
+    "export:addresses": "node scripts/export_addresses.js",
     "seed": "truffle exec scripts/seed.js --network development"
   },
   "keywords": [
@@ -30,6 +37,8 @@
     "build/contracts/*.json"
   ],
   "devDependencies": {
-    "@openzeppelin/test-helpers": "^0.5.16"
+    "@openzeppelin/test-helpers": "^0.5.16",
+    "ganache": "^7.9.2",
+    "truffle": "^5.11.5"
   }
 }

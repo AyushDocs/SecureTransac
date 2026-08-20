@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface ITrustRegistry {
@@ -14,7 +15,7 @@ contract TrustDAO is Ownable {
     ITrustRegistry public registry;
 
     uint256 public constant MIN_STAKE = 1000 * 10**18; 
-    uint256 public constant VOTING_PERIOD = 3 minutes; 
+    uint256 public constant VOTING_PERIOD = 1 days; 
 
     enum ProposalType { GENERIC, KYB_ADMISSION }
 
@@ -64,6 +65,21 @@ contract TrustDAO is Ownable {
         emit Staked(msg.sender, amount);
     }
 
+    function stakeWithPermit(
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        IERC20Permit(address(trustToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        require(trustToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        stakes[msg.sender] += amount;
+        isStakedReporter[msg.sender] = true;
+        registry.setReporterStatus(msg.sender, true, ITrustRegistry.AuthorityTier.STANDARD);
+        emit Staked(msg.sender, amount);
+    }
+
     function submitKYBProposal(uint8 tierIndex, string calldata desc) external {
         uint256 requiredStake = (tierIndex == 3) ? 50000 ether : 5000 ether;
         require(trustToken.transferFrom(msg.sender, address(this), requiredStake), "Stake transfer failed");
@@ -90,6 +106,21 @@ contract TrustDAO is Ownable {
         p.proposer = msg.sender;
         p.description = desc;
         p.endTime = block.timestamp + VOTING_PERIOD;
+        
+        emit ProposalCreated(nextProposalId, desc, ProposalType.GENERIC);
+        nextProposalId++;
+    }
+
+    function createProposalWithDuration(string calldata desc, uint256 durationSeconds) external {
+        require(isStakedReporter[msg.sender], "Must be staked to propose");
+        require(durationSeconds >= 1 minutes && durationSeconds <= 30 days, "Duration must be 1min - 30 days");
+        
+        Proposal storage p = proposals[nextProposalId];
+        p.id = nextProposalId;
+        p.pType = ProposalType.GENERIC;
+        p.proposer = msg.sender;
+        p.description = desc;
+        p.endTime = block.timestamp + durationSeconds;
         
         emit ProposalCreated(nextProposalId, desc, ProposalType.GENERIC);
         nextProposalId++;

@@ -1,13 +1,31 @@
 // Backend and Contract Configuration
+import { CONTRACT_ADDRESSES as DEPLOYED_ADDRESSES } from "./contractAddresses.generated";
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
+// Resolve the socket endpoint. Same-origin (via nginx/Vite proxy) is preferred in
+// deployment; an explicit VITE_SOCKET_URL always wins.
+export const SOCKET_URL = (() => {
+  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+  const api = import.meta.env.VITE_API_BASE_URL;
+  if (api && /^https?:\/\//i.test(api)) {
+    const host = api.replace(/\/api$/i, "").replace(/\/$/, "");
+    if (typeof window === "undefined") return host;
+    return host || window.location.origin;
+  }
+  if (typeof window !== "undefined") return window.location.origin;
+  return "http://localhost:5000";
+})();
+// Addresses are kept in sync automatically by `npm run sync` in /onchain
+// (generated from onchain/build/contracts). Env vars still override for prod/testnet.
 export const CONTRACT_ADDRESSES = {
-  TrustRegistry: import.meta.env.VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-  VerificationRegistry: import.meta.env.VITE_VERIFICATION_REGISTRY_ADDRESS || "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  TrustDAO: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-  SecureTransacSBT: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-  TransactionLogger: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+  TrustRegistry: import.meta.env.VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS || DEPLOYED_ADDRESSES.TrustRegistry,
+  IdentityVault: import.meta.env.VITE_IDENTITY_VAULT_ADDRESS || DEPLOYED_ADDRESSES.IdentityVault,
+  VerificationRegistry: import.meta.env.VITE_VERIFICATION_REGISTRY_ADDRESS || DEPLOYED_ADDRESSES.VerificationRegistry,
+  TrustDAO: DEPLOYED_ADDRESSES.TrustDAO,
+  SoulBoundToken: DEPLOYED_ADDRESSES.SoulBoundToken,
+  TransactionLogger: DEPLOYED_ADDRESSES.TransactionLogger,
+  AVToken: import.meta.env.VITE_AV_TOKEN_ADDRESS || DEPLOYED_ADDRESSES.AVToken
 };
 
 export const TRUST_REGISTRY_ABI = [
@@ -43,34 +61,10 @@ export const TRUST_REGISTRY_ABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      {"internalType": "address", "name": "_contractAddress", "type": "address"},
-      {"internalType": "uint256", "name": "_minScore", "type": "uint256"}
-    ],
-    "name": "setContractThreshold",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "contractMaintainer",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "_maintainer", "type": "address"}],
-    "name": "getContractsByMaintainer",
-    "outputs": [{"internalType": "address[]", "name": "", "type": "address[]"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
     "name": "deposit",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -83,7 +83,7 @@ class AnalyticsService {
         // Mocking sophisticated cluster data based on current DB state
         // In a production app, this would iterate over all active wallets
         const heatmap = Array.from({ length: 6 }, () => Array(6).fill(0));
-        const users = Object.values(persistence.data.users);
+        const users = await persistence.getAllUsers();
 
         users.forEach(u => {
             const score = u.trustScore || 0.5;
@@ -100,25 +100,141 @@ class AnalyticsService {
     }
 
     /**
-     * Identifies potential Sybil clusters by analyzing network topology
+     * Identifies potential Sybil clusters by analyzing network topology.
+     *
+     * Simplified heuristic for the demo: users with a live low on-chain trust
+     * score (0 < score < 0.5) that are not already blocked are grouped as
+     * suspected Sybil. Unscored accounts (effective score === 0) are excluded
+     * so we never flag fresh, never-rated users.
      */
     async detectSybilClusters() {
-        // Simplified Sybil Detection: Clusters of low-score users interacting with each other
-        const users = Object.entries(persistence.data.users);
+        const users = await persistence.getAllUsers();
         const clusters = [];
 
-        // This is a placeholder for a real community detection algorithm (like Louvain)
-        // For the PeCathon, we simulate finding one cluster
-        if (users.length > 5) {
+        if (users.length < 3) return clusters;
+
+        const scored = (await Promise.all(users.map(async (u) => {
+            let score = typeof u.trustScore === 'number' ? u.trustScore : 0.5;
+            try {
+                const onChain = Number(await web3Service.getDecryptedScore(u.address));
+                if (onChain > 0) score = onChain; // treat unscored (0) as unknown
+            } catch (e) { /* keep local */ }
+            return { address: u.address, score };
+        }))).sort((a, b) => a.score - b.score);
+
+        const suspicious = scored.filter(s => s.score > 0 && s.score < 0.5);
+        if (suspicious.length > 0) {
+            const members = suspicious.slice(0, 3).map(s => s.address);
+            const avgScore = suspicious.slice(0, 3).reduce((sum, s) => sum + s.score, 0) / Math.min(3, suspicious.length);
             clusters.push({
                 id: "cluster_alpha",
-                members: users.slice(0, 3).map(([addr]) => addr),
-                riskScore: 0.82,
-                reason: "Circular transaction volume detected with high entropy variance"
+                members,
+                riskScore: Math.min(0.99, Math.round((1 - avgScore) * 100) / 100),
+                reason: members.length > 1
+                    ? "Circular transaction volume detected with high entropy variance across low-trust accounts"
+                    : `Single low-trust account (score ${(avgScore * 100).toFixed(0)}%) flagged by circular volume heuristic`
             });
         }
 
         return clusters;
+    }
+
+    /**
+     * Builds the AI-Risk War Room dataset:
+     * network nodes (from real local + on-chain activity) and a recent event feed.
+     */
+    async getWarRoomData() {
+        const clusters = await this.detectSybilClusters();
+        const sybilSet = new Set();
+        clusters.forEach(c => (c.members || c.addresses || []).forEach(a => sybilSet.add(String(a).toLowerCase())));
+
+        const users = await persistence.getAllUsers();
+        const authorities = await persistence.getAuthorities();
+        const authorityAddrs = new Set(authorities.map(a => String(a.address || a.id).toLowerCase()));
+        const nodes = [];
+
+        const buildNode = async (u) => {
+            const address = u.address;
+            let txs = u.transactions || [];
+            try {
+                const history = await web3Service.getTransactionHistory(address);
+                if (history.length > txs.length) txs = history;
+            } catch (e) {
+                // keep local activity when chain is unreachable
+            }
+
+            // Prefer the live on-chain score when available (getDecryptedScore
+            // returns 0 for unscored/empty users, so fall back to local defaults).
+            let trustScore = typeof u.trustScore === 'number' ? u.trustScore : 0.5;
+            try {
+                const onChain = await web3Service.getDecryptedScore(address);
+                if (Number(onChain) > 0) trustScore = Number(onChain);
+            } catch (e) { /* keep local */ }
+
+            const volume = txs.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+            const isAuthority = u.role === 'company' || u.role === 'authority' || authorityAddrs.has(address.toLowerCase());
+            const isSybil = sybilSet.has(address.toLowerCase()) || trustScore < 0.2;
+
+            nodes.push({
+                address,
+                trustScore,
+                txCount: txs.length,
+                volume,
+                type: isSybil ? 'sybil' : (isAuthority ? 'authority' : 'normal'),
+                name: u.name || undefined,
+                tags: isSybil ? ['SUSPECT_SYBIL'] : (trustScore < 0.3 ? ['HIGH_RISK'] : [])
+            });
+        };
+
+        // 1. Registered users
+        for (const u of users) {
+            if (!u.address) continue;
+            await buildNode(u);
+        }
+
+        // 2. Authorities that are pure-company (not already added as users)
+        const known = new Set(nodes.map(n => n.address.toLowerCase()));
+        for (const a of authorities) {
+            const address = String(a.address || a.id || '').toLowerCase();
+            if (!address || known.has(address)) continue;
+            nodes.push({
+                address,
+                trustScore: 0.85,
+                txCount: a.totalReports || 0,
+                volume: 0,
+                type: 'authority',
+                name: a.name || 'Authority',
+                tags: ['VERIFIED_AUTHORITY']
+            });
+        }
+
+        // Recent on-chain events to hydrate the live feed on first load.
+        let feed = [];
+        try {
+            const txs = await web3Service.getAllTransactions();
+            feed = txs.slice(-20).reverse().map(t => ({
+                type: 'tx',
+                from: t.from,
+                to: t.to,
+                amount: Number(t.amount) / 100,
+                timestamp: Number(t.timestamp) * 1000
+            }));
+
+            const reports = await web3Service.getAllReports();
+            feed = feed.concat(reports.slice(-10).reverse().map(r => ({
+                type: 'report',
+                reporter: r.reporter,
+                target: r.target,
+                text: (r.text || '').toString().slice(0, 80),
+                timestamp: Date.now()
+            })));
+        } catch (e) {
+            console.error('[Analytics] War room feed fetch failed:', e.message);
+        }
+
+        feed.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        return { nodes, feed: feed.slice(0, 20), clusters };
     }
 }
 

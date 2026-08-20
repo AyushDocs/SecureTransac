@@ -1,5 +1,21 @@
 {
+  "name": "secure-transac-zk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ZK-SNARK circuits for SecureTransac trust score verification",
+  "scripts": {
+    "build": "bash build.sh",
+    "clean": "rm -rf build artifacts",
+    "verify": "npx snarkjs groth16 verify artifacts/verification_key.json artifacts/public.json artifacts/proof.json",
+    "proof": "npx snarkjs groth16 fullprove sample_input.json artifacts/trust_score_verifier_js/trust_score_verifier.wasm artifacts/trust_score_verifier_final.zkey artifacts/proof.json artifacts/public.json",
+    "copy": "cp artifacts/trust_score_verifier.wasm ../frontend/public/zk/ && cp artifacts/trust_score_verifier_final.zkey ../frontend/public/zk/ && cp artifacts/verification_key.json ../frontend/public/zk/ && cp artifacts/TrustScoreVerifier.sol ../onchain/contracts/ && echo 'Artifacts copied to frontend/public/zk/ and onchain/contracts/'",
+    "dev": "npm run build  && npm run copy"
+  },
   "dependencies": {
     "circomlib": "^2.0.5"
+  },
+  "devDependencies": {
+    "circomlibjs": "^0.1.7",
+    "snarkjs": "^0.7.6"
   }
 }

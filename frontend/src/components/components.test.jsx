@@ -54,8 +54,8 @@ describe('CreditBalance Component', () => {
     renderWithRouter(<CreditBalance />);
     
     // Should show credit-related content
-    const creditText = screen.queryByText(/Credit|Balance/i);
-    expect(creditText || document.body).toBeTruthy();
+    const creditTexts = screen.queryAllByText(/Credit|Balance/i);
+    expect(creditTexts.length).toBeGreaterThan(0);
   });
 });
 
@@ -74,8 +74,8 @@ describe('FileUpload Component', () => {
     
     const fileInput = container.querySelector('input[type="file"]');
     // File input might be hidden but should exist or have an upload button
-    const uploadButton = screen.queryByText(/Upload|Browse|Select/i);
-    expect(fileInput || uploadButton).toBeTruthy();
+    const uploadTexts = screen.queryAllByText(/Upload|Browse|Select/i);
+    expect(fileInput || uploadTexts.length > 0).toBeTruthy();
   });
 });
 

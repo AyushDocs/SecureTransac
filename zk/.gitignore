@@ -1,9 +1,4 @@
-# Ignore build artifacts
 build/
+artifacts/
 node_modules/
-
-# Ignore downloaded files
 *.ptau
-
-# Keep these files
-!.gitkeep

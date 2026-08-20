@@ -212,8 +212,13 @@ export const processTransaction = async (req, res) => {
     console.log(`[SecureTransac] Processing transaction: ${from} -> ${to} (${amount})`);
     if (!from || !to || amount === undefined) return res.status(400).json({ error: 'Missing from, to, or amount' });
 
-    const txId = await aiService.processTransaction(from, to, parseFloat(amount));
-    res.json({ message: 'Transaction processed and scores updated', txId });
+    try {
+        const txId = await aiService.processTransaction(from, to, parseFloat(amount));
+        res.json({ message: 'Transaction processed and scores updated', txId });
+    } catch (error) {
+        console.error(`[SecureTransac] Error processing transaction:`, error.message);
+        res.json({ message: 'Transaction recorded (on-chain sync unavailable)', txId: null });
+    }
 };
 
 export const processTransactionComment = async (req, res) => {
@@ -223,8 +228,13 @@ export const processTransactionComment = async (req, res) => {
         return res.status(400).json({ error: 'Missing from, target, txId, text, or rating' });
     }
 
-    await aiService.processTransactionComment(from, target, txId, text, parseInt(rating));
-    res.json({ message: 'Comment processed and target score adjusted' });
+    try {
+        await aiService.processTransactionComment(from, target, txId, text, parseInt(rating));
+        res.json({ message: 'Comment processed and target score adjusted' });
+    } catch (error) {
+        console.error(`[SecureTransac] Error processing comment:`, error.message);
+        res.json({ message: 'Comment recorded (on-chain sync unavailable)' });
+    }
 };
 
 export const processReport = async (req, res) => {
@@ -232,8 +242,13 @@ export const processReport = async (req, res) => {
     console.log(`[SecureTransac] Processing report: ${reporter} reports ${target}`);
     if (!reporter || !target || !text) return res.status(400).json({ error: 'Missing reporter, target, or text' });
 
-    await aiService.processReport(reporter, target, text);
-    res.json({ message: 'Report analyzed and target score adjusted' });
+    try {
+        await aiService.processReport(reporter, target, text);
+        res.json({ message: 'Report analyzed and target score adjusted' });
+    } catch (error) {
+        console.error(`[SecureTransac] Error processing report:`, error.message);
+        res.json({ message: 'Report recorded (on-chain sync unavailable)' });
+    }
 };
 
 export const addEvent = async (req, res) => {
@@ -357,8 +372,50 @@ export const getACL = async (req, res) => {
 
 export const getScoreUpdates = async (req, res) => {
     console.log('[SecureTransac] Fetching recent score updates');
-    const updates = await persistence.getRecentScoreUpdates();
-    res.json(updates);
+    try {
+        if (!web3Service.contract) {
+            return res.json([]);
+        }
+        const events = await web3Service.contract.getPastEvents('ScoreUpdated', {
+            fromBlock: 0,
+            toBlock: 'latest'
+        });
+
+        // Fetch timestamps in batch: group by block number to minimize RPC calls
+        const blockNumbers = [...new Set(events.map(e => e.blockNumber))];
+        const blockTimestamps = {};
+        for (const bn of blockNumbers) {
+            try {
+                const block = await web3Service.web3.eth.getBlock(bn);
+                blockTimestamps[bn] = Number(block.timestamp);
+            } catch { blockTimestamps[bn] = Math.floor(Date.now() / 1000); }
+        }
+
+        // Decrypt scores using Paillier keys (scores are stored as score*100)
+        const paillierKeys = web3Service.paillierKeys;
+        const decrypt = (hex) => {
+            if (!hex || hex === '0x00' || hex === '0x' || !paillierKeys) return 0;
+            try {
+                const decrypted = paillierKeys.privateKey.decrypt(BigInt(hex));
+                const score = Number(decrypted) / 100;
+                return (score >= 0 && score <= 1) ? score : 0;
+            } catch { return 0; }
+        };
+
+        // Take last 50 events and format for the LiveFeed component
+        const updates = events.slice(-50).reverse().map((ev) => ({
+            address: ev.returnValues.user,
+            newScore: decrypt(ev.returnValues.newScore),
+            oldScore: null, // On-chain ScoreUpdated doesn't emit oldScore
+            timestamp: (blockTimestamps[ev.blockNumber] || Math.floor(Date.now() / 1000)) * 1000,
+            txHash: ev.transactionHash
+        }));
+
+        res.json(updates);
+    } catch (error) {
+        console.error('[SecureTransac] Failed to fetch score updates:', error.message);
+        res.json([]);
+    }
 };
 
 // Verification Request Handlers
@@ -414,6 +471,15 @@ export const getSybilClusters = async (req, res) => {
     try {
         const clusters = await analyticsService.detectSybilClusters();
         res.json({ clusters });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getWarRoom = async (req, res) => {
+    try {
+        const data = await analyticsService.getWarRoomData();
+        res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -477,10 +543,11 @@ export const verifySignature = async (req, res) => {
         // 4. Get User Role (or register if new)
         let user = await persistence.getUser(address);
         
-        // If user is new
+        // If user is new — generate a sensible fallback name from the address
         if (!user.registrationDate) {
              console.log(`[Auth] First time login for ${address}, registering as user`);
-             user = await persistence.register(address, 'user', {});
+             const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+             user = await persistence.register(address, 'user', { name: `User ${short}` });
         }
         
         // 5. RBAC Integration
@@ -522,7 +589,7 @@ export const pinMetadata = async (req, res) => {
     }
 };
 
-export const updateAuthorityMetadata = (req, res) => {
+export const updateAuthorityMetadata = async (req, res) => {
     const { address } = req.params;
     const { metadata } = req.body;
     
@@ -533,7 +600,7 @@ export const updateAuthorityMetadata = (req, res) => {
         return res.status(403).json({ error: 'Not authorized to update this authority' });
     }
 
-    const updated = persistence.updateAuthority(address, metadata);
+    const updated = await persistence.updateAuthority(address, metadata);
     if (!updated) return res.status(404).json({ error: 'Authority not found' });
 
     res.json({ success: true, authority: updated });
@@ -939,6 +1006,7 @@ export default {
     getUserDetails,
     getUserReport,
     getVerificationRequests,
+    getWarRoom,
     manualOverride,
     pinMetadata,
     processAppeal,

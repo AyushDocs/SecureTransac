@@ -2,7 +2,7 @@ import fs from 'fs';
 import * as paillier from 'paillier-bigint';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Web3 } from 'web3';
+import { Web3, WebSocketProvider } from 'web3';
 import socketService from './socketService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,7 +33,16 @@ const UnprotectedStorage = loadJSON('../../../demo-vulnerable/build/contracts/Un
 class Web3Service {
     constructor() {
         try {
-            this.web3 = new Web3(process.env.PROVIDER_URL || 'http://127.0.0.1:7545');
+            // Prefer a WebSocket provider for live event subscriptions
+            // (HTTP providers cannot receive eth_subscribe notifications).
+            // Falls back to the HTTP RPC endpoint otherwise.
+            if (process.env.PROVIDER_WS) {
+                console.log(`[Web3] Using WebSocket provider: ${process.env.PROVIDER_WS}`);
+                this.provider = new WebSocketProvider(process.env.PROVIDER_WS);
+                this.web3 = new Web3(this.provider);
+            } else {
+                this.web3 = new Web3(process.env.PROVIDER_URL || 'http://127.0.0.1:7545');
+            }
             this.paillier = paillier;
             
             // Priority: Env variables -> Networks from JSON -> Fallbacks
@@ -43,7 +52,7 @@ class Web3Service {
             
             
             const networks = Object.keys(TrustRegistry.networks || {});
-            const targetNetworkId = process.env.NETWORK_ID || "5777";
+            const targetNetworkId = process.env.NETWORK_ID || "1337";
 
              // Identify network for Vulnerable contracts (often differs if migrated separately, but local likely same)
             const demoNetworks = Object.keys(VulnerableBank.networks || {});
@@ -51,9 +60,9 @@ class Web3Service {
 
 
             // Automatic discovery if not in .env
-            if (!this.registryAddress) this.registryAddress = TrustRegistry.networks?.[targetNetworkId]?.address;
-            if (!this.vaultAddress) this.vaultAddress = IdentityVault.networks?.[targetNetworkId]?.address;
-            if (!this.verificationAddress) this.verificationAddress = VerificationRegistry.networks?.[targetNetworkId]?.address;
+            if (!this.registryAddress) this.registryAddress = TrustRegistry.networks?.[targetNetworkId]?.address || TrustRegistry.networks?.["1337"]?.address || TrustRegistry.networks?.["5777"]?.address;
+            if (!this.vaultAddress) this.vaultAddress = IdentityVault.networks?.[targetNetworkId]?.address || IdentityVault.networks?.["1337"]?.address || IdentityVault.networks?.["5777"]?.address;
+            if (!this.verificationAddress) this.verificationAddress = VerificationRegistry.networks?.[targetNetworkId]?.address || VerificationRegistry.networks?.["1337"]?.address || VerificationRegistry.networks?.["5777"]?.address;
 
             // Demo contract addresses - Robust Discovery
             // Try targetNetworkId -> Try 1337 -> Try 5777 -> Use most recent
@@ -202,7 +211,10 @@ class Web3Service {
             throw new Error("Protocol is currently PAUSED by admin.");
         }
 
-        if (!this.adminAccount) throw new Error("Admin account not configured");
+        if (!this.adminAccount) {
+            console.warn("[Web3] Admin account not configured. On-chain write skipped.");
+            return false;
+        }
         
         let gasLimit;
         if (this.gasConfig.limitOverride) {
@@ -297,39 +309,49 @@ class Web3Service {
 
     async getTransactionHistory(address) {
         if (!this.contract) return [];
-        const addr = address.toLowerCase();
-        const [sent, received] = await Promise.all([
-            this.contract.getPastEvents('TransactionLogged', { filter: { from: addr }, fromBlock: 0 }),
-            this.contract.getPastEvents('TransactionLogged', { filter: { to: addr }, fromBlock: 0 })
-        ]);
+        try {
+            const addr = address.toLowerCase();
+            const [sent, received] = await Promise.all([
+                this.contract.getPastEvents('TransactionLogged', { filter: { from: addr }, fromBlock: 0 }),
+                this.contract.getPastEvents('TransactionLogged', { filter: { to: addr }, fromBlock: 0 })
+            ]);
 
-        const history = [...sent, ...received].map(e => ({
-            type: e.returnValues.from.toLowerCase() === addr ? 'OUT' : 'IN',
-            from: e.returnValues.from,
-            to: e.returnValues.to,
-            amount: Number(e.returnValues.amount) / 100,
-            timestamp: Number(e.returnValues.timestamp) * 1000,
-            txHash: e.transactionHash
-        }));
+            const history = [...sent, ...received].map(e => ({
+                type: e.returnValues.from.toLowerCase() === addr ? 'OUT' : 'IN',
+                from: e.returnValues.from,
+                to: e.returnValues.to,
+                amount: Number(e.returnValues.amount) / 100,
+                timestamp: Number(e.returnValues.timestamp) * 1000,
+                txHash: e.transactionHash
+            }));
 
-        return history.sort((a, b) => b.timestamp - a.timestamp);
+            return history.sort((a, b) => b.timestamp - a.timestamp);
+        } catch (error) {
+            console.error("[Web3] getTransactionHistory failed:", error.message);
+            return [];
+        }
     }
 
     async getReports(targetAddress) {
         if (!this.contract) return [];
-        const events = await this.contract.getPastEvents('ReportSubmitted', { 
-            filter: { target: targetAddress.toLowerCase() }, 
-            fromBlock: 0 
-        });
-        return events.map(e => ({
-            reporter: e.returnValues.reporter,
-            text: e.returnValues.reason,
-            timestamp: Number(e.returnValues.timestamp) * 1000
-        }));
+        try {
+            const events = await this.contract.getPastEvents('ReportSubmitted', { 
+                filter: { target: targetAddress.toLowerCase() }, 
+                fromBlock: 0 
+            });
+            return events.map(e => ({
+                reporter: e.returnValues.reporter,
+                text: e.returnValues.reason,
+                timestamp: Number(e.returnValues.timestamp) * 1000
+            }));
+        } catch (error) {
+            console.error("[Web3] getReports failed:", error.message);
+            return [];
+        }
     }
 
     async getScore(targetAddress) {
-        if (!this.contract) return 500;
+        if (!this.contract) return '0x00';
         try {
             // Admin view (free)
             if (this.adminAccount) {
@@ -621,23 +643,14 @@ class Web3Service {
     }
 
     /**
-     * Fetch all transactions from TransactionLogger events
+     * Fetch all transactions from TrustRegistry TransactionLogged events
      */
     async getAllTransactions() {
         try {
-            const networks = Object.keys(TransactionLogger.networks || {});
-            const networkId = networks[networks.length - 1];
-            const loggerAddress = TransactionLogger.networks?.[networkId]?.address;
-            
-            if (!loggerAddress) {
-                console.warn('[Web3] TransactionLogger not deployed');
-                return [];
-            }
+            if (!this.contract) return [];
 
-            const loggerContract = new this.web3.eth.Contract(TransactionLogger.abi, loggerAddress);
-            
             // Fetch TransactionLogged events (correct event name)
-            const events = await loggerContract.getPastEvents('TransactionLogged', {
+            const events = await this.contract.getPastEvents('TransactionLogged', {
                 fromBlock: 0,
                 toBlock: 'latest'
             });
@@ -647,7 +660,7 @@ class Web3Service {
                 to: event.returnValues.to,
                 amount: event.returnValues.amount,
                 timestamp: event.returnValues.timestamp,
-                blockNumber: event.blockNumber
+                blockNumber: Number(event.blockNumber) || 0
             }));
         } catch (error) {
             console.error('[Web3] Error fetching transactions:', error);
@@ -680,10 +693,10 @@ class Web3Service {
                 return {
                     reporter: event.returnValues.reporter,
                     target: event.returnValues.target,
-                    severity: parsed.severity || 5,
+                    severity: Number(parsed.severity) || 5,
                     type: parsed.type || 'UNKNOWN',
                     text: parsed.text || '',
-                    blockNumber: event.blockNumber
+                    blockNumber: Number(event.blockNumber) || 0
                 };
             });
         } catch (error) {
@@ -723,7 +736,7 @@ class Web3Service {
                 gasPrice: `${gasGwei} Gwei`,
                 blockNumber: Number(blockNumber),
                 status: 'OPERATIONAL',
-                networkId: await this.web3.eth.net.getId()
+                networkId: Number(await this.web3.eth.net.getId())
             };
         } catch (error) {
             console.error("[Web3] Failed to fetch stats:", error);

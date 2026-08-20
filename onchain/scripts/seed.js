@@ -30,8 +30,8 @@ module.exports = async function(callback) {
         try { trustDAO = await TrustDAO.deployed(); } catch(e) { console.log("TrustDAO not deployed"); }
         try { verificationRegistry = await VerificationRegistry.deployed(); } catch(e) { console.log("VerificationRegistry not deployed"); }
         try { 
-            const SecureTransacToken = artifacts.require("SecureTransacToken");
-            token = await SecureTransacToken.deployed(); 
+            const AVToken = artifacts.require("AVToken");
+            token = await AVToken.deployed(); 
         } catch(e) { console.log("Token not deployed"); }
         
         const accounts = await web3.eth.getAccounts();

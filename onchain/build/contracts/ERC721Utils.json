@@ -10,7 +10,7 @@
   "sourceMap": "431:1490:12:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;",
   "deployedSourceMap": "431:1490:12:-:0;;;;;;;;",
   "source": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.4.0) (token/ERC721/utils/ERC721Utils.sol)\n\npragma solidity ^0.8.20;\n\nimport {IERC721Receiver} from \"../IERC721Receiver.sol\";\nimport {IERC721Errors} from \"../../../interfaces/draft-IERC6093.sol\";\n\n/**\n * @dev Library that provide common ERC-721 utility functions.\n *\n * See https://eips.ethereum.org/EIPS/eip-721[ERC-721].\n *\n * _Available since v5.1._\n */\nlibrary ERC721Utils {\n    /**\n     * @dev Performs an acceptance check for the provided `operator` by calling {IERC721Receiver-onERC721Received}\n     * on the `to` address. The `operator` is generally the address that initiated the token transfer (i.e. `msg.sender`).\n     *\n     * The acceptance call is not executed and treated as a no-op if the target address doesn't contain code (i.e. an EOA).\n     * Otherwise, the recipient must implement {IERC721Receiver-onERC721Received} and return the acceptance magic value to accept\n     * the transfer.\n     */\n    function checkOnERC721Received(\n        address operator,\n        address from,\n        address to,\n        uint256 tokenId,\n        bytes memory data\n    ) internal {\n        if (to.code.length > 0) {\n            try IERC721Receiver(to).onERC721Received(operator, from, tokenId, data) returns (bytes4 retval) {\n                if (retval != IERC721Receiver.onERC721Received.selector) {\n                    // Token rejected\n                    revert IERC721Errors.ERC721InvalidReceiver(to);\n                }\n            } catch (bytes memory reason) {\n                if (reason.length == 0) {\n                    // non-IERC721Receiver implementer\n                    revert IERC721Errors.ERC721InvalidReceiver(to);\n                } else {\n                    assembly (\"memory-safe\") {\n                        revert(add(reason, 0x20), mload(reason))\n                    }\n                }\n            }\n        }\n    }\n}\n",
-  "sourcePath": "@openzeppelin\\contracts\\token\\ERC721\\utils\\ERC721Utils.sol",
+  "sourcePath": "@openzeppelin/contracts/token/ERC721/utils/ERC721Utils.sol",
   "ast": {
     "absolutePath": "@openzeppelin/contracts/token/ERC721/utils/ERC721Utils.sol",
     "exportedSymbols": {
@@ -1043,7 +1043,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-31T11:43:51.407Z",
+  "updatedAt": "2026-08-19T19:05:05.163Z",
   "devdoc": {
     "details": "Library that provide common ERC-721 utility functions. See https://eips.ethereum.org/EIPS/eip-721[ERC-721]. _Available since v5.1._",
     "kind": "dev",

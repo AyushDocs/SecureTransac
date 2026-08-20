@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { DEPLOYED_NETWORK_ID } from "../api/contractAddresses.generated";
 import { getNonce, searchAddress, verifySignature } from "../api/client";
+import { API_BASE_URL } from "../api/config";
 
 // Network Configurations
 const NETWORKS = {
@@ -82,10 +84,21 @@ export function AuthProvider({ children }) {
   const [isWalletConnecting, setIsWalletConnecting] = useState(false);
   const [chainId, setChainId] = useState(null);
   const [showDashboardSelector, setShowDashboardSelector] = useState(false);
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState(true); // Optimistic default
+  const [networkWarning, setNetworkWarning] = useState(null);
   
   // Multi-wallet support
   const [walletProvider, setWalletProvider] = useState(localStorage.getItem("walletProvider") || null);
   const [useWeb3Modal, setUseWeb3Modal] = useState(true); // Enable Web3Modal by default
+
+  // Dev mode grace period — avoids logout during Ganache redeployment
+  const graceTimerRef = useRef(null);
+
+  const isSupportedNetwork = useCallback((cid) => {
+    if (!cid) return false;
+    const num = parseInt(cid, 16) || parseInt(cid, 10);
+    return num === parseInt(DEPLOYED_NETWORK_ID, 10);
+  }, []);
 
   // Load initial chain ID and listen for changes
   useEffect(() => {
@@ -93,28 +106,75 @@ export function AuthProvider({ children }) {
             .then(id => {
                 console.log("[AuthContext] Initial Chain ID detected:", id);
                 setChainId(id);
+                setIsCorrectNetwork(isSupportedNetwork(id));
             })
             .catch(console.error);
 
         const handleChainChanged = (newChainId) => {
             console.log("[AuthContext] Chain changed to:", newChainId);
             setChainId(newChainId);
+
+            const supported = isSupportedNetwork(newChainId);
+            setIsCorrectNetwork(supported);
+
+            if (!supported) {
+                // Dev mode (localhost/1337): grace period, don't logout during redeployment
+                const isDevMode = parseInt(newChainId, 16) === 1337 || parseInt(newChainId, 10) === 1337;
+                if (isDevMode) {
+                    console.log("[AuthContext] Dev mode chain change — keeping session, grace period active");
+                    setNetworkWarning("Network temporarily unavailable — reconnecting...");
+                    // Clear any existing grace timer
+                    if (graceTimerRef.current) clearTimeout(graceTimerRef.current);
+                    // After 30s, clear warning if still unavailable (user must manually reconnect)
+                    graceTimerRef.current = setTimeout(() => setNetworkWarning(null), 30000);
+                } else {
+                    // Production: wrong network — warn but don't force logout
+                    setNetworkWarning("Connected to an unsupported network. Please switch to a supported network.");
+                }
+            } else {
+                // Network is valid — clear any grace period and restore session if needed
+                if (graceTimerRef.current) {
+                    clearTimeout(graceTimerRef.current);
+                    graceTimerRef.current = null;
+                }
+                setNetworkWarning(null);
+                // Restore session if it was cleared during grace period
+                const savedToken = localStorage.getItem("userToken");
+                const savedAddress = localStorage.getItem("userAddress");
+                if (savedToken && !token && savedAddress) {
+                    console.log("[AuthContext] Network restored — restoring session");
+                    setToken(savedToken);
+                    const savedRoles = localStorage.getItem("userRoles");
+                    const savedActiveRole = localStorage.getItem("activeRole");
+                    if (savedRoles) setRoles(JSON.parse(savedRoles));
+                    if (savedActiveRole) {
+                        setActiveRole(savedActiveRole);
+                        setRole(savedActiveRole);
+                    }
+                }
+            }
         };
 
         const handleAccountsChanged = async (accounts) => {
             if (accounts.length > 0) {
                 console.log("[AuthContext] Account changed to:", accounts[0]);
                 const newAddress = accounts[0];
-                
-                // If the account changed from what we have stored, clear session
-                if (newAddress.toLowerCase() !== address?.toLowerCase()) {
+
+                // Compare against the persisted account (not the mount-time closure)
+                const storedAddress = localStorage.getItem("userAddress") || "";
+
+                // If the account changed from what we have stored, clear session fully
+                if (newAddress.toLowerCase() !== storedAddress.toLowerCase()) {
                     setAddress(newAddress);
                     setProfile(null);
                     setRole(null);
                     setRoles([]);
                     setActiveRole(null);
                     setToken(null);
+                    setShowDashboardSelector(false);
+                    localStorage.setItem("userAddress", newAddress);
                     localStorage.removeItem("userToken");
+                    localStorage.removeItem("userRole");
                     localStorage.removeItem("userRoles");
                     localStorage.removeItem("activeRole");
                 }
@@ -166,6 +226,7 @@ export function AuthProvider({ children }) {
         attemptAutoConnect();
         
         return () => {
+            if (graceTimerRef.current) clearTimeout(graceTimerRef.current);
             if (window.ethereum.removeListener) {
                 window.ethereum.removeListener('chainChanged', handleChainChanged);
                 window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
@@ -210,6 +271,7 @@ export function AuthProvider({ children }) {
   }, [address, role, roles, activeRole, profile]);
 
   const login = useCallback((selectedRole, selectedAddress) => {
+    const previousAddress = localStorage.getItem("userAddress") || "";
     setRole(selectedRole);
     setActiveRole(selectedRole);
     setAddress(selectedAddress);
@@ -219,14 +281,18 @@ export function AuthProvider({ children }) {
     localStorage.setItem("activeRole", selectedRole);
     localStorage.setItem("userAddress", selectedAddress);
 
-    // Update roles array
+    // Update roles array WITHOUT leaking the previous account's roles:
+    // a different wallet address logging in starts fresh with only its own role(s).
     setRoles(prev => {
-        if (!prev.includes(selectedRole)) {
-            const newRoles = [...prev, selectedRole];
-            localStorage.setItem("userRoles", JSON.stringify(newRoles));
-            return newRoles;
+        const isSameAccount = previousAddress.toLowerCase() === (selectedAddress || "").toLowerCase();
+        const base = isSameAccount ? (Array.isArray(prev) ? prev : []) : [];
+        if (!base.includes(selectedRole)) {
+            base.push(selectedRole);
+            localStorage.setItem("userRoles", JSON.stringify(base));
+            return base;
         }
-        return prev;
+        localStorage.setItem("userRoles", JSON.stringify(base));
+        return base;
     });
 
     setShowDashboardSelector(false); // Valid explicit login, suppress selector
@@ -241,7 +307,7 @@ export function AuthProvider({ children }) {
     
     try {
       // Optionally sync with backend
-      const response = await fetch('http://localhost:5000/api/admin/switch-role', {
+      const response = await fetch(`${API_BASE_URL}/admin/switch-role`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -331,6 +397,20 @@ export function AuthProvider({ children }) {
       
       const cid = await provider.request({ method: 'eth_chainId' });
       setChainId(cid);
+
+      // Validate network — warn if not on a supported chain
+      if (!isSupportedNetwork(cid)) {
+          const isDevMode = parseInt(cid, 16) === 1337 || parseInt(cid, 10) === 1337;
+          if (isDevMode) {
+              setNetworkWarning("Dev network temporarily unavailable — reconnecting...");
+          } else {
+              setNetworkWarning("Connected to an unsupported network. Please switch to a supported network.");
+          }
+          setIsCorrectNetwork(false);
+      } else {
+          setNetworkWarning(null);
+          setIsCorrectNetwork(true);
+      }
 
       console.log("Requesting nonce for", walletAddress);
       const { nonce } = await getNonce(walletAddress);
@@ -438,7 +518,7 @@ export function AuthProvider({ children }) {
     if (!token) return null;
     
     try {
-      const response = await fetch('http://localhost:5000/api/admin/me', {
+      const response = await fetch(`${API_BASE_URL}/admin/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -491,8 +571,10 @@ export function AuthProvider({ children }) {
     isAdmin: role === "admin" || role === "deployer",
     isMultiRole: roles.length > 1,
     availableNetworks: NETWORKS,
+    isCorrectNetwork,
+    networkWarning,
     ROLE_DASHBOARD_MAP
-  }), [user, role, roles, activeRole, address, token, chainId, login, logout, connectWallet, switchNetwork, switchRole, refreshProfile, fetchUserInfo, hasRole, hasAnyRole, isWalletConnecting, showDashboardSelector]);
+  }), [user, role, roles, activeRole, address, token, chainId, login, logout, connectWallet, switchNetwork, switchRole, refreshProfile, fetchUserInfo, hasRole, hasAnyRole, isWalletConnecting, showDashboardSelector, isCorrectNetwork, networkWarning]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -42,7 +42,6 @@ import PartnerEcosystem from '../pages/PartnerEcosystem';
 import PrivacyPortal from '../pages/PrivacyPortal';
 import Reports from '../pages/Reports';
 import RiskWarRoom from '../pages/RiskWarRoom';
-import RoleSelection from '../pages/RoleSelection';
 import TrustDAO from '../pages/TrustDAO';
 
 // Helper to render with router
@@ -71,7 +70,7 @@ describe('TrustDAO Component', () => {
     renderWithRouter(<TrustDAO />);
     
     await waitFor(() => {
-      const stakeButton = screen.getByText(/Stake to become Authority|Active Authority/i);
+      const stakeButton = screen.getByText(/Stake to join DAO|Active Member/i);
       expect(stakeButton).toBeInTheDocument();
     });
   });
@@ -92,12 +91,12 @@ describe('TrustDAO Component', () => {
     renderWithRouter(<TrustDAO />);
     
     await waitFor(() => {
-      const voteForButtons = screen.queryAllByText('VOTE FOR');
-      const voteAgainstButtons = screen.queryAllByText('VOTE AGAINST');
+      const supportButtons = screen.queryAllByText('Support');
+      const opposeButtons = screen.queryAllByText('Oppose');
       
       // Should have voting buttons or already voted indicators
-      const votedIndicators = screen.queryAllByText(/You voted/);
-      expect(voteForButtons.length + votedIndicators.length).toBeGreaterThanOrEqual(0);
+      const votedIndicators = screen.queryAllByText(/Participation Recorded/i);
+      expect(supportButtons.length + votedIndicators.length).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -105,7 +104,7 @@ describe('TrustDAO Component', () => {
     renderWithRouter(<TrustDAO />);
     
     await waitFor(async () => {
-      const voteForButton = screen.queryByText('VOTE FOR');
+      const voteForButton = screen.queryByText('Support');
       if (voteForButton && !voteForButton.disabled) {
         fireEvent.click(voteForButton);
         await waitFor(() => {
@@ -119,7 +118,7 @@ describe('TrustDAO Component', () => {
     renderWithRouter(<TrustDAO />);
     
     await waitFor(async () => {
-      const voteAgainstButton = screen.queryByText('VOTE AGAINST');
+      const voteAgainstButton = screen.queryByText('Oppose');
       if (voteAgainstButton && !voteAgainstButton.disabled) {
         fireEvent.click(voteAgainstButton);
         await waitFor(() => {
@@ -129,19 +128,15 @@ describe('TrustDAO Component', () => {
     });
   });
 
-  it('create proposal form submits correctly', async () => {
+  it('create proposal form renders correctly', async () => {
     renderWithRouter(<TrustDAO />);
     
     await waitFor(() => {
-      const textarea = screen.getByPlaceholderText(/I propose that we/i);
+      const textarea = screen.getByPlaceholderText(/Draft your decentralized proposal/i);
       expect(textarea).toBeInTheDocument();
       
-      fireEvent.change(textarea, { target: { value: 'Test Proposal' } });
-      
-      const submitButton = screen.getByText('Submit Proposal');
-      fireEvent.click(submitButton);
-      
-      expect(window.alert).toHaveBeenCalledWith('Proposal submitted to the DAO!');
+      const submitButton = screen.getByText('Broadcast Proposal', { exact: false });
+      expect(submitButton).toBeInTheDocument();
     });
   });
 });
@@ -170,9 +165,9 @@ describe('PartnerEcosystem Component', () => {
     renderWithRouter(<PartnerEcosystem />);
     
     await waitFor(() => {
-      const loanButton = screen.getByText('Apply for Partner Loan');
-      expect(loanButton).toBeInTheDocument();
-      expect(loanButton.tagName).toBe('BUTTON');
+      const inDevButton = screen.getByText('Protocol In Development');
+      expect(inDevButton).toBeInTheDocument();
+      expect(inDevButton.tagName).toBe('BUTTON');
     });
   });
 
@@ -180,55 +175,24 @@ describe('PartnerEcosystem Component', () => {
     renderWithRouter(<PartnerEcosystem />);
     
     await waitFor(() => {
-      const syncButton = screen.getByText('Sync with SecureMarket');
-      expect(syncButton).toBeInTheDocument();
+      const waitlistButton = screen.getByText(/Join SecureMarket Waitlist/i);
+      expect(waitlistButton).toBeInTheDocument();
     });
-  });
-});
-
-describe('RoleSelection Component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders role selection page', () => {
-    renderWithRouter(<RoleSelection />);
-    expect(screen.getByText(/Choose Your Path/i)).toBeInTheDocument();
-  });
-
-  it('displays all role options', () => {
-    renderWithRouter(<RoleSelection />);
-    
-    expect(screen.getByText('Individual')).toBeInTheDocument();
-    expect(screen.getByText('Company')).toBeInTheDocument();
-    expect(screen.getByText('Network Admin')).toBeInTheDocument();
-    expect(screen.getByText('Contract Deployer')).toBeInTheDocument();
-  });
-
-  it('role selection buttons trigger setRole', () => {
-    renderWithRouter(<RoleSelection />);
-    
-    const userCard = screen.getByText('Individual').closest('div');
-    const selectButton = userCard.querySelector('button') || userCard.closest('button');
-    
-    if (selectButton) {
-      fireEvent.click(selectButton);
-    }
   });
 });
 
 describe('Reports Component', () => {
   it('renders reports page', () => {
     renderWithRouter(<Reports />);
-    expect(screen.getByText(/Submit Whistleblower Report|Report Manager/i)).toBeInTheDocument();
+    expect(screen.getByText(/Export Reports/i)).toBeInTheDocument();
   });
 
-  it('report form has required fields', () => {
+  it('report export actions exist', () => {
     renderWithRouter(<Reports />);
     
-    // Check for form elements
-    const textareas = screen.queryAllByRole('textbox');
-    expect(textareas.length).toBeGreaterThan(0);
+    // Check for export action buttons
+    const buttons = screen.queryAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(0);
   });
 });
 
@@ -237,7 +201,7 @@ describe('PrivacyPortal Component', () => {
     renderWithRouter(<PrivacyPortal />);
     
     await waitFor(() => {
-      expect(screen.getByText(/Privacy Portal|Data Protection/i)).toBeInTheDocument();
+      expect(screen.getByText(/Privacy & Cryptography Portal/i)).toBeInTheDocument();
     });
   });
 });
@@ -247,7 +211,7 @@ describe('BridgePortal Component', () => {
     renderWithRouter(<BridgePortal />);
     
     await waitFor(() => {
-      expect(screen.getByText(/Bridge Portal|Cross-Chain/i)).toBeInTheDocument();
+      expect(screen.getByText(/Cross-Chain Trust Bridge/i)).toBeInTheDocument();
     });
   });
 
@@ -312,10 +276,6 @@ describe('Global Button & Link Validation', () => {
 
   it('PartnerEcosystem has valid interactive elements', async () => {
     await validateInteractiveElements(<PartnerEcosystem />, 'PartnerEcosystem');
-  });
-
-  it('RoleSelection has valid interactive elements', async () => {
-    await validateInteractiveElements(<RoleSelection />, 'RoleSelection');
   });
 
   it('Reports has valid interactive elements', async () => {

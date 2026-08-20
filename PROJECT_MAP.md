@@ -7,12 +7,18 @@ This document provides an overview of the SecureTransac project structure and wh
 ```text
 /
 ├── .github/                # GitHub-specific configs and AI instructions
+├── ai/                     # ML Fraud Model (real Ethereum data) + training notebooks
 ├── frontend/               # React Frontend Application
 ├── server/                 # Express Backend API Server
 ├── onchain/                # Solidity Smart Contracts (Truffle)
 ├── demo-vulnerable/        # Security Showcase (Vulnerable vs Protected)
 └── data/                   # (Server-side) Persistent JSON storage
 ```
+
+## 🧠 AI Facilities (`/ai`)
+- **Pipeline Notebooks**: `01-AyushDocs-DatasetIngestion` → `04-AyushDocs-ModelExport` (dataset ingestion, feature engineering, MLP training, model export). See [ai/README.md](ai/README.md).
+- **Weights**: `model_weights.json` (canonical) — mirrored to `server/src/utils/model_weights.json`, loaded at boot by `AIScoreService`.
+- **Dataset**: `data/transaction_dataset.csv` (git-ignored, auto-downloaded on first run).
 
 ## 🖥️ Frontend Facilities (`/frontend`)
 - **API Client**: [client.js](file:///j:/Users/ayush/Desktop/code/Pecathon/frontend/src/api/client.js) - All Web3 and Backend communication.

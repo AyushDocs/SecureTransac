@@ -1,11 +1,11 @@
 const TrustRegistry = artifacts.require("TrustRegistry");
-const SecureTransacToken = artifacts.require("SecureTransacToken");
+const AVToken = artifacts.require("AVToken");
 
 module.exports = async function (deployer, network, accounts) {
   // 1. Deploy the Token
-  await deployer.deploy(SecureTransacToken);
-  const token = await SecureTransacToken.deployed();
-  console.log(`SecureTransacToken deployed at: ${token.address}`);
+  await deployer.deploy(AVToken);
+  const token = await AVToken.deployed();
+  console.log(`AVToken deployed at: ${token.address}`);
 
   // 2. Link Token to TrustRegistry
   const registry = await TrustRegistry.deployed();

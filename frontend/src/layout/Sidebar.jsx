@@ -22,13 +22,13 @@ const NAV_PERMISSIONS = {
   "/submit-report": ["user", "viewer", "company"],
   "/appeals": ["user", "viewer", "company"], // All can appeal
   "/privacy": ["user", "viewer", "company"], // All users
-  "/analytics": ["admin", "deployer"], // Admin only
+  "/analytics": ["admin"], // Admin only
   "/ecosystem": ["company", "admin", "deployer"], // Partners only
-  "/bridge": ["admin", "deployer"], // Admin only - FIXED
-  "/war-room": ["admin", "deployer"], // Admin only
+  "/bridge": ["admin"], // Admin only
+  "/war-room": ["admin"], // Admin only
   "/system": ["admin"], // Admin only
   "/dao": ["user", "viewer", "company", "admin", "deployer"], // All can participate
-  "/verification-requests": ["company", "admin", "deployer"], // Verifiers only
+  "/verification-requests": ["company", "admin"], // Verifiers only (not deployer)
 };
 
 // Sidebar navigation with route links

@@ -9,8 +9,9 @@ SecureTransac leverages **On-Chain AI**, **Zero-Knowledge Proofs**, and **Social
 ## 🚀 Key Features
 
 ### 🧠 AI-Driven AV Scoring
+-   **Real Fraud Model**: A neural network trained on 9,841 real Ethereum addresses (public fraud-labeled dataset) predicts fraud probability from on-chain behavior — no synthetic data. See **[ai/README.md](./ai/README.md)**.
+-   **On-Chain Features**: Volume, transaction frequency, account age, network degree, temporal cadence, value flows, and volatility — all computed from blockchain event logs.
 -   **Temporal Analysis**: Detects anomalies like sudden transaction bursts (bot activity) or volume spikes (hacked wallets).
--   **Social Graph Scoring**: Implements "Guilt by Association". Interacting with low-AV addresses negatively impacts your score.
 -   **On-Chain Source of Truth**: All behavioral data is fetched directly from the blockchain event logs, not a centralized database.
 
 ### 🔐 Privacy-First Identity
@@ -33,6 +34,7 @@ SecureTransac leverages **On-Chain AI**, **Zero-Knowledge Proofs**, and **Social
 For a detailed map, see **[PROJECT_MAP.md](./PROJECT_MAP.md)**.
 
 ```text
+/ai               - ML Fraud Model (real Ethereum dataset) + training notebooks
 /onchain           - Solidity Smart Contracts & ZK Circuits
   /contracts       - TrustRegistry, VerificationRegistry, ZKIdentityVerifier
   /zk              - identity.circom (Zero-Knowledge Circuit)

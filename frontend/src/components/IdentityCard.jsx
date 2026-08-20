@@ -55,7 +55,7 @@ const IdentityCard = () => {
   const handleViewExplorer = () => {
     const currentNetwork = Object.values(availableNetworks).find(n => n.chainId.toLowerCase() === chainId?.toLowerCase());
     const baseUrl = currentNetwork?.blockExplorerUrls?.[0] || "https://etherscan.io/";
-    window.open(`${baseUrl}address/${CONTRACT_ADDRESSES.SecureTransacSBT}`, '_blank');
+    window.open(`${baseUrl}address/${CONTRACT_ADDRESSES.SoulBoundToken}`, '_blank');
   };
 
   const getRank = () => {
@@ -130,7 +130,7 @@ const IdentityCard = () => {
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span>
                     Identity Verified On-Chain
                 </div>
-                <p className="text-[10px] text-gray-500">Contract: {CONTRACT_ADDRESSES.SecureTransacSBT.slice(0, 10)}...</p>
+                <p className="text-[10px] text-gray-500">Contract: {CONTRACT_ADDRESSES.SoulBoundToken.slice(0, 10)}...</p>
             </div>
         )}
       </div>

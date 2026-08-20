@@ -1,1 +1,0 @@
-﻿require('dotenv').config(); const HDWalletProvider = require('@truffle/hdwallet-provider'); console.log('Address:', new HDWalletProvider(process.env.MNEMONIC, 'http://127.0.0.1:7545').getAddress(0)); process.exit(0);

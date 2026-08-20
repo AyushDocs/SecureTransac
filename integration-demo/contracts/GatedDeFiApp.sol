@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title ISecureTransacSBT
+ * @title ISoulBoundToken
  * @dev Interface for the Soulbound identity token to check reputation levels and ownership.
  */
-interface ISecureTransacSBT {
+interface ISoulBoundToken {
     function balanceOf(address owner) external view returns (uint256);
     function getReputationLevel(address user) external view returns (string memory);
 }
@@ -15,7 +15,7 @@ interface ISecureTransacSBT {
  * @dev Example of a DeFi application that uses Soulbound ID for access control.
  */
 contract GatedDeFiApp {
-    ISecureTransacSBT public sbt;
+    ISoulBoundToken public sbt;
     
     // Mapping to track "trusted" deposits
     mapping(address => uint256) public deposits;
@@ -23,7 +23,7 @@ contract GatedDeFiApp {
     event TrustedDeposit(address indexed user, uint256 amount, string level);
 
     constructor(address _sbtAddress) {
-        sbt = ISecureTransacSBT(_sbtAddress);
+        sbt = ISoulBoundToken(_sbtAddress);
     }
 
     /**

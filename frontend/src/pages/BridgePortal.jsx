@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
+import { API_BASE_URL, CONTRACT_ADDRESSES } from '../api/config';
 
 const BridgePortal = () => {
     const { user } = useAuth();
@@ -19,12 +20,12 @@ const BridgePortal = () => {
         
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/admin/bridge/sync', {
+            const res = await axios.post(`${API_BASE_URL}/admin/bridge/sync`, {
                 userAddress: targetAddr,
                 sourceChainId: sourceChain,
-                sourceContract: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // Default local for demo
+                sourceContract: CONTRACT_ADDRESSES.TrustRegistry, // Default local for demo
                 targetChainId: targetChain,
-                targetContract: "0x5FbDB2315678afecb367f032d93F642f64180aa3" // Relayer pushes to target
+                targetContract: CONTRACT_ADDRESSES.TrustRegistry // Relayer pushes to target
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });

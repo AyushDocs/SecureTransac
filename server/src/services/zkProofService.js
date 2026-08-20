@@ -15,21 +15,19 @@ class ZKProofService {
         console.log(`[ZK-Server] Generating proof for Score: ${trustScore} >= ${threshold}`);
 
         if (!fs.existsSync(WASM_PATH) || !fs.existsSync(ZKEY_PATH)) {
-            throw new Error("ZK artifacts not found on server. Please ensure ZK build exists.");
+            throw new Error("ZK artifacts not found on server. Run `cd zk && npm run build` first.");
         }
 
-        // Convert secret to numeric entropy
-        const secretHash = userSecret.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-        const input = {
-            trustScore: trustScore.toString(),
-            threshold: threshold.toString(),
-            userSecret: secretHash.toString()
-        };
+        // Convert secret to numeric salt
+        const salt = userSecret.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
         try {
             const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-                input,
+                {
+                    score: trustScore.toString(),
+                    salt: salt.toString(),
+                    threshold: threshold.toString(),
+                },
                 WASM_PATH,
                 ZKEY_PATH
             );
@@ -42,13 +40,13 @@ class ZKProofService {
 
     async verifyScoreProof(proof, publicSignals) {
         console.log("[ZK-Server] Verifying proof...");
-        
+
         if (!fs.existsSync(VKEY_PATH)) {
             throw new Error("Verification key not found on server.");
         }
 
         const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, 'utf8'));
-        
+
         try {
             const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
             return res;

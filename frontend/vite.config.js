@@ -44,6 +44,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: false,
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {
@@ -86,11 +87,24 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module'
       }
     })
   ],
+  build: {
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'web3-core': ['web3', 'viem', '@walletconnect/ethereum-provider', '@web3modal/wagmi', 'wagmi'],
+          'zk': ['snarkjs', 'eth-crypto', 'elliptic', 'crypto-js'],
+          'reports': ['jspdf', 'jspdf-autotable'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'axios', 'socket.io-client']
+        }
+      }
+    }
+  },
   define: {
     global: 'window',
   },

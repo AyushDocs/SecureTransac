@@ -1,10 +1,10 @@
 const TrustDAO = artifacts.require("TrustDAO");
 const TrustRegistry = artifacts.require("TrustRegistry");
-const SecureTransacToken = artifacts.require("SecureTransacToken");
+const AVToken = artifacts.require("AVToken");
 
 module.exports = async function (deployer, network, accounts) {
   // Ensure we have the dependencies
-  const token = await SecureTransacToken.deployed();
+  const token = await AVToken.deployed();
   const registry = await TrustRegistry.deployed();
 
   console.log("Deploying TrustDAO with Token:", token.address, "Registry:", registry.address);

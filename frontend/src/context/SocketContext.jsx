@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import { SOCKET_URL } from '../api/config';
 
 const SocketContext = createContext();
 
@@ -8,7 +9,7 @@ export const SocketProvider = ({ children }) => {
     const [lastEvent, setLastEvent] = useState(null);
 
     useEffect(() => {
-        const newSocket = io('http://localhost:5000'); // Use generic URL or env var
+        const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
 
         newSocket.on('connect', () => {

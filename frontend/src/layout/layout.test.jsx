@@ -51,25 +51,15 @@ describe('Navbar Component', () => {
 
   it('renders navbar correctly', () => {
     renderWithRouter(<Navbar />);
-    
-    // Should have search input
-    const searchInput = screen.getByPlaceholderText(/Search address/i);
-    expect(searchInput).toBeInTheDocument();
-  });
 
-  it('search form submits correctly', () => {
-    renderWithRouter(<Navbar />);
-    
-    const searchInput = screen.getByPlaceholderText(/Search address/i);
-    fireEvent.change(searchInput, { target: { value: '0x1234' } });
-    
-    const form = searchInput.closest('form');
-    fireEvent.submit(form);
+    // Should render user identity info (address truncated "0x1234...5678")
+    const addressText = screen.getByText('0x1234...5678');
+    expect(addressText).toBeInTheDocument();
   });
 
   it('displays user name', () => {
     renderWithRouter(<Navbar />);
-    
+
     expect(screen.getByText('Test User')).toBeInTheDocument();
   });
 

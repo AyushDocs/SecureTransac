@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./AccessControl.sol";
 import "./CreditSystem.sol";
-
-
+//created to resolve circular dependency betweeen this and zk verifier
 interface IVerifier {
     function verifyProof(
         uint[2] calldata _pA,
@@ -15,42 +14,125 @@ interface IVerifier {
 }
 
 contract ScoringSystem is CreditSystem {
-    // Migrated to bytes to support Paillier Homomorphic Ciphertexts (approx 2048+ bits)
     mapping(address => bytes) private scores;
-
-    // ZK Architecture (Dynamic Ranges)
     IVerifier public verifier;
-    // We store the highest lower-bound the user has proven via ZK.
-    // e.g. If user proves score >= 60, this stores 60.
-    mapping(address => uint256) public provenScoreLowerBound;
-    
-    uint256 public constant whitelistThreshold = 80;
-    uint256 public constant blacklistThreshold = 20;
+    mapping(address => uint256) public provenMaxScoreTillNow;
+
+    mapping(address => bool) public manuallyBlacklisted;
+    mapping(address => bool) public manuallyWhitelisted;
+
+    //can be updated later on
+    uint256 public whitelistThreshold = 80;
+    uint256 public blacklistThreshold = 20;
+    uint256 public constant SCORE_UPDATE_COST = 0.05 ether;
+
+    struct ScoreUpdateRecord {
+        address reporter;
+        address targetUser;
+        string reason;
+        uint256 timestamp;
+        bool paid;
+    }
+
+    mapping(address => ScoreUpdateRecord[]) public scoreUpdateHistory;
+    mapping(address => uint256) public scoreUpdateCount;
 
     event ScoreUpdated(address indexed user, bytes newScore);
+    event ScoreUpdateRecorded(address indexed reporter, address indexed targetUser, uint256 indexed recordIndex, string reason, bool paid);
     event ProofSubmitted(address indexed user, uint256 provenThreshold);
     event ScoreRevealed(address indexed target, bytes score, address indexed viewer);
     event VerifierUpdated(address indexed newVerifier);
+    event Blacklisted(address indexed user, bool status);
+    event Whitelisted(address indexed user, bool status);
+    event ThresholdsUpdated(uint256 newWhitelist, uint256 newBlacklist);
 
     function setVerifier(address _verifier) external onlyOwner {
         verifier = IVerifier(_verifier);
         emit VerifierUpdated(_verifier);
     }
 
-    function updateScore(address user, bytes memory newScore) external onlyReporter {
-        // Range check removed: Encrypted values cannot be checked directly.
-        scores[user] = newScore;
-        emit ScoreUpdated(user, newScore);
-        
-        // Reset proven status on score update to ensure freshness (invalidates old proofs)
-        provenScoreLowerBound[user] = 0;
+    function setWhitelistThreshold(uint256 _whitelist) external onlyOwner {
+        require(_whitelist > blacklistThreshold, "Must exceed blacklist threshold");
+        require(_whitelist <= 100, "Out of range");
+        whitelistThreshold = _whitelist;
+        emit ThresholdsUpdated(_whitelist, blacklistThreshold);
     }
 
-    /**
-     * @dev Submit a ZK Proof validating the encrypted score is >= claimedThreshold.
-     * The Proof Logic must verify: Decrypt(onChainScore) >= claimedThreshold.
-     * Inputs match Groth16 standard (a, b, c).
-     */
+    function setBlacklistThreshold(uint256 _blacklist) external onlyOwner {
+        require(_blacklist >=0,"Blacklist thresholld must be between 0 to 100");
+        require(_blacklist < whitelistThreshold, "Must be below whitelist threshold");
+        blacklistThreshold = _blacklist;
+        emit ThresholdsUpdated(whitelistThreshold, _blacklist);
+    }
+
+    function blacklist(address user, bool status) external onlyOwner {
+        manuallyBlacklisted[user] = status;
+        if (status) {
+            manuallyWhitelisted[user] = false;
+        }
+        emit Blacklisted(user, status);
+    }
+
+    function whitelist(address user, bool status) external onlyOwner {
+        manuallyWhitelisted[user] = status;
+        if (status) {
+            manuallyBlacklisted[user] = false;
+        }
+        emit Whitelisted(user, status);
+    }
+
+    function updateScore(address user, bytes memory newScore, string calldata reason) external onlyReporter {
+        bool paid = false;
+        if (owner() != _msgSender()) {
+            _createAndDeduct(_msgSender(), SCORE_UPDATE_COST, CreditTxnType.GENERIC);
+            paid = true;
+        }
+
+        scores[user] = newScore;
+        provenMaxScoreTillNow[user] = 0;
+
+        uint256 recordIndex = scoreUpdateCount[user];
+        scoreUpdateHistory[user].push(ScoreUpdateRecord({
+            reporter: msg.sender,
+            targetUser: user,
+            reason: reason,
+            timestamp: block.timestamp,
+            paid: paid
+        }));
+        scoreUpdateCount[user]++;
+
+        emit ScoreUpdated(user, newScore);
+        emit ScoreUpdateRecorded(msg.sender, user, recordIndex, reason, paid);
+    }
+
+    function attestScore(address user, uint256 scoreValue, string calldata reason) external onlyReporter {
+        require(scoreValue <= 100, "Score out of range");
+
+        bool paid = false;
+        if (owner() != _msgSender()) {
+            _createAndDeduct(_msgSender(), SCORE_UPDATE_COST, CreditTxnType.GENERIC);
+            paid = true;
+        }
+
+        provenMaxScoreTillNow[user] = scoreValue;
+
+        uint256 recordIndex = scoreUpdateCount[user];
+        scoreUpdateHistory[user].push(ScoreUpdateRecord({
+            reporter: msg.sender,
+            targetUser: user,
+            reason: reason,
+            timestamp: block.timestamp,
+            paid: paid
+        }));
+        scoreUpdateCount[user]++;
+
+        emit ScoreUpdateRecorded(msg.sender, user, recordIndex, reason, paid);
+    }
+
+    function getScoreUpdateHistory(address user) external view returns (ScoreUpdateRecord[] memory) {
+        return scoreUpdateHistory[user];
+    }
+
     function submitRangeProof(
         uint[2] calldata _pA,
         uint[2][2] calldata _pB,
@@ -58,7 +140,7 @@ contract ScoringSystem is CreditSystem {
         uint256 claimedThreshold
     ) external {
         require(address(verifier) != address(0), "Verifier not set");
-        
+
         uint[2] memory pubSignals;
         // Signal 0: Commitment (Hash of encrypted score)
         // Note: Hash must be mod 'p' of BN128 scalar field. Solidity keccak is 256 bits, might overflow p.
@@ -73,8 +155,8 @@ contract ScoringSystem is CreditSystem {
         require(result, "Invalid ZK Proof");
 
         // Update state if this proof establishes a better bound than what we have
-        if (claimedThreshold > provenScoreLowerBound[msg.sender]) {
-            provenScoreLowerBound[msg.sender] = claimedThreshold;
+        if (claimedThreshold > provenMaxScoreTillNow[msg.sender]) {
+            provenMaxScoreTillNow[msg.sender] = claimedThreshold;
         }
 
         emit ProofSubmitted(msg.sender, claimedThreshold);
@@ -83,27 +165,28 @@ contract ScoringSystem is CreditSystem {
     // --- ZK-Based Access Control ---
 
     function isWhitelisted(address user) public view returns (bool) {
-        // Check if user has proven a score >= global whitelist threshold
-        return provenScoreLowerBound[user] >= whitelistThreshold;
+        if (manuallyWhitelisted[user]) return true;
+        if (manuallyBlacklisted[user]) return false;
+        return provenMaxScoreTillNow[user] >= whitelistThreshold;
     }
 
     function isBlacklisted(address user) public view returns (bool) {
-        // If proven lower bound is <= blacklist threshold (e.g. 20), we can't be sure they are safe.
-        // Wait, if provenLowerBound is 0, they are definitely "potentially blacklisted".
-        // If provenLowerBound is 30, they are definitely > 20.
-        // So: return (provenLowerBound <= blacklistThreshold);
-        return provenScoreLowerBound[user] <= blacklistThreshold;
+        if (manuallyBlacklisted[user]) return true;
+        if (manuallyWhitelisted[user]) return false;
+        return provenMaxScoreTillNow[user] <= blacklistThreshold;
     }
 
-    /**
-     * @dev Pay to view a score. Deducts credits from user.
-     */
-    function accessScore(address target) public returns (bytes memory) {
-        // Admin can view for free (owner)
+    function isScoreAbove(address user, uint256 threshold) public returns (bool) {
         if (owner() != _msgSender()) {
-             _deductCredits(_msgSender(), VIEW_COST);
+            _createAndDeduct(_msgSender(), VIEW_COST, CreditTxnType.SCORE_VIEW);
         }
-        
+        return provenMaxScoreTillNow[user] >= threshold;
+    }
+
+    function accessScore(address target) public returns (bytes memory) {
+        if (owner() != _msgSender()) {
+             _createAndDeduct(_msgSender(), VIEW_COST, CreditTxnType.SCORE_VIEW);
+        }
         bytes memory score = scores[target];
         emit ScoreRevealed(target, score, _msgSender());
         return score;
@@ -112,56 +195,7 @@ contract ScoringSystem is CreditSystem {
     /**
      * @dev Admin view for free.
      */
-    function getScore(address user) external view returns (bytes memory) {
+    function getScore(address user) external onlyOwner returns (bytes memory) {
         return scores[user];
-    }
-
-    // --- Contract Access Config (Updated for ZK) ---
-
-    struct ContractConfig {
-        uint256 minTrustScore;   
-        bool exists;             
-    }
-    mapping(address => ContractConfig) public contractConfigs;
-    mapping(address => address) public contractMaintainer;
-    mapping(address => address[]) public maintainerContracts;
-    event ContractThresholdUpdated(address indexed targetContract, uint256 minScore, address indexed updatedBy);
-
-    function setContractThreshold(address _contractAddress, uint256 _minScore) external {
-        // Custom thresholds > 20/80 now require specific circuit logic not covered by standard proofs.
-        // For migration: We map custom demands to the nearest ZK tier.
-        // 0-20:  Requires Verified Proof
-        // 80-100: Requires Whitelist Proof
-        
-        // Claim logic
-        if (contractMaintainer[_contractAddress] == address(0)) {
-            contractMaintainer[_contractAddress] = msg.sender;
-            maintainerContracts[msg.sender].push(_contractAddress); 
-        } else {
-            require(contractMaintainer[_contractAddress] == msg.sender, "Not authorized");
-        }
-
-        contractConfigs[_contractAddress] = ContractConfig({
-            minTrustScore: _minScore,
-            exists: true
-        });
-        emit ContractThresholdUpdated(_contractAddress, _minScore, msg.sender);
-    }
-    
-    function getContractsByMaintainer(address _maintainer) external view returns (address[] memory) {
-        return maintainerContracts[_maintainer];
-    }
-
-    function isAllowedToInteract(address _user, address _contractAddress) external view returns (bool) {
-        // Dynamic ZK Check:
-        // Does the user's proven lower bound meet the contract's requirement?
-        
-        uint256 requiredScore = blacklistThreshold; // Default requirement if no config
-
-        if (contractConfigs[_contractAddress].exists) {
-            requiredScore = contractConfigs[_contractAddress].minTrustScore;
-        }
-
-        return provenScoreLowerBound[_user] >= requiredScore;
     }
 }

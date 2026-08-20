@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { keccak256, stringToHex } from 'viem';
 import { generateStealthAddress, getBlindKeys, signBlind, submitAnonymousReport } from '../api/client';
+import { API_BASE_URL } from '../api/config';
 import ProofVerifierTool from '../components/ProofVerifierTool';
 import ZKProofSystem from '../components/ZKProofSystem';
 import PageWrapper from '../layout/PageWrapper';
@@ -51,7 +52,7 @@ const PrivacyPortal = () => {
 
     const fetchPublicKey = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/admin/privacy/key');
+            const response = await axios.get(`${API_BASE_URL}/admin/privacy/key`);
             setPublicKey(response.data);
         } catch (error) {
             console.error('Failed to fetch privacy key:', error);

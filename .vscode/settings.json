@@ -1,4 +1,14 @@
 {
-    "snyk.advanced.organization": "03050b24-0f68-4e01-82a4-6e205f77c00b",
-    "snyk.advanced.autoSelectOrganization": true
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.git/objects/**": true,
+        "**/ganache_db/**": true,
+        "**/build/**": true,
+        "**/dist/**": true
+    },
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/ganache_db": true,
+        "**/dist": true
+    }
 }

@@ -28,11 +28,13 @@ function LiveFeed({ updates }) {
               <p className="text-xs text-muted-foreground">{update.timestamp}</p>
             </div>
             <div className="flex items-center gap-3 ml-4">
-              <span className="text-sm text-muted-foreground">{update.oldScore.toFixed(2)}</span>
+              <span className="text-sm text-muted-foreground">
+                {update.oldScore != null ? update.oldScore.toFixed(2) : '—'}
+              </span>
               <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-              <Badge variant={getVariant(update.newScore - update.oldScore)}>
+              <Badge variant={getVariant(update.newScore - (update.oldScore ?? update.newScore))}>
                 {update.newScore.toFixed(2)}
               </Badge>
             </div>

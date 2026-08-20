@@ -14,11 +14,11 @@ export const ROLES = {
 
 // Role groups for easier permission checking
 export const ROLE_GROUPS = {
-  ALL: [ROLES.USER, ROLES.VIEWER, ROLES.COMPANY, ROLES.CREATOR, ROLES.ADMIN, ROLES.DEPLOYER],
+  ALL: [ROLES.USER, ROLES.VIEWER, ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER],
   REGULAR_USERS: [ROLES.USER, ROLES.VIEWER],
-  BUSINESS: [ROLES.COMPANY, ROLES.CREATOR],
+  BUSINESS: [ROLES.COMPANY],
   ADMINS: [ROLES.ADMIN, ROLES.DEPLOYER],
-  ELEVATED: [ROLES.COMPANY, ROLES.CREATOR, ROLES.ADMIN, ROLES.DEPLOYER],
+  ELEVATED: [ROLES.COMPANY, ROLES.ADMIN, ROLES.DEPLOYER],
 };
 
 // Route-level permissions
@@ -147,7 +147,6 @@ export function getRoleName(role) {
     [ROLES.USER]: 'User',
     [ROLES.VIEWER]: 'Viewer',
     [ROLES.COMPANY]: 'Company',
-    [ROLES.CREATOR]: 'Creator',
     [ROLES.ADMIN]: 'Admin',
     [ROLES.DEPLOYER]: 'Deployer',
   };
@@ -164,7 +163,6 @@ export function getRoleColor(role) {
     [ROLES.USER]: 'bg-blue-500/20 text-blue-400',
     [ROLES.VIEWER]: 'bg-gray-500/20 text-gray-400',
     [ROLES.COMPANY]: 'bg-green-500/20 text-green-400',
-    [ROLES.CREATOR]: 'bg-teal-500/20 text-teal-400',
     [ROLES.ADMIN]: 'bg-purple-500/20 text-purple-400',
     [ROLES.DEPLOYER]: 'bg-red-500/20 text-red-400',
   };

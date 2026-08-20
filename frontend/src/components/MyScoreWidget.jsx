@@ -47,7 +47,7 @@ const MyScoreWidget = ({ userAddress }) => {
                 <span className="text-4xl">🔒</span>
             </div>
             <p className="text-gray-400 text-sm mb-6">
-                Your Trust Score is private. Pay <span className="text-cyan-400 font-bold">0.01 ETH</span> in credits to unlock.
+                Your Trust Score is private. Pay <span className="text-cyan-400 font-bold">0.01 AV</span> in credits to unlock.
             </p>
             {error && (
                 <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs">
