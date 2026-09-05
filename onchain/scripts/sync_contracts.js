@@ -47,7 +47,7 @@ function pickNetworkId() {
 // Contract -> display key used across env files / generated module
 const MAIN_CONTRACTS = [
     { name: 'TrustRegistry', key: 'TrustRegistry', env: 'REGISTRY_ADDRESS', vite: 'VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS' },
-    { name: 'IdentityVault', key: 'IdentityVault', env: 'VAULT_ADDRESS', vite: 'VITE_IDENTITY_VAULT_ADDRESS' },
+    { name: 'SecureDocumentStorage', key: 'IdentityVault', env: 'VAULT_ADDRESS', vite: 'VITE_IDENTITY_VAULT_ADDRESS' },
     { name: 'VerificationRegistry', key: 'VerificationRegistry', env: 'VERIFICATION_ADDRESS', vite: 'VITE_VERIFICATION_REGISTRY_ADDRESS' },
     { name: 'TrustDAO', key: 'TrustDAO', env: 'DAO_ADDRESS', vite: null },
     { name: 'SoulBoundToken', key: 'SoulBoundToken', env: 'SBT_ADDRESS', vite: null },

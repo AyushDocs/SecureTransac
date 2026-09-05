@@ -2,17 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./Guardian.sol";
+import "./types/Types.sol";
 
-/**
- * @title SecureDocumentStorage
- * @dev Stores encrypted user data (IPFS hashes) and manages access reveal for authorities.
- */
 contract SecureDocumentStorage is Guardian {
-    struct EncryptedData {
-        string ipfsHash;
-        uint256 timestamp;
-        bool exists;
-    }
 
     mapping(address => EncryptedData) private userToData;
     mapping(address => bool) public isAuthorizedAuthority;
@@ -24,18 +16,14 @@ contract SecureDocumentStorage is Guardian {
     error NotAuthorizedAuthority(address authority);
     error DataNotFound(address user);
 
-    constructor(address _registry) Guardian(_registry, 60) {
-        // Owner/Registry owner can set authorities
-    }
+    constructor(address _registry) Guardian(_registry, 60) {}
 
     function setAuthorityStatus(address authority, bool status) external {
-        // Simple logic: Only registry owner can set authorities
         require(msg.sender == registry.owner(), "Only registry owner can set authorities");
         isAuthorizedAuthority[authority] = status;
         emit AuthorityStatusChanged(authority, status);
     }
 
-    // Store user's own encrypted identity data - no trust score required for own data
     function storeData(string calldata _ipfsHash) external {
         userToData[msg.sender] = EncryptedData({
             ipfsHash: _ipfsHash,

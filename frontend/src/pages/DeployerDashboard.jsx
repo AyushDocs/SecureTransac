@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteAuthorityMetadata, fetchAuthorities, fetchNetworkStats, fetchSystemContracts, fetchSystemStatus, setAuthorityStatus, setReporterStatus } from "../api/client";
+import { deleteAuthorityMetadata, fetchAuthorities, fetchNetworkStats, fetchSystemContracts, fetchSystemStatus, setAuthorityStatus, setIssuerStatus } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import PageWrapper from "../layout/PageWrapper";
 import { logger } from "../utils/logger";
@@ -113,7 +113,7 @@ function DeployerDashboard() {
     
     if (!confirm(`Confirm revocation of access for ${address}?`)) return;
     try {
-      await setReporterStatus(address, false);
+      await setIssuerStatus(address, false);
       await setAuthorityStatus(address, false);
       await deleteAuthorityMetadata(address);
       

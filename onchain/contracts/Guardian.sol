@@ -6,6 +6,7 @@ import "./TrustRegistry.sol";
 /**
  * @title Guardian
  * @dev Base contract to provide trust-score based access control.
+ * Reads provenMaxScoreTillNow directly to avoid credit charges on every access check.
  */
 abstract contract Guardian {
     TrustRegistry public immutable registry;
@@ -20,10 +21,12 @@ abstract contract Guardian {
     }
 
     modifier onlyTrusted() {
-        require(!registry.isBlacklisted(msg.sender), "Address blacklisted");
-        bool above = registry.isScoreAbove(msg.sender, minRequiredScore);
-        if (!above) {
-             revert InsufficientTrustScore(msg.sender, registry.provenMaxScoreTillNow(msg.sender), minRequiredScore);
+        if (registry.isBlacklisted(msg.sender)) {
+            revert AddressBlacklisted(msg.sender);
+        }
+        uint256 score = registry.provenMaxScoreTillNow(msg.sender);
+        if (score < minRequiredScore) {
+            revert InsufficientTrustScore(msg.sender, score, minRequiredScore);
         }
         _;
     }

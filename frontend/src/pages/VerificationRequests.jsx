@@ -10,6 +10,7 @@ const VerificationRequests = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [viewingProof, setViewingProof] = useState(null);
+  const [scoreInputs, setScoreInputs] = useState({});
 
   const loadRequests = async () => {
     if (!user?.address) return;
@@ -30,7 +31,8 @@ const VerificationRequests = () => {
   const handleVerify = async (requestId, status) => {
     setActionLoading(requestId);
     try {
-      await verifyUser(requestId, user.address, status);
+      const score = status === 'approved' ? (Number(scoreInputs[requestId]) || 80) : 0;
+      await verifyUser(requestId, user.address, status, score);
       alert(`User ${status === 'approved' ? 'Verified' : 'Rejected'} successfully!`);
       await loadRequests();
     } catch (error) {
@@ -134,7 +136,16 @@ const VerificationRequests = () => {
                         </td>
                         <td className="p-4">
                           {req.status === 'pending' ? (
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 items-center">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="Score"
+                                  value={scoreInputs[req.id] || ''}
+                                  onChange={(e) => setScoreInputs(prev => ({ ...prev, [req.id]: e.target.value }))}
+                                  className="w-16 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-white text-[10px] text-center focus:border-green-500 focus:outline-none"
+                                />
                                 <button 
                                   onClick={() => handleVerify(req.id, 'approved')}
                                   disabled={actionLoading === req.id}

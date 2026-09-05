@@ -7,12 +7,13 @@ const IdentityCard = () => {
   const { user, chainId, availableNetworks } = useAuth();
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState(false);
+  const [cardURI, setCardURI] = useState('');
+  const [gatewayURL, setGatewayURL] = useState('');
 
   useEffect(() => {
     let interval;
     if (user?.address) {
         checkStatus();
-        // Poll every 10 seconds to ensure status is synced if minted elsewhere
         interval = setInterval(checkStatus, 10000);
     }
     return () => clearInterval(interval);
@@ -22,9 +23,6 @@ const IdentityCard = () => {
     if (!user?.address) return;
     try {
         const isMinted = await checkSBTMinted(user.address);
-        console.log(`[IdentityCard] Checked SBT status for ${user.address}: ${isMinted}`);
-        // Only update if we got a definitive boolean answer (true or false)
-        // If it's null (error), we keep the current state (potentially 'true' from handleMint)
         if (isMinted !== null) {
             setMinted(isMinted);
         }
@@ -36,16 +34,17 @@ const IdentityCard = () => {
   const handleMint = async () => {
     setLoading(true);
     try {
-        await mintSBT();
+        const result = await mintSBT();
         setMinted(true);
-        alert("Soulbound Reputation Card minted successfully! This NFT is now permanently linked to your wallet.");
+        if (result?.gatewayURL) setGatewayURL(result.gatewayURL);
+        if (result?.cid) setCardURI(`ipfs://${result.cid}`);
+        alert("Soulbound Reputation Card minted! Your reputation card is now stored on IPFS and linked to your wallet.");
     } catch (error) {
         console.error("Minting failed", error);
-        // Special check: If error says already minted, we should trust it
-        if (error.message?.includes("already minted") || error.data?.message?.includes("already minted")) {
+        if (error.message?.includes("already minted")) {
             setMinted(true);
         } else {
-            alert("Minting failed. Ensure you have enough gas and haven't already minted.");
+            alert("Minting failed. " + (error.message || "Ensure you are connected."));
         }
     } finally {
         setLoading(false);
@@ -58,20 +57,22 @@ const IdentityCard = () => {
     window.open(`${baseUrl}address/${CONTRACT_ADDRESSES.SoulBoundToken}`, '_blank');
   };
 
+  const handleViewCard = () => {
+    if (gatewayURL) window.open(gatewayURL, '_blank');
+  };
+
   const getRank = () => {
     const rawScore = user?.score !== undefined ? user.score : 0.5;
-    // Normalize to 0-1 range if score is > 1 (e.g. 80 -> 0.8)
     const score = rawScore > 1 ? rawScore / 100 : rawScore;
 
     if (score >= 0.9) return { name: "DIAMOND", color: "from-cyan-300 to-blue-500", shadow: "shadow-cyan-500/50" };
     if (score >= 0.75) return { name: "PLATINUM", color: "from-gray-300 to-gray-500", shadow: "shadow-gray-400/50" };
     if (score >= 0.6) return { name: "GOLD", color: "from-yellow-400 to-orange-500", shadow: "shadow-yellow-500/50" };
-    // Bronze: Vivid copper/orange to distinct from grayscale
     return { name: "BRONZE", color: "from-orange-500 to-amber-800", shadow: "shadow-orange-900/40" };
   };
 
   const rank = getRank();
-  const displayScore = "****"; // Privacy mode: Score is hidden by default
+  const displayScore = "****";
 
   return (
     <div className="bg-gray-900 border border-border rounded-xl overflow-hidden shadow-2xl">
@@ -121,16 +122,24 @@ const IdentityCard = () => {
                   disabled={loading}
                   className="bg-white text-black font-black px-8 py-3 rounded-full text-xs hover:bg-gray-200 transition-all shadow-xl shadow-white/10 disabled:opacity-50"
                 >
-                  {loading ? 'MINTING PROOF...' : 'MINT SOULBOUND IDENTITY'}
+                  {loading ? 'GENERATING & MINTING...' : 'MINT SOULBOUND IDENTITY'}
                 </button>
             </div>
         ) : (
-            <div className="mt-8 text-center animate-in fade-in zoom-in duration-500">
+            <div className="mt-8 text-center animate-in fade-in zoom-in duration-500 space-y-3">
                 <div className="text-green-500 font-black text-xs uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span>
                     Identity Verified On-Chain
                 </div>
-                <p className="text-[10px] text-gray-500">Contract: {CONTRACT_ADDRESSES.SoulBoundToken.slice(0, 10)}...</p>
+                <p className="text-[10px] text-gray-500">Contract: {CONTRACT_ADDRESSES.SoulBoundToken?.slice(0, 10)}...</p>
+                {gatewayURL && (
+                  <button 
+                    onClick={handleViewCard}
+                    className="text-[10px] text-blue-400 font-bold uppercase cursor-pointer hover:text-blue-300 underline underline-offset-2"
+                  >
+                    View Reputation Card on IPFS
+                  </button>
+                )}
             </div>
         )}
       </div>

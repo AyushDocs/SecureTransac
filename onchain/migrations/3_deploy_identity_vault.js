@@ -1,10 +1,10 @@
 const TrustRegistry = artifacts.require("TrustRegistry");
-const IdentityVault = artifacts.require("IdentityVault");
+const SecureDocumentStorage = artifacts.require("SecureDocumentStorage");
 
 module.exports = async function (deployer) {
   const registry = await TrustRegistry.deployed();
-  await deployer.deploy(IdentityVault, registry.address);
-  const instance = await IdentityVault.deployed();
+  await deployer.deploy(SecureDocumentStorage, registry.address);
+  const instance = await SecureDocumentStorage.deployed();
   const chainId = await web3.eth.net.getId();
-  console.log(`IdentityVault deployed at: ${instance.address} (Chain ID: ${chainId})`);
+  console.log(`SecureDocumentStorage deployed at: ${instance.address} (Chain ID: ${chainId})`);
 };

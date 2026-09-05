@@ -223,7 +223,7 @@ class AnalyticsService {
             const reports = await web3Service.getAllReports();
             feed = feed.concat(reports.slice(-10).reverse().map(r => ({
                 type: 'report',
-                reporter: r.reporter,
+                reporter: r.issuer,
                 target: r.target,
                 text: (r.text || '').toString().slice(0, 80),
                 timestamp: Date.now()

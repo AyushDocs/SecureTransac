@@ -13,7 +13,10 @@ export const SOCKET_URL = (() => {
     if (typeof window === "undefined") return host;
     return host || window.location.origin;
   }
-  if (typeof window !== "undefined") return window.location.origin;
+  // Same-origin is preferred in deployment (via nginx/Vite proxy). When serving
+  // the static build from a different port than the backend, fall back to the
+  // default backend host so socket.io reaches the API server.
+  if (typeof window !== "undefined") return "http://localhost:5000";
   return "http://localhost:5000";
 })();
 // Addresses are kept in sync automatically by `npm run sync` in /onchain
@@ -93,10 +96,11 @@ export const TRUST_REGISTRY_ABI = [
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "reporter", "type": "address" },
-      { "internalType": "bool", "name": "status", "type": "bool" }
+      { "internalType": "address", "name": "issuer", "type": "address" },
+      { "internalType": "bool", "name": "status", "type": "bool" },
+      { "internalType": "uint8", "name": "role", "type": "uint8" }
     ],
-    "name": "setReporterStatus",
+    "name": "setIssuerStatus",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -156,11 +160,43 @@ export const ERC721S_ABI = [
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" },
+      { "internalType": "string", "name": "cardURI", "type": "string" }
+    ],
+    "name": "mintFor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "owner", "type": "address" }
     ],
     "name": "balanceOf",
     "outputs": [
       { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "tokenURI",
+    "outputs": [
+      { "internalType": "string", "name": "", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" }
+    ],
+    "name": "cardURI",
+    "outputs": [
+      { "internalType": "string", "name": "", "type": "string" }
     ],
     "stateMutability": "view",
     "type": "function"

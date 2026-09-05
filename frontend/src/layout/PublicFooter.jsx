@@ -42,19 +42,36 @@ function PublicFooter() {
           {/* Socials Column */}
           <div>
             <h4 className="text-white font-bold mb-6">Connect</h4>
-            <div className="flex gap-4">
-              {['Twitter', 'GitHub', 'Discord'].map((social) => (
-                <a 
-                  key={social}
-                  href="#" 
-                  className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all"
-                  aria-label={social}
-                >
-                  {/* Simple text placeholder icons or SVGs could go here */}
-                  <span className="text-xs">{social[0]}</span>
-                </a>
-              ))}
+            <div className="flex gap-3">
+              <a 
+                href="mailto:ayushalokdubey@gmail.com"
+                className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all"
+                aria-label="Email"
+              >
+                <span className="text-xs">✉</span>
+              </a>
+              <a 
+                href="https://github.com/AyushDocs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all"
+                aria-label="GitHub"
+              >
+                <span className="text-xs">GH</span>
+              </a>
+              <a 
+                href="https://linkedin.com/in/ayushdubeyad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all"
+                aria-label="LinkedIn"
+              >
+                <span className="text-xs">in</span>
+              </a>
             </div>
+            <p className="text-gray-500 text-sm mt-4">
+              <a href="mailto:ayushalokdubey@gmail.com" className="hover:text-gray-300 transition-colors">ayushalokdubey@gmail.com</a>
+            </p>
           </div>
         </div>
 

@@ -24,7 +24,7 @@ function AddressProfile() {
 
   // Determine User Tier (1=Basic, 2=Institutional, 3=Diamond)
   // Default to 1 if not set
-  const userTier = user?.reporterTier || 1; 
+  const userTier = user?.issuerRole || 1; 
 
   const loadData = async () => {
     setLoading(true);
@@ -167,9 +167,9 @@ function AddressProfile() {
           <Badge variant={displayScore >= 0.7 ? "success" : displayScore >= 0.4 ? "warning" : "destructive"}>
             {displayScore >= 0.7 ? "Trusted" : displayScore >= 0.4 ? "Moderate" : "Risky"}
           </Badge>
-          {profileData?.reporterTier >= 2 && (
-            <Badge variant={profileData.reporterTier == 3 ? "premium" : "info"}>
-              {profileData.reporterTier == 3 ? "💎 Diamond Authority" : "🏛️ Institutional Authority"}
+          {profileData?.issuerRole >= 2 && (
+            <Badge variant={profileData.issuerRole == 3 ? "premium" : "info"}>
+              {profileData.issuerRole == 3 ? "💎 Diamond Authority" : "🏛️ Institutional Authority"}
             </Badge>
           )}
         </div>

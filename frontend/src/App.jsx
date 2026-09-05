@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import DashboardSelector from "./components/DashboardSelector";
 import ScrollToTop from "./components/ScrollToTop";
@@ -5,40 +6,58 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import MobileNav from "./layout/MobileNav";
 import Navbar from "./layout/Navbar";
 import Sidebar from "./layout/Sidebar";
-import AddressProfile from "./pages/AddressProfile";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdvancedAnalytics from './pages/AdvancedAnalytics';
-import Appeals from "./pages/Appeals";
-import BridgePortal from "./pages/BridgePortal";
-import CompanyDashboard from "./pages/CompanyDashboard";
-import ContractDetails from "./pages/ContractDetails";
-import Dashboard from "./pages/Dashboard";
-import DeployerDashboard from "./pages/DeployerDashboard";
-import IdentityVault from "./pages/IdentityVault";
-import InstitutionalPortal from "./pages/InstitutionalPortal";
-import Login from "./pages/Login";
-import PartnerEcosystem from "./pages/PartnerEcosystem";
-import PrivacyPortal from "./pages/PrivacyPortal";
-import Register from "./pages/Register";
-import Registry from "./pages/Registry";
-import Reports from "./pages/Reports";
-import ReputationActivity from "./pages/ReputationActivity";
-import RiskWarRoom from "./pages/RiskWarRoom";
-import Search from "./pages/Search";
-import SubmitReport from "./pages/SubmitReport";
-import SystemControl from "./pages/SystemControl";
-import TrustDAO from "./pages/TrustDAO";
-import UserDashboard from "./pages/UserDashboard";
-import VerificationRequests from "./pages/VerificationRequests";
+
+// Lazy-loaded pages — each becomes its own chunk
+const AddressProfile = lazy(() => import("./pages/AddressProfile"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdvancedAnalytics = lazy(() => import("./pages/AdvancedAnalytics"));
+const Appeals = lazy(() => import("./pages/Appeals"));
+const BridgePortal = lazy(() => import("./pages/BridgePortal"));
+const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
+const ContractDetails = lazy(() => import("./pages/ContractDetails"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DeployerDashboard = lazy(() => import("./pages/DeployerDashboard"));
+const IdentityVault = lazy(() => import("./pages/IdentityVault"));
+const InstitutionalPortal = lazy(() => import("./pages/InstitutionalPortal"));
+const Login = lazy(() => import("./pages/Login"));
+const PartnerEcosystem = lazy(() => import("./pages/PartnerEcosystem"));
+const PrivacyPortal = lazy(() => import("./pages/PrivacyPortal"));
+const Register = lazy(() => import("./pages/Register"));
+const Registry = lazy(() => import("./pages/Registry"));
+const Reports = lazy(() => import("./pages/Reports"));
+const ReputationActivity = lazy(() => import("./pages/ReputationActivity"));
+const RiskWarRoom = lazy(() => import("./pages/RiskWarRoom"));
+const Search = lazy(() => import("./pages/Search"));
+const SubmitReport = lazy(() => import("./pages/SubmitReport"));
+const SystemControl = lazy(() => import("./pages/SystemControl"));
+const TrustDAO = lazy(() => import("./pages/TrustDAO"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const VerificationRequests = lazy(() => import("./pages/VerificationRequests"));
+
+// Public pages — also lazy
+const PublicFooter = lazy(() => import("./layout/PublicFooter"));
+const PublicNavbar = lazy(() => import("./layout/PublicNavbar"));
+const About = lazy(() => import("./pages/About"));
+const Connect = lazy(() => import("./pages/Connect"));
+const Documentation = lazy(() => import("./pages/Documentation"));
+const Home = lazy(() => import("./pages/Home"));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Loading...</span>
+    </div>
+  </div>
+);
+
 // Component to redirect to the correct dashboard based on active role
-// (The DashboardSelector modal is rendered once by AppContent — not here.)
 const DashboardSwitch = () => {
   const { role, activeRole } = useAuth();
   
   const currentRole = activeRole || role;
   if (!currentRole) return <Navigate to="/" />;
   
-  // Render dashboard based on active role
   const normalizedRole = (currentRole || "").toLowerCase();
   
   switch (normalizedRole) {
@@ -47,7 +66,7 @@ const DashboardSwitch = () => {
     case "viewer":
       return <Dashboard />;
     case "company":
-    case "creator":  // Legacy fallback
+    case "creator":
       return <CompanyDashboard />;
     case "admin":
       return <AdminDashboard />;
@@ -59,20 +78,17 @@ const DashboardSwitch = () => {
   }
 };
 
-// Basic protected route - requires any authenticated role
 const ProtectedRoute = ({ children }) => {
   const { role } = useAuth();
   if (!role) return <Navigate to="/" />;
   return children;
 };
 
-// Role-specific protected route - requires specific role(s)
 const RoleRoute = ({ children, allowedRoles }) => {
   const { role, roles, hasAnyRole } = useAuth();
   
   if (!role) return <Navigate to="/" />;
   
-  // Check if user has any of the allowed roles
   if (allowedRoles && !hasAnyRole(allowedRoles)) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -93,34 +109,21 @@ const RoleRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-// Define route permissions
 const routePermissions = {
-  "/identity": ["user", "viewer", "admin", "deployer"], // All users
-  "/certified": ["user", "viewer", "company", "admin", "deployer"], // All users
-  "/kyb": ["company", "admin", "deployer"], // Corporate only
+  "/identity": ["user", "viewer", "admin", "deployer"],
+  "/certified": ["user", "viewer", "company", "admin", "deployer"],
+  "/kyb": ["company", "admin", "deployer"],
   "/analytics": ["admin"],
   "/bridge": ["admin"],
   "/war-room": ["admin"],
-  // Add other routes and their required roles here
 };
-
-import PublicFooter from "./layout/PublicFooter";
-import PublicNavbar from "./layout/PublicNavbar";
-import About from "./pages/About";
-import Connect from "./pages/Connect";
-import Documentation from "./pages/Documentation";
-import Home from "./pages/Home";
 
 function AppContent() {
   const { role, showDashboardSelector, setShowDashboardSelector, isMultiRole, networkWarning, isCorrectNetwork } = useAuth();
 
-
-// ...
-
   return (
     <HashRouter>
       <ScrollToTop />
-      {/* Network Warning Banner */}
       {networkWarning && (
         <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm font-medium ${
           isCorrectNetwork
@@ -130,13 +133,13 @@ function AppContent() {
           {networkWarning}
         </div>
       )}
-      {/* Dashboard Selector Modal - Valid for both if needed, but mostly for auth users */}
       {showDashboardSelector && isMultiRole && (
         <DashboardSelector 
           onClose={() => setShowDashboardSelector(false)}
         />
       )}
       
+      <Suspense fallback={<PageLoader />}>
       {role ? (
         <div className={`flex h-screen bg-gray-950 font-sans text-gray-400 overflow-hidden ${networkWarning ? 'pt-10' : ''}`}>
           <Sidebar />
@@ -145,7 +148,6 @@ function AppContent() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-950 pb-24 lg:pb-6 scroll-smooth no-scrollbar">
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" />} />
-                {/* Redirect login to dashboard if already logged in */}
                 <Route path="/login" element={<Navigate to="/dashboard" />} />
                 
                 <Route path="/register" element={<Register />} />
@@ -207,7 +209,6 @@ function AppContent() {
                         <ContractDetails />
                     </RoleRoute>
                 } />
-                {/* Fallback for auth users */}
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </main>
@@ -215,7 +216,6 @@ function AppContent() {
           </div>
         </div>
       ) : (
-        /* PUBLIC LAYOUT */
         <div className="min-h-screen bg-gray-950 font-sans text-gray-400 flex flex-col">
           <PublicNavbar />
           <div className="flex-1">
@@ -226,13 +226,13 @@ function AppContent() {
               <Route path="/connect" element={<Connect />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              {/* Fallback for public users */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
           <PublicFooter />
         </div>
       )}
+      </Suspense>
     </HashRouter>
   );
 }

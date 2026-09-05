@@ -1,39 +1,54 @@
-import Web3 from "web3";
 import { logger } from "../utils/logger";
 import { API_BASE_URL, CONTRACT_ADDRESSES, ERC721S_ABI, IDENTITY_VAULT_ABI, TRUST_REGISTRY_ABI } from "./config";
 
-let web3;
-let contract;
-let vaultContract;
-let sbtContract;
+// Lazy Web3 — only loaded when on-chain functions are actually called
+let _web3Instance = null;
+let _contract = null;
+let _vaultContract = null;
+let _sbtContract = null;
 
-if (window.ethereum) {
-  web3 = new Web3(window.ethereum);
-  contract = new web3.eth.Contract(TRUST_REGISTRY_ABI, CONTRACT_ADDRESSES.TrustRegistry);
-  vaultContract = new web3.eth.Contract(IDENTITY_VAULT_ABI, CONTRACT_ADDRESSES.IdentityVault);
-  sbtContract = new web3.eth.Contract(ERC721S_ABI, CONTRACT_ADDRESSES.SoulBoundToken);
-  logger.info("Web3 initialized with window.ethereum");
-} else {
-  logger.warn("No Web3 provider detected. On-chain features will be disabled.");
+async function getWeb3() {
+  if (_web3Instance) return _web3Instance;
+  if (!window.ethereum) throw new Error("No Web3 provider detected");
+  const { default: Web3 } = await import("web3");
+  _web3Instance = new Web3(window.ethereum);
+  _contract = new _web3Instance.eth.Contract(TRUST_REGISTRY_ABI, CONTRACT_ADDRESSES.TrustRegistry);
+  _vaultContract = new _web3Instance.eth.Contract(IDENTITY_VAULT_ABI, CONTRACT_ADDRESSES.IdentityVault);
+  _sbtContract = new _web3Instance.eth.Contract(ERC721S_ABI, CONTRACT_ADDRESSES.SoulBoundToken);
+  logger.info("Web3 initialized (lazy) with window.ethereum");
+  return _web3Instance;
 }
 
 export async function checkSBTMinted(address) {
-  if (!sbtContract) return false;
   try {
-    const balance = await sbtContract.methods.balanceOf(address).call();
+    await getWeb3();
+    if (!_sbtContract) return false;
+    const balance = await _sbtContract.methods.balanceOf(address).call();
     return Number(balance) > 0;
   } catch (error) {
     logger.error("Error checking SBT status (Contract might not be deployed):", error);
-    // Return null instead of false if it's a connection/contract error
-    // This prevents the UI from resetting 'minted' to false if it was already true
     return null;
   }
 }
 
 export async function mintSBT() {
-  if (!sbtContract) throw new Error("SBT Contract not connected");
-  const accounts = await web3.eth.getAccounts();
-  return await sbtContract.methods.mint().send({ from: accounts[0] });
+  logger.info("Requesting server-side SBT mint with IPFS card...");
+  await getWeb3();
+  const accounts = await _web3Instance.eth.getAccounts();
+  const userAddress = accounts[0];
+
+  const response = await fetch(`${API_BASE_URL}/admin/sbt/mint`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ userAddress }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || err.error || "SBT minting failed");
+  }
+
+  return await response.json();
 }
 export const getAuthHeaders = () => {
   const token = localStorage.getItem("userToken");
@@ -206,14 +221,15 @@ export async function submitManualOverride(address, action, reason, targetScore 
 
 export async function setAuthorityStatus(authorityAddress, status) {
   logger.info(`Setting authority status: ${authorityAddress} -> ${status}`);
-  if (!vaultContract) {
+  await getWeb3();
+  if (!_vaultContract) {
     logger.error("IdentityVault contract not initialized");
     throw new Error("IdentityVault contract not initialized");
   }
 
   try {
-    const accounts = await web3.eth.getAccounts();
-    const result = await vaultContract.methods.setAuthorityStatus(authorityAddress, status).send({
+    const accounts = await _web3Instance.eth.getAccounts();
+    const result = await _vaultContract.methods.setAuthorityStatus(authorityAddress, status).send({
       from: accounts[0],
     });
     logger.info("Authority status updated successfully", result);
@@ -362,30 +378,30 @@ export async function fetchACL() {
   }
 }
 
-export async function setReporterStatus(reporterAddress, status, tier = 1) {
-  logger.info(`Setting reporter status: ${reporterAddress} -> ${status} (Tier: ${tier})`);
+export async function setIssuerStatus(issuerAddress, status, role = 1) {
+  logger.info(`Setting issuer status: ${issuerAddress} -> ${status} (Role: ${role})`);
+  await getWeb3();
   
-  if (!contract) {
+  if (!_contract) {
     logger.error("TrustRegistry contract not initialized");
     throw new Error("TrustRegistry contract not initialized");
   }
 
-  if (!reporterAddress) {
-      throw new Error("setReporterStatus: reporterAddress is missing/null");
+  if (!issuerAddress) {
+      throw new Error("setIssuerStatus: issuerAddress is missing/null");
   }
 
   try {
-    const accounts = await web3.eth.getAccounts();
-    logger.info(`Sending transaction from ${accounts[0]} to set status for ${reporterAddress}`);
+    const accounts = await _web3Instance.eth.getAccounts();
+    logger.info(`Sending transaction from ${accounts[0]} to set status for ${issuerAddress}`);
     
-    // ABI only has 2 arguments: reporter (address), status (bool)
-    const result = await contract.methods.setReporterStatus(reporterAddress, status).send({
+    const result = await _contract.methods.setIssuerStatus(issuerAddress, status, role).send({
       from: accounts[0],
     });
-    logger.info("Reporter status updated successfully", result);
+    logger.info("Issuer status updated successfully", result);
     return result;
   } catch (error) {
-    logger.error("Error setting reporter status:", error);
+    logger.error("Error setting issuer status:", error);
     throw error;
   }
 }
@@ -444,13 +460,13 @@ export async function requestVerification(userAddress, companyAddress, metadata 
   }
 }
 
-export async function verifyUser(requestId, reviewerAddress, status, targetScore = 900) {
-  logger.info(`Processing verification: ${requestId} (${status})`);
+export async function verifyUser(requestId, reviewerAddress, status, scoreValue = 80) {
+  logger.info(`Processing verification: ${requestId} (${status}, score: ${scoreValue})`);
   try {
     const response = await fetch(`${API_BASE_URL}/admin/verify-user`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ requestId, reviewerAddress, status, targetScore }),
+      body: JSON.stringify({ requestId, reviewerAddress, status, targetScore: scoreValue }),
     });
     if (!response.ok) throw new Error("Failed to verify user");
     return await response.json();
@@ -506,11 +522,12 @@ export async function pinMetadata(metadata) {
 
 export async function storeIdentityData(cid) {
   logger.info(`Storing Identity CID on-chain: ${cid}`);
-  if (!vaultContract) throw new Error("IdentityVault contract not initialized");
+  await getWeb3();
+  if (!_vaultContract) throw new Error("IdentityVault contract not initialized");
 
   try {
-    const accounts = await web3.eth.getAccounts();
-    const result = await vaultContract.methods.storeData(cid).send({
+    const accounts = await _web3Instance.eth.getAccounts();
+    const result = await _vaultContract.methods.storeData(cid).send({
       from: accounts[0],
       gas: 500000 // Force gas limit to prevent estimation errors
     });
@@ -524,10 +541,11 @@ export async function storeIdentityData(cid) {
 
 export async function getIdentityData(userAddress) {
   logger.info(`Fetching Identity CID for: ${userAddress}`);
-  if (!vaultContract) throw new Error("IdentityVault contract not initialized");
+  await getWeb3();
+  if (!_vaultContract) throw new Error("IdentityVault contract not initialized");
 
   try {
-    const cid = await vaultContract.methods.requestData(userAddress).call();
+    const cid = await _vaultContract.methods.requestData(userAddress).call();
     logger.info(`Fetched CID: ${cid}`);
     return cid;
   } catch (error) {

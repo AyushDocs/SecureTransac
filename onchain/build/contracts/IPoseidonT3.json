@@ -1,0 +1,205 @@
+{
+  "contractName": "IPoseidonT3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256[2]",
+          "name": "input",
+          "type": "uint256[2]"
+        }
+      ],
+      "name": "poseidon",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.21+commit.d9974bed\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256[2]\",\"name\":\"input\",\"type\":\"uint256[2]\"}],\"name\":\"poseidon\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/interfaces/IPoseidonT3.sol\":\"IPoseidonT3\"},\"evmVersion\":\"shanghai\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/interfaces/IPoseidonT3.sol\":{\"keccak256\":\"0xb431efac4bf0c692e479428ab92df4e0d23961fe77b4cf0a0ebdb48ed069c11d\",\"license\":\"LGPL-3.0+\",\"urls\":[\"bzz-raw://79c6cb6b8ec0c2f3a7be85574cc471b1ff10ad4d3449240a8af6f63e1825e926\",\"dweb:/ipfs/QmXBHtNqA1gTGif8oh3j5KYgN55oqMB78w2WTanVds5pT6\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "// SPDX-License-Identifier: LGPL-3.0+\npragma solidity ^0.8.0;\n\ninterface IPoseidonT3 {\n    function poseidon(uint256[2] memory input) external pure returns (uint256);\n}\n",
+  "sourcePath": "/home/ayush/Desktop/code/SecureTransac/onchain/contracts/interfaces/IPoseidonT3.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/interfaces/IPoseidonT3.sol",
+    "exportedSymbols": {
+      "IPoseidonT3": [
+        9362
+      ]
+    },
+    "id": 9363,
+    "license": "LGPL-3.0+",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 9352,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "38:23:29"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IPoseidonT3",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "id": 9362,
+        "linearizedBaseContracts": [
+          9362
+        ],
+        "name": "IPoseidonT3",
+        "nameLocation": "73:11:29",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "functionSelector": "29a5f2f6",
+            "id": 9361,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "poseidon",
+            "nameLocation": "100:8:29",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 9357,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 9356,
+                  "mutability": "mutable",
+                  "name": "input",
+                  "nameLocation": "127:5:29",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9361,
+                  "src": "109:23:29",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$2_memory_ptr",
+                    "typeString": "uint256[2]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 9353,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "109:7:29",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 9355,
+                    "length": {
+                      "hexValue": "32",
+                      "id": 9354,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "117:1:29",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_2_by_1",
+                        "typeString": "int_const 2"
+                      },
+                      "value": "2"
+                    },
+                    "nodeType": "ArrayTypeName",
+                    "src": "109:10:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$2_storage_ptr",
+                      "typeString": "uint256[2]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "108:25:29"
+            },
+            "returnParameters": {
+              "id": 9360,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 9359,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9361,
+                  "src": "157:7:29",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 9358,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "157:7:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "156:9:29"
+            },
+            "scope": 9362,
+            "src": "91:75:29",
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "scope": 9363,
+        "src": "63:105:29",
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "src": "38:131:29"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.21+commit.d9974bed.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.16",
+  "updatedAt": "2026-08-20T10:53:38.169Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}

@@ -1,5 +1,5 @@
 const TrustRegistry = artifacts.require("TrustRegistry");
-const IdentityVault = artifacts.require("IdentityVault");
+const SecureDocumentStorage = artifacts.require("SecureDocumentStorage");
 const TransactionLogger = artifacts.require("TransactionLogger");
 const TrustDAO = artifacts.require("TrustDAO");
 const VerificationRegistry = artifacts.require("VerificationRegistry");
@@ -23,7 +23,7 @@ module.exports = async function(callback) {
         console.log("=== Seeding SecureTransac with Rich Transaction History ===");
         
         const trustRegistry = await TrustRegistry.deployed();
-        const identityVault = await IdentityVault.deployed();
+        const secureDocStorage = await SecureDocumentStorage.deployed();
         const txLogger = await TransactionLogger.deployed();
         
         let trustDAO, verificationRegistry, token;
@@ -90,8 +90,8 @@ module.exports = async function(callback) {
         // ============================================
         console.log("\n[2/8] Setting up authorities...");
         try {
-            await trustRegistry.setReporterStatus(admin, true, 3, { from: admin });
-            await txLogger.setReporterStatus(admin, true, 3, { from: admin });
+            await trustRegistry.setIssuerStatus(admin, true, 3, { from: admin });
+            await txLogger.setIssuerStatus(admin, true, 3, { from: admin });
             console.log("✓ Admin authorized");
         } catch (e) { console.error("Auth setup failed:", e.message); }
 
@@ -112,7 +112,7 @@ module.exports = async function(callback) {
 
         for (const [addr, cid] of Object.entries(identities)) {
             try {
-                await identityVault.storeData(cid, { from: addr });
+                await secureDocStorage.storeData(cid, { from: addr });
                 console.log(`✓ Identity stored for ${addr.slice(0, 10)}...`);
             } catch(e) { 
                 console.log(`  Skipped ${addr.slice(0, 10)}... (already exists or error)`);
@@ -227,7 +227,7 @@ module.exports = async function(callback) {
                 text: "Attempted phishing attack", 
                 severity: 9 
             });
-            await trustRegistry.submitReport(scammer, report1, { from: PRIMARY_USER });
+            await trustRegistry.submitReport(scammer, report1, { from: admin });
             console.log("✓ Fraud report submitted against scammer");
         } catch(e) { console.log("  Report 1 failed:", e.message); }
 
@@ -237,7 +237,7 @@ module.exports = async function(callback) {
                 text: "Excellent service, fast delivery", 
                 severity: 1 
             });
-            await trustRegistry.submitReport(merchant1, report2, { from: PRIMARY_USER });
+            await trustRegistry.submitReport(merchant1, report2, { from: admin });
             console.log("✓ Positive feedback for merchant1");
         } catch(e) { console.log("  Report 2 failed:", e.message); }
 

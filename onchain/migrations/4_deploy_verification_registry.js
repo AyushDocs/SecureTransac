@@ -1,8 +1,9 @@
 const VerificationRegistry = artifacts.require("VerificationRegistry");
+const TrustRegistry = artifacts.require("TrustRegistry");
 
 module.exports = async function (deployer) {
-  await deployer.deploy(VerificationRegistry);
+  const registry = await TrustRegistry.deployed();
+  await deployer.deploy(VerificationRegistry, registry.address);
   const instance = await VerificationRegistry.deployed();
-  const chainId = await web3.eth.net.getId();
-  console.log(`VerificationRegistry deployed at: ${instance.address} (Chain ID: ${chainId})`);
+  console.log(`VerificationRegistry deployed at: ${instance.address}`);
 };

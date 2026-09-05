@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import aiService from '../services/aiService.js';
 import analyticsService from '../services/analyticsService.js';
 import bridgeService from '../services/bridgeService.js';
+import { generateCardHTML } from '../services/cardGenerator.js';
 import ipfsService from '../services/ipfsService.js';
 import persistence from '../services/persistenceService.js';
 import privacyService from '../services/privacyService.js';
@@ -163,12 +164,12 @@ export const getUserDetails = async (req, res) => {
         // 2. Identity CID (Chain Contract)
         // 3. Chain History (Events)
         // 4. Reports (Events)
-        const [onChainScore, identityCid, transactions, complaints, reporterTier] = await Promise.all([
+        const [onChainScore, identityCid, transactions, complaints, issuerRole] = await Promise.all([
             web3Service.getDecryptedScore(address),
             web3Service.getIdentityCID(address),
             web3Service.getTransactionHistory(address),
             web3Service.getReports(address),
-            web3Service.getReporterTier(address)
+            web3Service.getIssuerRole(address)
         ]);
 
         let identityData = {};
@@ -187,7 +188,7 @@ export const getUserDetails = async (req, res) => {
             ...identityData, // IPFS data overrides local defaults
             trustScore: onChainScore * 1000, // Normalized 0-1000
             identityCid: identityCid || localData.identityCid,
-            reporterTier: reporterTier,
+            issuerRole: issuerRole,
             transactions: transactions.length > 0 ? transactions : localData.transactions,
             complaints: complaints.length > 0 ? complaints : localData.complaints
         });
@@ -300,7 +301,7 @@ export const getAuthorities = async (req, res) => {
     for (const data of authorities) {
         const address = data.id || data.address; // Ensure address access
         try {
-            const onChainStatus = await web3Service.isReporter(address);
+            const onChainStatus = await web3Service.isIssuer(address);
             // Sync local DB if on-chain status is the source of truth
             if (onChainStatus && data.status === 'revoked') {
                 data.status = 'active';
@@ -494,16 +495,11 @@ export const verifyUser = async (req, res) => {
         const statusMap = { 'approved': 1, 'rejected': 2 };
         const contractStatus = statusMap[status.toLowerCase()] || 2;
         
-        await web3Service.processVerification(requestId, contractStatus);
+        // scoreValue is 0-100; contract calls attestScore automatically on Approved
+        // Default to 80 (good reputation) if not specified
+        const scoreValue = status === 'approved' ? Math.min(Math.max(Number(targetScore) || 80, 0), 100) : 0;
 
-        if (status === 'approved') {
-            const score = targetScore || 0.9;
-            const requests = await web3Service.getVerificationRequests(req.user.address, 'company');
-            const targetReq = requests.find(r => r.id == requestId);
-            if (targetReq) {
-                await web3Service.updateScore(targetReq.userAddress, score);
-            }
-        }
+        await web3Service.processVerification(requestId, contractStatus, scoreValue);
 
         res.json({ message: `Verification processed on-chain: ${status}` });
     } catch (error) {
@@ -964,6 +960,66 @@ export const processAppeal = async (req, res) => {
     }
 };
 
+export const mintSBT = async (req, res) => {
+    const { userAddress } = req.body;
+    console.log(`[SBT] Minting reputation card for ${userAddress}`);
+    if (!userAddress) return res.status(400).json({ error: 'userAddress required' });
+
+    try {
+        const decryptedScore = await web3Service.getDecryptedScore(userAddress);
+        const scorePercent = Math.round(decryptedScore * 100);
+
+        const user = await persistence.getUser(userAddress);
+        const name = user?.name || null;
+
+        const html = generateCardHTML({
+            address: userAddress,
+            score: decryptedScore,
+            name,
+            timestamp: Date.now(),
+            chainId: process.env.NETWORK_ID || '1337',
+            networkName: 'Ethereum Local',
+        });
+
+        const formData = new FormData();
+        formData.append('file', new Blob([html], { type: 'text/html' }), `reputation-${userAddress.slice(0, 10)}.html`);
+        formData.append('network', 'public');
+        formData.append('name', `SecureTransac-Reputation-${userAddress.slice(0, 10)}`);
+
+        const pinataResp = await fetch('https://uploads.pinata.cloud/v3/files', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.PINATA_JWT}` },
+            body: formData,
+        });
+
+        if (!pinataResp.ok) {
+            const errBody = await pinataResp.json().catch(() => ({}));
+            throw new Error(`Pinata upload failed: ${errBody?.error?.reason || pinataResp.status}`);
+        }
+
+        const pinataData = await pinataResp.json();
+        const cid = pinataData?.data?.cid;
+        if (!cid) throw new Error('No CID returned from Pinata');
+
+        const ipfsURI = `ipfs://${cid}`;
+        console.log(`[SBT] Card pinned to IPFS: ${ipfsURI}`);
+
+        await web3Service.mintSBT(userAddress, ipfsURI);
+
+        console.log(`[SBT] SBT minted for ${userAddress} with card URI ${ipfsURI}`);
+        res.json({
+            success: true,
+            cid,
+            ipfsURI,
+            gatewayURL: `https://gateway.pinata.cloud/ipfs/${cid}`,
+            score: scorePercent,
+        });
+    } catch (error) {
+        console.error(`[SBT] Mint failed for ${userAddress}:`, error);
+        res.status(500).json({ error: 'SBT minting failed', message: error.message });
+    }
+};
+
 export const verifyProof = async (req, res) => {
     const { proof, publicSignals } = req.body;
     
@@ -1008,6 +1064,7 @@ export default {
     getVerificationRequests,
     getWarRoom,
     manualOverride,
+    mintSBT,
     pinMetadata,
     processAppeal,
     processReport,

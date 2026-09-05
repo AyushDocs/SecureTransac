@@ -80,9 +80,21 @@ function Connect() {
 
              <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
                 <p className="text-sm text-gray-500 mb-2">Direct Email</p>
-                <a href="mailto:contact@securetransac.dao" className="text-cyan-400 font-mono text-lg hover:underline">
-                  contact@securetransac.dao
+                <a href="mailto:ayushalokdubey@gmail.com" className="text-cyan-400 font-mono text-lg hover:underline">
+                  ayushalokdubey@gmail.com
                 </a>
+             </div>
+
+             <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800">
+                <p className="text-sm text-gray-500 mb-3">Find me on</p>
+                <div className="flex gap-4">
+                  <a href="https://github.com/AyushDocs" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    GitHub
+                  </a>
+                  <a href="https://linkedin.com/in/ayushdubeyad" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    LinkedIn
+                  </a>
+                </div>
              </div>
           </div>
 

@@ -5,26 +5,22 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface ITrustRegistry {
-    enum AuthorityTier { NONE, STANDARD, INSTITUTIONAL, DIAMOND }
-    function setReporterStatus(address reporter, bool status, AuthorityTier tier) external;
-}
+import "./types/Types.sol";
+import "./interfaces/ITrustRegistry.sol";
 
 contract TrustDAO is Ownable {
     IERC20 public trustToken;
     ITrustRegistry public registry;
 
-    uint256 public constant MIN_STAKE = 1000 * 10**18; 
-    uint256 public constant VOTING_PERIOD = 1 days; 
-
-    enum ProposalType { GENERIC, KYB_ADMISSION }
+    uint256 public constant MIN_STAKE = 1000 * 10**18;
+    uint256 public constant VOTING_PERIOD = 1 days;
 
     struct Proposal {
         uint256 id;
         ProposalType pType;
         address proposer;
-        uint8 targetTier;      
-        uint256 stakedAmount;  
+        uint8 targetTier;
+        uint256 stakedAmount;
         string description;
         uint256 forVotes;
         uint256 againstVotes;
@@ -37,8 +33,8 @@ contract TrustDAO is Ownable {
     uint256 public nextProposalId;
 
     mapping(address => uint256) public stakes;
-    mapping(address => bool) public isStakedReporter;
-    
+    mapping(address => bool) public isStakedIssuer;
+
     mapping(address => uint256) public claimableRewards;
     uint256 public totalDistributedRewards;
 
@@ -60,8 +56,7 @@ contract TrustDAO is Ownable {
         uint256 amount = MIN_STAKE;
         require(trustToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
         stakes[msg.sender] += amount;
-        isStakedReporter[msg.sender] = true;
-        registry.setReporterStatus(msg.sender, true, ITrustRegistry.AuthorityTier.STANDARD);
+        isStakedIssuer[msg.sender] = true;
         emit Staked(msg.sender, amount);
     }
 
@@ -75,13 +70,21 @@ contract TrustDAO is Ownable {
         IERC20Permit(address(trustToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
         require(trustToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
         stakes[msg.sender] += amount;
-        isStakedReporter[msg.sender] = true;
-        registry.setReporterStatus(msg.sender, true, ITrustRegistry.AuthorityTier.STANDARD);
+        isStakedIssuer[msg.sender] = true;
         emit Staked(msg.sender, amount);
     }
 
+    function unstake() external {
+        uint256 amount = stakes[msg.sender];
+        require(amount > 0, "Nothing staked");
+        stakes[msg.sender] = 0;
+        isStakedIssuer[msg.sender] = false;
+        require(trustToken.transfer(msg.sender, amount), "Unstake transfer failed");
+        emit Unstaked(msg.sender, amount);
+    }
+
     function submitKYBProposal(uint8 tierIndex, string calldata desc) external {
-        uint256 requiredStake = (tierIndex == 3) ? 50000 ether : 5000 ether;
+        uint256 requiredStake = (tierIndex == 3) ? 50000 * 10**18 : 5000 * 10**18;
         require(trustToken.transferFrom(msg.sender, address(this), requiredStake), "Stake transfer failed");
 
         Proposal storage p = proposals[nextProposalId];
@@ -92,36 +95,36 @@ contract TrustDAO is Ownable {
         p.stakedAmount = requiredStake;
         p.description = desc;
         p.endTime = block.timestamp + VOTING_PERIOD;
-        
+
         emit ProposalCreated(nextProposalId, desc, ProposalType.KYB_ADMISSION);
         nextProposalId++;
     }
 
     function createProposal(string calldata desc) external {
-        require(isStakedReporter[msg.sender], "Must be staked to propose");
-        
+        require(isStakedIssuer[msg.sender], "Must be staked to propose");
+
         Proposal storage p = proposals[nextProposalId];
         p.id = nextProposalId;
         p.pType = ProposalType.GENERIC;
         p.proposer = msg.sender;
         p.description = desc;
         p.endTime = block.timestamp + VOTING_PERIOD;
-        
+
         emit ProposalCreated(nextProposalId, desc, ProposalType.GENERIC);
         nextProposalId++;
     }
 
     function createProposalWithDuration(string calldata desc, uint256 durationSeconds) external {
-        require(isStakedReporter[msg.sender], "Must be staked to propose");
+        require(isStakedIssuer[msg.sender], "Must be staked to propose");
         require(durationSeconds >= 1 minutes && durationSeconds <= 30 days, "Duration must be 1min - 30 days");
-        
+
         Proposal storage p = proposals[nextProposalId];
         p.id = nextProposalId;
         p.pType = ProposalType.GENERIC;
         p.proposer = msg.sender;
         p.description = desc;
         p.endTime = block.timestamp + durationSeconds;
-        
+
         emit ProposalCreated(nextProposalId, desc, ProposalType.GENERIC);
         nextProposalId++;
     }
@@ -148,36 +151,41 @@ contract TrustDAO is Ownable {
 
         p.executed = true;
         bool passed = p.forVotes > p.againstVotes;
-        
+
         if (passed) {
-             if (p.pType == ProposalType.KYB_ADMISSION) {
-                 registry.setReporterStatus(p.proposer, true, ITrustRegistry.AuthorityTier(p.targetTier));
-                 stakes[p.proposer] += p.stakedAmount;
-                 isStakedReporter[p.proposer] = true; 
-             }
+            if (p.pType == ProposalType.KYB_ADMISSION) {
+                registry.authorizeTier(p.proposer, p.targetTier);
+                isStakedIssuer[p.proposer] = true;
+            }
         } else {
-             if (p.pType == ProposalType.KYB_ADMISSION) {
-                 uint256 penalty = p.stakedAmount / 10; 
-                 uint256 refund = p.stakedAmount - penalty;
-                 trustToken.transfer(p.proposer, refund);
-                 emit RefundedWithPenalty(p.proposer, refund, penalty);
-             }
+            if (p.pType == ProposalType.KYB_ADMISSION) {
+                uint256 penalty = p.stakedAmount / 10;
+                uint256 refund = p.stakedAmount - penalty;
+                require(trustToken.transfer(p.proposer, refund), "Refund transfer failed");
+                emit RefundedWithPenalty(p.proposer, refund, penalty);
+            }
         }
-        
+
         emit ProposalExecuted(proposalId, passed);
     }
 
     function distributeRewards(uint256 totalAmount) external onlyOwner {
         require(totalAmount > 0, "No rewards");
+        require(trustToken.transferFrom(msg.sender, address(this), totalAmount), "Reward transfer failed");
         totalDistributedRewards += totalAmount;
         emit RewardsDistributed(totalAmount);
+    }
+
+    function addClaimableRewards(address user, uint256 amount) external onlyOwner {
+        require(amount > 0, "Zero amount");
+        claimableRewards[user] += amount;
     }
 
     function claimRewards() external {
         uint256 reward = claimableRewards[msg.sender];
         require(reward > 0, "No rewards");
         claimableRewards[msg.sender] = 0;
-        trustToken.transfer(msg.sender, reward);
+        require(trustToken.transfer(msg.sender, reward), "Claim transfer failed");
         emit RewardsClaimed(msg.sender, reward);
     }
 

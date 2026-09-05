@@ -14,7 +14,14 @@ import "./ReportingSystem.sol";
 contract TrustRegistry is ScoringSystem, TransactionLogger, ReportingSystem {
     event TierUpgraded(address indexed user, Role tier, uint256 stakedAmount);
 
+    address public dao;
+
     constructor() SecureAccessControl() {
+    }
+
+    function setDAO(address _dao) external onlyOwner {
+        require(_dao != address(0), "Zero address");
+        dao = _dao;
     }
 
     function upgradeTier(uint8 tierIndex) external {
@@ -30,10 +37,21 @@ contract TrustRegistry is ScoringSystem, TransactionLogger, ReportingSystem {
 
         require(trustToken.transferFrom(msg.sender, address(this), cost), "Stake transfer failed");
 
-        reporters[msg.sender] = true;
+        issuers[msg.sender] = true;
         addressRoleMap[msg.sender] = Role(tierIndex);
 
         emit TierUpgraded(msg.sender, Role(tierIndex), cost);
-        emit ReporterStatusChanged(msg.sender, true, Role(tierIndex));
+        emit IssuerStatusChanged(msg.sender, true, Role(tierIndex));
+    }
+
+    function authorizeTier(address user, uint8 tierIndex) external {
+        require(msg.sender == owner() || msg.sender == dao, "Not authorized");
+        require(tierIndex == 2 || tierIndex == 3, "Invalid tier");
+
+        issuers[user] = true;
+        addressRoleMap[user] = Role(tierIndex);
+
+        emit TierUpgraded(user, Role(tierIndex), 0);
+        emit IssuerStatusChanged(user, true, Role(tierIndex));
     }
 }

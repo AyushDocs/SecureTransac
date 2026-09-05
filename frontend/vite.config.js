@@ -96,11 +96,51 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'web3-core': ['web3', 'viem', '@walletconnect/ethereum-provider', '@web3modal/wagmi', 'wagmi'],
-          'zk': ['snarkjs', 'eth-crypto', 'elliptic', 'crypto-js'],
-          'reports': ['jspdf', 'jspdf-autotable'],
-          'react-vendor': ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'axios', 'socket.io-client']
+        manualChunks(id) {
+          // Shared crypto primitives — bn.js, elliptic, brorand, hash.js all depend on each other
+          if (id.includes('node_modules/bn.js') || id.includes('node_modules/bnjs') ||
+              id.includes('node_modules/elliptic') || id.includes('node_modules/brorand') ||
+              id.includes('node_modules/hash.js')) {
+            return 'crypto-shared';
+          }
+          // web3.js standalone — huge but only needed for on-chain tx pages
+          if (id.includes('node_modules/web3') || id.includes('node_modules/@ethereumjs')) {
+            return 'web3-lib';
+          }
+          // wagmi + walletconnect + web3modal — wallet connection stack
+          if (id.includes('node_modules/@wagmi') || id.includes('node_modules/wagmi') ||
+              id.includes('node_modules/@web3modal') || id.includes('node_modules/@walletconnect') ||
+              id.includes('node_modules/@reown')) {
+            return 'wallet-sdk';
+          }
+          // ZK proof libs — only snarkjs + eth-crypto (elliptic handled by crypto-shared)
+          if (id.includes('node_modules/snarkjs') || id.includes('node_modules/eth-crypto')) {
+            return 'zk-crypto';
+          }
+          // PDF generation — only for reports
+          if (id.includes('node_modules/jspdf')) {
+            return 'pdf-libs';
+          }
+          // React core
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'react-core';
+          }
+          // React router
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
+            return 'react-router';
+          }
+          // tanstack react-query
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'react-query';
+          }
+          // socket.io
+          if (id.includes('node_modules/socket.io') || id.includes('node_modules/engine.io')) {
+            return 'socket-io';
+          }
+          // viem (tree-shakeable but still large)
+          if (id.includes('node_modules/viem')) {
+            return 'viem-lib';
+          }
         }
       }
     }
@@ -111,6 +151,7 @@ export default defineConfig({
   resolve: {
     alias: {
       buffer: 'buffer',
+      '@': '/src',
     },
   },
   base: './', // Essential for IPFS/Relative path deployment

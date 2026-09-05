@@ -22,9 +22,10 @@ const loadJSON = (relativePath) => {
 };
 
 const TrustRegistry = loadJSON('../../../onchain/build/contracts/TrustRegistry.json');
-const IdentityVault = loadJSON('../../../onchain/build/contracts/IdentityVault.json');
+const SecureDocumentStorage = loadJSON('../../../onchain/build/contracts/SecureDocumentStorage.json');
 const VerificationRegistry = loadJSON('../../../onchain/build/contracts/VerificationRegistry.json');
 const TransactionLogger = loadJSON('../../../onchain/build/contracts/TransactionLogger.json');
+const SoulBoundToken = loadJSON('../../../onchain/build/contracts/SoulBoundToken.json');
 const VulnerableBank = loadJSON('../../../demo-vulnerable/build/contracts/VulnerableBank.json');
 const UnprotectedStorage = loadJSON('../../../demo-vulnerable/build/contracts/UnprotectedStorage.json');
 
@@ -61,7 +62,7 @@ class Web3Service {
 
             // Automatic discovery if not in .env
             if (!this.registryAddress) this.registryAddress = TrustRegistry.networks?.[targetNetworkId]?.address || TrustRegistry.networks?.["1337"]?.address || TrustRegistry.networks?.["5777"]?.address;
-            if (!this.vaultAddress) this.vaultAddress = IdentityVault.networks?.[targetNetworkId]?.address || IdentityVault.networks?.["1337"]?.address || IdentityVault.networks?.["5777"]?.address;
+            if (!this.vaultAddress) this.vaultAddress = SecureDocumentStorage.networks?.[targetNetworkId]?.address || SecureDocumentStorage.networks?.["1337"]?.address || SecureDocumentStorage.networks?.["5777"]?.address;
             if (!this.verificationAddress) this.verificationAddress = VerificationRegistry.networks?.[targetNetworkId]?.address || VerificationRegistry.networks?.["1337"]?.address || VerificationRegistry.networks?.["5777"]?.address;
 
             // Demo contract addresses - Robust Discovery
@@ -103,10 +104,16 @@ class Web3Service {
                 this.contract = new this.web3.eth.Contract(TrustRegistry.abi, this.registryAddress);
             }
             if (this.vaultAddress) {
-                this.vaultContract = new this.web3.eth.Contract(IdentityVault.abi, this.vaultAddress);
+                this.vaultContract = new this.web3.eth.Contract(SecureDocumentStorage.abi, this.vaultAddress);
             }
             if (this.verificationAddress) {
                 this.verificationContract = new this.web3.eth.Contract(VerificationRegistry.abi, this.verificationAddress);
+            }
+
+            this.sbtAddress = process.env.SBT_ADDRESS || SoulBoundToken.networks?.[targetNetworkId]?.address || SoulBoundToken.networks?.["1337"]?.address || SoulBoundToken.networks?.["5777"]?.address;
+            if (this.sbtAddress && SoulBoundToken.abi?.length > 0) {
+                this.sbtContract = new this.web3.eth.Contract(SoulBoundToken.abi, this.sbtAddress);
+                console.log(`[Web3] SoulBoundToken loaded: ${this.sbtAddress}`);
             }
 
             // System Control State
@@ -266,15 +273,16 @@ class Web3Service {
                 return false;
             }
 
-            const isAuthorized = await this.contract.methods.isAuthorizedReporter(this.adminAccount.address).call();
+            const isAuthorized = await this.contract.methods.issuers(this.adminAccount.address).call();
             if (!isAuthorized) {
-                console.warn(`[Web3] Admin ${this.adminAccount.address} is not an authorized reporter.`);
+                console.warn(`[Web3] Admin ${this.adminAccount.address} is not an authorized issuer.`);
                 
                 // Attempt Auto-Authorization if Admin is Owner
                 const owner = await this.contract.methods.owner().call();
                 if (owner.toLowerCase() === this.adminAccount.address.toLowerCase()) {
-                    console.log("[Web3] Admin is owner. Auto-authorizing as Diamond Reporter...");
-                    await this._sendAdminTx(this.registryAddress, this.contract.methods.setReporterStatus(this.adminAccount.address, true, 3));
+                    console.log("[Web3] Admin is owner. Auto-authorizing as Diamond Issuer...");
+                    // Role.DIAMOND = 3
+                    await this._sendAdminTx(this.registryAddress, this.contract.methods.setIssuerStatus(this.adminAccount.address, true, 3));
                 } else {
                     console.error("[Web3] REVERT PREVENTED: Admin lacks permissions and is not owner. Please run 'npm run seed'.");
                     return false;
@@ -340,7 +348,7 @@ class Web3Service {
                 fromBlock: 0 
             });
             return events.map(e => ({
-                reporter: e.returnValues.reporter,
+                issuer: e.returnValues.issuer,
                 text: e.returnValues.reason,
                 timestamp: Number(e.returnValues.timestamp) * 1000
             }));
@@ -410,28 +418,45 @@ class Web3Service {
         }
     }
 
-    async isReporter(address) {
+    async isIssuer(address) {
         if (!this.contract) return false;
         try {
-            return await this.contract.methods.isAuthorizedReporter(address).call();
+            return await this.contract.methods.issuers(address).call();
         } catch (error) {
             return false;
         }
     }
 
-    async getReporterTier(address) {
+    async getIssuerRole(address) {
         if (!this.contract) return 0;
         try {
-            const tier = await this.contract.methods.reporterTier(address).call();
-            return Number(tier);
+            const role = await this.contract.methods.addressRoleMap(address).call();
+            return Number(role);
         } catch (error) {
             return 0;
         }
     }
 
-    async setReporterStatus(reporterAddress, status, tier = 1) {
+    async setIssuerStatus(issuerAddress, status, role = 1) {
         if (!this.contract) return false;
-        return this._sendAdminTx(this.registryAddress, this.contract.methods.setReporterStatus(reporterAddress, status, tier));
+        return this._sendAdminTx(this.registryAddress, this.contract.methods.setIssuerStatus(issuerAddress, status, role));
+    }
+
+    async mintSBT(userAddress, cardURI) {
+        if (!this.sbtContract || !this.adminAccount) {
+            throw new Error("SBT contract or admin account not configured");
+        }
+        console.log(`[Web3] mintFor(${userAddress}, ${cardURI?.slice(0, 40)}...)`);
+        return this._sendAdminTx(this.sbtAddress, this.sbtContract.methods.mintFor(userAddress, cardURI || ''));
+    }
+
+    async getSBTCardURI(userAddress) {
+        if (!this.sbtContract) return '';
+        try {
+            return await this.sbtContract.methods.cardURI(userAddress).call();
+        } catch (e) {
+            return '';
+        }
     }
 
     async getIdentityCID(userAddress) {
@@ -449,10 +474,10 @@ class Web3Service {
         return this._sendAdminTx(this.verificationAddress, this.verificationContract.methods.requestVerification(userAddress, companyAddress, proofCid));
     }
 
-    async processVerification(requestId, status) {
+    async processVerification(requestId, status, scoreValue = 0) {
         if (!this.verificationContract) return false;
-        // status: 1 = Approved, 2 = Rejected
-        return this._sendAdminTx(this.verificationAddress, this.verificationContract.methods.processVerification(requestId, status));
+        // status: 1 = Approved, 2 = Rejected; scoreValue: 0-100 (used only when Approved)
+        return this._sendAdminTx(this.verificationAddress, this.verificationContract.methods.processVerification(requestId, status, scoreValue));
     }
 
     // ZK Proof Submission (Backend Proxy)
@@ -578,7 +603,7 @@ class Web3Service {
                     .on('data', (event) => {
                         const data = {
                             type: 'report',
-                            reporter: event.returnValues.reporter,
+                            issuer: event.returnValues.issuer,
                             target: event.returnValues.target,
                             reason: event.returnValues.reason,
                             timestamp: Date.now()
@@ -691,7 +716,7 @@ class Web3Service {
                 }
 
                 return {
-                    reporter: event.returnValues.reporter,
+                    issuer: event.returnValues.issuer,
                     target: event.returnValues.target,
                     severity: Number(parsed.severity) || 5,
                     type: parsed.type || 'UNKNOWN',
@@ -710,7 +735,7 @@ class Web3Service {
     getSystemAddresses() {
         const contracts = {
             TrustRegistry: this.registryAddress,
-            IdentityVault: this.vaultAddress,
+            SecureDocumentStorage: this.vaultAddress,
             VerificationRegistry: this.verificationAddress,
             TransactionLogger: TransactionLogger.networks?.[process.env.NETWORK_ID || '5777']?.address,
             VulnerableBank: this.vulnerableBankAddress,

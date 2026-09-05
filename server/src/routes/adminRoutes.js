@@ -212,6 +212,7 @@ router.post('/evaluate', adminController.evaluateAddress);
 router.post('/transaction', adminController.processTransaction);
 router.post('/comment', adminController.processTransactionComment);
 router.post('/report', protect, adminController.processReport);
+router.post('/sbt/mint', protect, adminController.mintSBT);
 router.get('/audit-logs', protect, restrictTo('admin', 'deployer'), adminController.getAuditLogs);
 router.post('/manual-override', protect, restrictTo('admin', 'deployer'), adminController.manualOverride);
 router.post('/events', protect, adminController.addEvent);

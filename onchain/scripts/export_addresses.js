@@ -26,7 +26,7 @@ const FRONTEND_CONTRACTS_DIR = path.resolve(__dirname, '../../frontend/src/contr
 // Contract -> env var mapping for the server
 const SERVER_ENV = {
     TrustRegistry: 'REGISTRY_ADDRESS',
-    IdentityVault: 'VAULT_ADDRESS',
+    SecureDocumentStorage: 'VAULT_ADDRESS',
     VerificationRegistry: 'VERIFICATION_ADDRESS',
     TrustDAO: 'DAO_ADDRESS',
     SoulBoundToken: 'SBT_ADDRESS',
@@ -36,7 +36,7 @@ const SERVER_ENV = {
 // Contract -> frontend VITE_ env var (matches frontend/src/api/config.js)
 const FRONTEND_ENV = {
     TrustRegistry: 'VITE_TRUST_REGISTRY_TRUST_REGISTRY_ADDRESS',
-    IdentityVault: 'VITE_IDENTITY_VAULT_ADDRESS',
+    SecureDocumentStorage: 'VITE_IDENTITY_VAULT_ADDRESS',
     VerificationRegistry: 'VITE_VERIFICATION_REGISTRY_ADDRESS',
 };
 
